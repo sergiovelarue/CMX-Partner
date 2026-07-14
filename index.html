@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Comodísimos Partner v1.2</title>
+<title>Comercial Partner APP</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <style>
 :root{--bg:#eef4fb;--bg2:#f7f9fc;--card:#fff;--ink:#17324d;--muted:#667085;--brand:#123a63;--brand2:#1f6fb2;--line:#d9e2ec;--soft:#eef4fb;--ok:#127a4a;--warn:#b45309;--danger:#b42318;--gain:#fff7cc;--gainline:#f3d34a}
 *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);color:var(--ink)}
@@ -37,7 +38,7 @@ select{width:100%;padding:14px;border:1px solid #cfd8e3;border-radius:14px;font-
 <div id="registerScreen" class="partner-screen">
   <div class="partner-box">
     <div class="partner-hero">
-      <h1>Comodísimos Partner</h1>
+      <h1>Comercial Partner APP</h1>
       <p>Activa tu acceso profesional para cotizar más rápido, vender con seguridad y mejorar tu rentabilidad.</p>
       <div class="benefits">
         <div>✅ Calculador de precios</div>
@@ -59,7 +60,7 @@ select{width:100%;padding:14px;border:1px solid #cfd8e3;border-radius:14px;font-
         <div><label>Cargo</label><select id="regRole"><option value="">Seleccionar</option><option>Vendedor</option><option>Dependiente</option><option>Administrador</option><option>Propietario</option></select></div>
       </div>
       <div class="consent">
-        <label><input id="regConsent" type="checkbox"> <span>Autorizo a Comodísimos y/o Espumas Plásticas S.A.S. para recolectar, almacenar y tratar mis datos personales con fines comerciales, promocionales, formativos y de relacionamiento, conforme a la política de tratamiento de datos personales vigente.</span></label>
+        <label><input id="regConsent" type="checkbox"> <span>Autorizo a Conaccion y/o Espumas Plásticas S.A.S. para recolectar, almacenar y tratar mis datos personales con fines comerciales, promocionales, formativos y de relacionamiento, conforme a la política de tratamiento de datos personales vigente.</span></label>
       </div>
       <div class="actions"><button class="p" id="activateAccess">Activar mi acceso</button></div>
       <div id="regMsg" style="color:var(--danger);font-size:.86rem;margin-top:8px"></div>
@@ -69,7 +70,7 @@ select{width:100%;padding:14px;border:1px solid #cfd8e3;border-radius:14px;font-
 <div id="appScreen" class='wrap hidden'>
 <div class="userbar"><div>Acceso activo: <b id="activeUser">-</b> · <span id="activeCompany">-</span></div><button class="linkbtn" id="changeUser">Cambiar usuario</button></div>
 <div class='hero'>
-<h1 id='appName'>Calculador de Precios Comodísimos</h1>
+<h1 id='appName'>Comercial Partner APP</h1>
 <p id='introText'>Herramienta de cálculo de precios para el canal B2B Multimarca.</p>
 <p style='margin-top:10px;opacity:.9;font-size:.9rem'>Base de precios integrada: <span id="baseName">-</span> | Desarrollo calculador: <span id="devDate">-</span> | Referencias activas cargadas: <span id="statRefs">-</span></p>
 <small id='waNote'></small></div>
@@ -78,14 +79,14 @@ select{width:100%;padding:14px;border:1px solid #cfd8e3;border-radius:14px;font-
 <div><label>Descuento en Sala (%)</label><input id='sala' type='number' value='0' step='0.1'></div>
 </div><div class='actions'><button class='p' id='calc'>Consultar precio</button><button class='g' id='copy' disabled>Copiar resultado</button><button class='g' id='quote' disabled>Copiar cotización WhatsApp</button><button class='s' id='clear'>Limpiar</button></div></div>
 <div class='card' id='r'><div class='empty'>Cargando base de productos…</div></div>
-<div class='footer'>Herramienta para distribuidores autorizados de Comodísimos. Información de referencia comercial. Derechos reservados.<div class='admin-gate hidden' id='adminGate'><button class='s mini' id='adminLogin'>🔒 Acceso administrador</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Visible solo para correos administradores autorizados.</span></div><div class='admin-tools hidden' id='adminTools'><button class='s mini' id='exportUsers'>Exportar registros CSV</button><button class='s mini' id='exportLogs'>Exportar uso CSV</button><button class='s mini' id='adminLogout'>Bloquear descargas</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Descargas habilitadas para administrador validado.</span></div></div>
+<div class='footer'>Herramienta para distribuidores autorizados. Información de referencia comercial. Derechos reservados.<div class='admin-gate hidden' id='adminGate'><button class='s mini' id='adminLogin'>🔒 Acceso administrador</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Visible solo para correos administradores autorizados.</span></div><div class='admin-tools hidden' id='adminTools'><button class='s mini' id='exportUsers'>Exportar registros CSV</button><button class='s mini' id='exportLogs'>Exportar uso CSV</button><button class='s mini' id='adminLogout'>Bloquear descargas</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Descargas habilitadas para administrador validado.</span></div><div style="margin-top:10px;font-size:.74rem;color:#a9b4c2">© Comercial Partner APP. Todos los derechos reservados — Sergio Velásquez.<span style="float:right;opacity:.45">23:1</span></div></div>
 </div><div id='toast'>Copiado</div>
 <script>
 const PRODUCTS_FILE="cmx30_products_core.json", RULES_FILE="cmx30_margin_rules.json", CONFIG_FILE="cmx30_app_config.json";
 const USER_KEY='cmx_partner_user_v1', USERS_KEY='cmx_partner_users_v1', LOGS_KEY='cmx_partner_logs_v1';
 // Correos autorizados para ver y descargar la información administrativa.
 // Para agregar o quitar administradores, edita esta lista manteniendo minúsculas y comillas.
-const ADMIN_EMAILS=['sergiovelasquez@me.com','sergio.velasquez@comodisimos.com','andres.barrera@comodisimos.com'];
+const ADMIN_EMAILS=['sergiovelasquez@me.com'];
 const ADMIN_PASSWORD='CMX2026';
 const ADMIN_UNLOCK_KEY='cmx_partner_admin_unlocked_v13';
 let CURRENT_USER=null;
@@ -138,7 +139,7 @@ PVD con IVA: ${money(pvdI)}
 PVD sin IVA: ${money(pvd)}
 Esto es lo que se puede ganar el distribuidor: ${money(gain)}
 Fecha cálculo: ${dt}`;
-lastQuote=`Cotización Comodísimos
+lastQuote=`Cotización Comercial Partner
 
 Referencia: ${item.referencia}
 Producto: ${item.descripcion}
@@ -152,11 +153,11 @@ Ganancia estimada distribuidor: ${money(gain)}
 Fecha cálculo: ${dt}`;
 copy.disabled=false;quote.disabled=false;
 r.innerHTML=`<div class='${bc}'>${bt}</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='row'><div class='k'>Producto</div><div>${item.producto}</div></div><div class='row'><div class='k'>Activo</div><div>${item.activo?'Sí':'No'}</div></div><div class='row'><div class='k'>Descuento en Sala</div><div>${Number(sala.value||0).toFixed(1)}%</div></div><div class='row'><div class='k'>Margen Distribuidor</div><div>${(m*100).toFixed(0)}% ${mTag(m)}</div></div><div class='row'><div class='k'>Fecha y hora del cálculo</div><div>${dt}</div></div><div class='prices'><div class='price'><div class='t'>PVP con IVA</div><div class='v'>${money(pvpI)}</div></div><div class='price'><div class='t'>PVP sin IVA</div><div class='v'>${money(pvp)}</div></div><div class='price'><div class='t'>PVP con IVA dto SALA</div><div class='v'>${money(pvpSI)}</div></div><div class='price'><div class='t'>PVP sin IVA dto SALA</div><div class='v'>${money(pvpS)}</div></div><div class='price hl'><div class='t'>PVD con IVA</div><div class='v'>${money(pvdI)}</div></div><div class='price hl'><div class='t'>PVD sin IVA</div><div class='v'>${money(pvd)}</div></div><div class='price gain'><div class='t'>Esto es lo que se puede ganar el distribuidor</div><div class='v'>${money(gain)}</div></div></div>`;}
-async function init(){try{const[pRes,rRes,cRes]=await Promise.all([fetch(PRODUCTS_FILE),fetch(RULES_FILE),fetch(CONFIG_FILE)]);PRODUCTS=await pRes.json();RULES=await rRes.json();CONFIG=await cRes.json();DATA=PRODUCTS.filter(x=>x.activo).map(x=>({...x,search:(`${x.referencia} ${x.descripcion} ${x.gama} ${x.producto}`).toUpperCase()}));byRef=new Map(DATA.map(x=>[normalize(x.referencia),x]));document.getElementById('appName').textContent=CONFIG.app_name||'Calculador de Precios Comodísimos';document.getElementById('introText').textContent=CONFIG.intro_text||'Herramienta de cálculo de precios para el canal B2B Multimarca.';document.getElementById('baseName').textContent=CONFIG.base_name||'-';document.getElementById('devDate').textContent=CONFIG.development_date||'-';document.getElementById('waNote').textContent=CONFIG.whatsapp_note||'';document.getElementById('statRefs').textContent=DATA.length.toLocaleString('es-CO');r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";}catch(err){r.innerHTML="<div class='badge danger'>Error de carga</div><div class='empty'>Revisa que index.html, cmx30_products_core.json, cmx30_margin_rules.json y cmx30_app_config.json estén juntos en Netlify.</div>";}}
+async function init(){try{const[pRes,rRes,cRes]=await Promise.all([fetch(PRODUCTS_FILE),fetch(RULES_FILE),fetch(CONFIG_FILE)]);PRODUCTS=await pRes.json();RULES=await rRes.json();CONFIG=await cRes.json();DATA=PRODUCTS.filter(x=>x.activo).map(x=>({...x,search:(`${x.referencia} ${x.descripcion} ${x.gama} ${x.producto}`).toUpperCase()}));byRef=new Map(DATA.map(x=>[normalize(x.referencia),x]));document.getElementById('appName').textContent=CONFIG.app_name||'Comercial Partner APP';document.getElementById('introText').textContent=CONFIG.intro_text||'Herramienta de cálculo de precios para el canal B2B Multimarca.';document.getElementById('baseName').textContent=CONFIG.base_name||'-';document.getElementById('devDate').textContent=CONFIG.development_date||'-';document.getElementById('waNote').textContent=CONFIG.whatsapp_note||'';document.getElementById('statRefs').textContent=DATA.length.toLocaleString('es-CO');r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";}catch(err){r.innerHTML="<div class='badge danger'>Error de carga</div><div class='empty'>Revisa que index.html, cmx30_products_core.json, cmx30_margin_rules.json y cmx30_app_config.json estén juntos en Netlify.</div>";}}
 document.getElementById('calc').onclick=calc;document.getElementById('clear').onclick=()=>{ref.value='';sala.value='0';box.style.display='none';copy.disabled=true;quote.disabled=true;r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";ref.focus();};
 ref.addEventListener('input',showS);ref.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});sala.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});document.addEventListener('click',e=>{if(!box.contains(e.target)&&e.target!==ref)box.style.display='none';});
 copy.onclick=async()=>{if(!lastCopy)return;try{await navigator.clipboard.writeText(lastCopy);showToast('Resultado copiado');}catch(e){}};quote.onclick=async()=>{if(!lastQuote)return;try{await navigator.clipboard.writeText(lastQuote);showToast('Cotización copiada');}catch(e){}};
-qs('activateAccess').onclick=activate;qs('changeUser').onclick=()=>{localStorage.removeItem(USER_KEY);showRegister();};qs('adminLogin').onclick=unlockAdmin;qs('adminLogout').onclick=lockAdmin;qs('exportUsers').onclick=()=>downloadCSV('comodisimos_partner_registros.csv',readJSON(USERS_KEY,[]));qs('exportLogs').onclick=()=>downloadCSV('comodisimos_partner_uso.csv',readJSON(LOGS_KEY,[]));
+qs('activateAccess').onclick=activate;qs('changeUser').onclick=()=>{localStorage.removeItem(USER_KEY);showRegister();};qs('adminLogin').onclick=unlockAdmin;qs('adminLogout').onclick=lockAdmin;qs('exportUsers').onclick=()=>downloadCSV('comercial_partner_registros.csv',readJSON(USERS_KEY,[]));qs('exportLogs').onclick=()=>downloadCSV('comercial_partner_uso.csv',readJSON(LOGS_KEY,[]));
 const savedUser=readJSON(USER_KEY,null);if(savedUser&&savedUser.consent)showApp(savedUser);else showRegister();
 init();
 </script></body></html>
