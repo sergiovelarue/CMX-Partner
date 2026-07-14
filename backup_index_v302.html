@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculador de Precios Comodísimos</title>
+<style>
+:root{--bg:#eef4fb;--bg2:#f7f9fc;--card:#fff;--ink:#17324d;--muted:#667085;--brand:#123a63;--brand2:#1f6fb2;--line:#d9e2ec;--soft:#eef4fb;--ok:#127a4a;--warn:#b45309;--danger:#b42318;--gain:#fff7cc;--gainline:#f3d34a}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);color:var(--ink)}
+.wrap{max-width:1100px;margin:auto;padding:18px}.hero{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;border-radius:24px;padding:22px 20px;margin-bottom:16px;box-shadow:0 16px 40px rgba(18,58,99,.18)}
+.hero h1{margin:0 0 8px;font-size:1.45rem}.hero p{margin:0;opacity:.94;line-height:1.45;max-width:900px}.hero small{display:block;margin-top:10px;opacity:.86}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:16px;margin-bottom:14px;box-shadow:0 8px 22px rgba(16,24,40,.06)}
+.grid{display:grid;grid-template-columns:1.7fr .9fr;gap:12px}.prices{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+label{display:block;font-weight:700;margin-bottom:6px}input{width:100%;padding:14px;border:1px solid #cfd8e3;border-radius:14px;font-size:1rem}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}button{border:0;border-radius:14px;padding:13px 16px;font-weight:700;cursor:pointer}
+.p{background:var(--brand);color:#fff}.s{background:var(--soft);color:var(--brand)}.g{background:#fff;color:var(--brand);border:1px solid var(--line)}
+.price{background:#fbfdff;border:1px solid var(--line);border-radius:18px;padding:14px}.hl{background:#f4f9ff;border:2px solid #b9d7ff}.gain{background:var(--gain);border:2px solid var(--gainline)}
+.t{color:var(--muted);font-size:.86rem;font-weight:700}.v{font-size:1.28rem;font-weight:800;margin-top:6px}.row{display:grid;grid-template-columns:190px 1fr;gap:10px;margin:8px 0}
+.k{color:var(--muted);font-weight:700}.empty{color:var(--muted);text-align:center;padding:22px}.mono{font-family:monospace}
+.badge{display:inline-block;padding:7px 10px;border-radius:999px;font-size:.82rem;font-weight:700;margin-bottom:10px}.ok{background:#e9f7ef;color:var(--ok)}.warn{background:#fff7ed;color:var(--warn)}.danger{background:#fdecec;color:var(--danger)}
+.box{margin-top:10px;border:1px solid var(--line);border-radius:14px;background:#fff;display:none;max-height:240px;overflow:auto}.it{padding:10px 12px;border-bottom:1px solid #eef2f6;cursor:pointer}.it:last-child{border-bottom:none}.it:hover{background:#f7fbff}
+.footer{margin-top:16px;color:var(--muted);font-size:.82rem;line-height:1.45}#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#123a63;color:#fff;padding:10px 14px;border-radius:999px;font-size:.9rem;display:none;z-index:9999}
+.tag-good,.tag-mid,.tag-low{display:inline-block;margin-left:8px;padding:4px 8px;border-radius:999px;font-size:.78rem;font-weight:800}.tag-good{background:#e9f7ef;color:var(--ok)}.tag-mid{background:#fff7ed;color:var(--warn)}.tag-low{background:#fdecec;color:var(--danger)}
+@media(max-width:760px){.grid,.prices,.row{grid-template-columns:1fr}.hero h1{font-size:1.25rem}}
+</style>
+</head>
+<body>
+<div class='wrap'>
+<div class='hero'>
+<h1 id='appName'>Calculador de Precios Comodísimos</h1>
+<p id='introText'>Herramienta de cálculo de precios para el canal B2B Multimarca.</p>
+<p style='margin-top:10px;opacity:.9;font-size:.9rem'>Base de precios integrada: <span id="baseName">-</span> | Desarrollo calculador: <span id="devDate">-</span> | Referencias activas cargadas: <span id="statRefs">-</span></p>
+<small id='waNote'></small></div>
+<div class='card'><div class='grid'>
+<div><label>Referencia o nombre</label><input id='ref' autocomplete='off' placeholder='Ej: CSMPC0102 o parte del nombre'><div id='box' class='box'></div><div style='font-size:.84rem;color:#667085;margin-top:8px'>Solo se muestran productos activos.</div></div>
+<div><label>Descuento en Sala (%)</label><input id='sala' type='number' value='0' step='0.1'></div>
+</div><div class='actions'><button class='p' id='calc'>Consultar precio</button><button class='g' id='copy' disabled>Copiar resultado</button><button class='g' id='quote' disabled>Copiar cotización WhatsApp</button><button class='s' id='clear'>Limpiar</button></div></div>
+<div class='card' id='r'><div class='empty'>Cargando base de productos…</div></div>
+<div class='footer'>Uso interno. Información confidencial y de derechos reservados. No debe ser replicada, compartida o reproducida sin autorización explícita de Comodísimos o Espumas Plásticas SAS.</div>
+</div><div id='toast'>Copiado</div>
+<script>
+const PRODUCTS_FILE="cmx30_products_core.json", RULES_FILE="cmx30_margin_rules.json", CONFIG_FILE="cmx30_app_config.json";
+let PRODUCTS=[],RULES=[],CONFIG={},DATA=[],byRef=new Map(),lastCopy="",lastQuote="";
+const ref=document.getElementById('ref'),sala=document.getElementById('sala'),r=document.getElementById('r'),box=document.getElementById('box'),copy=document.getElementById('copy'),quote=document.getElementById('quote'),toast=document.getElementById('toast');
+const money=v=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(Math.round(v));
+const pct=v=>Math.max(0,Math.min(100,Number(v)||0))/100; const now=()=>new Intl.DateTimeFormat('es-CO',{dateStyle:'medium',timeStyle:'short'}).format(new Date());
+const normalize=s=>String(s||'').trim().toUpperCase();
+const resolveMargin=g=>{g=normalize(g);for(const rule of RULES){const k=normalize(rule.match);if((rule.type||'prefix')==='prefix'&&g.startsWith(k))return Number(rule.margen||0);if(rule.type==='exact'&&g===k)return Number(rule.margen||0);}return 0;};
+const find=q=>{q=normalize(q);if(!q)return null;if(byRef.has(q))return byRef.get(q);return DATA.find(x=>x.search.includes(q));};
+const sugg=q=>{q=normalize(q);if(!q)return[];return DATA.filter(x=>x.search.includes(q)).slice(0,8);};
+function showToast(msg){toast.textContent=msg;toast.style.display='block';setTimeout(()=>toast.style.display='none',1500);}
+function showS(){const items=sugg(ref.value);if(!ref.value||!items.length){box.style.display='none';box.innerHTML='';return;}box.innerHTML=items.map(x=>`<div class='it' data-r='${x.referencia}'><b>${x.referencia}</b> — ${x.descripcion}</div>`).join('');box.style.display='block';[...box.querySelectorAll('.it')].forEach(el=>el.onclick=()=>{ref.value=el.dataset.r;box.style.display='none';calc();});}
+function badge(ds){if(ds>.35)return["badge danger","Descuento en sala muy alto: revisar política comercial"];if(ds>.30)return["badge warn","Descuento en sala alto: revisar política comercial"];return["badge ok","Consulta válida"];}
+function mTag(m){if(m>=.20)return"<span class='tag-good'>Margen alto</span>";if(m>=.15)return"<span class='tag-mid'>Margen medio</span>";return"<span class='tag-low'>Sin margen</span>";}
+function isRestricted(gama){const arr=Array.isArray(CONFIG.restricted_gamas)?CONFIG.restricted_gamas:[];return arr.map(normalize).includes(normalize(gama));}
+function calc(){const item=find(ref.value),ds=pct(sala.value);if(!item){r.innerHTML="<div class='badge warn'>Referencia no encontrada</div><div class='empty'>Revisa el código o selecciona una sugerencia.</div>";copy.disabled=true;quote.disabled=true;return;}
+if(isRestricted(item.gama)){copy.disabled=true;quote.disabled=true;r.innerHTML=`<div class='badge warn'>No disponible</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='empty'>${CONFIG.restricted_message||'Producto no disponible para cotización en este canal.'}</div>`;return;}
+const m=resolveMargin(item.gama),pvpI=Number(item.c01||0),pvp=pvpI/1.19,pvpSI=pvpI*(1-ds),pvpS=pvpSI/1.19,pvdI=pvpSI*(1-m),pvd=pvdI/1.19,gain=pvpS-pvd,dt=now(),[bc,bt]=badge(ds);
+lastCopy=`Referencia: ${item.referencia}
+Descripción: ${item.descripcion}
+Gama: ${item.gama}
+Descuento en Sala: ${Number(sala.value||0).toFixed(1)}%
+Margen Distribuidor: ${(m*100).toFixed(0)}%
+PVP con IVA: ${money(pvpI)}
+PVP sin IVA: ${money(pvp)}
+PVP con IVA dto SALA: ${money(pvpSI)}
+PVP sin IVA dto SALA: ${money(pvpS)}
+PVD con IVA: ${money(pvdI)}
+PVD sin IVA: ${money(pvd)}
+Esto es lo que se puede ganar el distribuidor: ${money(gain)}
+Fecha cálculo: ${dt}`;
+lastQuote=`Cotización Comodísimos
+
+Referencia: ${item.referencia}
+Producto: ${item.descripcion}
+Gama: ${item.gama}
+
+PVP con IVA: ${money(pvpI)}
+PVP con IVA dto SALA: ${money(pvpSI)}
+PVD con IVA: ${money(pvdI)}
+
+Ganancia estimada distribuidor: ${money(gain)}
+Fecha cálculo: ${dt}`;
+copy.disabled=false;quote.disabled=false;
+r.innerHTML=`<div class='${bc}'>${bt}</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='row'><div class='k'>Producto</div><div>${item.producto}</div></div><div class='row'><div class='k'>Activo</div><div>${item.activo?'Sí':'No'}</div></div><div class='row'><div class='k'>Descuento en Sala</div><div>${Number(sala.value||0).toFixed(1)}%</div></div><div class='row'><div class='k'>Margen Distribuidor</div><div>${(m*100).toFixed(0)}% ${mTag(m)}</div></div><div class='row'><div class='k'>Fecha y hora del cálculo</div><div>${dt}</div></div><div class='prices'><div class='price'><div class='t'>PVP con IVA</div><div class='v'>${money(pvpI)}</div></div><div class='price'><div class='t'>PVP sin IVA</div><div class='v'>${money(pvp)}</div></div><div class='price'><div class='t'>PVP con IVA dto SALA</div><div class='v'>${money(pvpSI)}</div></div><div class='price'><div class='t'>PVP sin IVA dto SALA</div><div class='v'>${money(pvpS)}</div></div><div class='price hl'><div class='t'>PVD con IVA</div><div class='v'>${money(pvdI)}</div></div><div class='price hl'><div class='t'>PVD sin IVA</div><div class='v'>${money(pvd)}</div></div><div class='price gain'><div class='t'>Esto es lo que se puede ganar el distribuidor</div><div class='v'>${money(gain)}</div></div></div>`;}
+async function init(){try{const[pRes,rRes,cRes]=await Promise.all([fetch(PRODUCTS_FILE),fetch(RULES_FILE),fetch(CONFIG_FILE)]);PRODUCTS=await pRes.json();RULES=await rRes.json();CONFIG=await cRes.json();DATA=PRODUCTS.filter(x=>x.activo).map(x=>({...x,search:(`${x.referencia} ${x.descripcion} ${x.gama} ${x.producto}`).toUpperCase()}));byRef=new Map(DATA.map(x=>[normalize(x.referencia),x]));document.getElementById('appName').textContent=CONFIG.app_name||'Calculador de Precios Comodísimos';document.getElementById('introText').textContent=CONFIG.intro_text||'Herramienta de cálculo de precios para el canal B2B Multimarca.';document.getElementById('baseName').textContent=CONFIG.base_name||'-';document.getElementById('devDate').textContent=CONFIG.development_date||'-';document.getElementById('waNote').textContent=CONFIG.whatsapp_note||'';document.getElementById('statRefs').textContent=DATA.length.toLocaleString('es-CO');r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";}catch(err){r.innerHTML="<div class='badge danger'>Error de carga</div><div class='empty'>Revisa que index.html, cmx30_products_core.json, cmx30_margin_rules.json y cmx30_app_config.json estén juntos en Netlify.</div>";}}
+document.getElementById('calc').onclick=calc;document.getElementById('clear').onclick=()=>{ref.value='';sala.value='0';box.style.display='none';copy.disabled=true;quote.disabled=true;r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";ref.focus();};
+ref.addEventListener('input',showS);ref.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});sala.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});document.addEventListener('click',e=>{if(!box.contains(e.target)&&e.target!==ref)box.style.display='none';});
+copy.onclick=async()=>{if(!lastCopy)return;try{await navigator.clipboard.writeText(lastCopy);showToast('Resultado copiado');}catch(e){}};quote.onclick=async()=>{if(!lastQuote)return;try{await navigator.clipboard.writeText(lastQuote);showToast('Cotización copiada');}catch(e){}};
+init();
+</script></body></html>

@@ -1,0 +1,187 @@
+[
+  {
+    "match": "CABECEROS",
+    "type": "prefix",
+    "margen": 0.2
+  },
+  {
+    "match": "LINEA DISTRIBUIDORES",
+    "type": "prefix",
+    "margen": 0.2
+  },
+  {
+    "match": "CAMA AJUSTABLE",
+    "type": "prefix",
+    "margen": 0.15
+  },
+  {
+    "match": "CAMA ELECTRICA",
+    "type": "prefix",
+    "margen": 0.15
+  },
+  {
+    "match": "LINEA PREMIUM",
+    "type": "prefix",
+    "margen": 0.2
+  },
+  {
+    "match": "LINEA GOLD",
+    "type": "prefix",
+    "margen": 0.2
+  },
+  {
+    "match": "LINEA ACCESS",
+    "type": "prefix",
+    "margen": 0.2
+  },
+  {
+    "match": "LINEA SILVER",
+    "type": "prefix",
+    "margen": 0.2
+  },
+  {
+    "match": "SOMMIER",
+    "type": "prefix",
+    "margen": 0.15
+  },
+  {
+    "match": "SOMIER",
+    "type": "prefix",
+    "margen": 0.15
+  },
+  {
+    "match": "DUPLEX",
+    "type": "prefix",
+    "margen": 0.15
+  },
+  {
+    "match": "CAMA DUPLEX",
+    "type": "prefix",
+    "margen": 0.15
+  },
+  {
+    "match": "MINICOLCHONES",
+    "type": "prefix",
+    "margen": 0.15
+  },
+  {
+    "match": "LINEA COLCHONETAS",
+    "type": "prefix",
+    "margen": 0.15
+  },
+  {
+    "match": "COLCHONETAS",
+    "type": "prefix",
+    "margen": 0.15
+  },
+  {
+    "match": "ALMOHADAS",
+    "type": "prefix",
+    "margen": 0.2
+  },
+  {
+    "match": "ALMOHADA PET",
+    "type": "prefix",
+    "margen": 0.2
+  },
+  {
+    "match": "SABANAS",
+    "type": "prefix",
+    "margen": 0.2
+  },
+  {
+    "match": "LENCERIA",
+    "type": "prefix",
+    "margen": 0.2
+  },
+  {
+    "match": "PROTECTORES",
+    "type": "prefix",
+    "margen": 0.15
+  },
+  {
+    "match": "COMPLEMENTOS",
+    "type": "prefix",
+    "margen": 0.15
+  },
+  {
+    "match": "PRODUCTOS COMPLEMENTARIOS",
+    "type": "prefix",
+    "margen": 0.15
+  },
+  {
+    "match": "COJINERIA",
+    "type": "prefix",
+    "margen": 0.15
+  },
+  {
+    "match": "FORRO COZY",
+    "type": "prefix",
+    "margen": 0.2
+  },
+  {
+    "match": "FORROS",
+    "type": "prefix",
+    "margen": 0.15
+  },
+  {
+    "match": "FUNDAS",
+    "type": "prefix",
+    "margen": 0.15
+  },
+  {
+    "match": "LINEA BABY",
+    "type": "prefix",
+    "margen": 0.2
+  },
+  {
+    "match": "LINEA PET",
+    "type": "prefix",
+    "margen": 0.2
+  },
+  {
+    "match": "ACUSTICA",
+    "type": "prefix",
+    "margen": 0.15
+  },
+  {
+    "match": "FOAM ACUSTIC",
+    "type": "prefix",
+    "margen": 0.15
+  },
+  {
+    "match": "PATA MADERA",
+    "type": "prefix",
+    "margen": 0.15
+  },
+  {
+    "match": "PATA METALICA",
+    "type": "prefix",
+    "margen": 0.15
+  },
+  {
+    "match": "TOALLAS",
+    "type": "prefix",
+    "margen": 0.15
+  },
+  {
+    "match": "LINEA CLASICA",
+    "type": "prefix",
+    "margen": 0.0
+  },
+  {
+    "match": "LINEA HOSPITALARIA",
+    "type": "prefix",
+    "margen": 0.0
+  },
+  {
+    "match": "LINEA HOTELERA",
+    "type": "prefix",
+    "margen": 0.0
+  },
+  {
+    "match": "NO APLICA",
+    "type": "prefix",
+    "margen": 0.0
+  }
+]

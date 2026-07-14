@@ -1,0 +1,14 @@
+{
+  "app_name": "Calculador de Precios Comodísimos",
+  "version": "3.0.2",
+  "base_name": "C01 14 de abril MM",
+  "development_date": "23 abr 2026",
+  "intro_text": "Herramienta de cálculo de precios para el canal B2B Multimarca. Desarrollada por el área comercial B2B Multimarca Comodísimos. Uso interno – Información confidencial y de derechos reservados.",
+  "whatsapp_note": "NOTA: La cotización para WhatsApp copia solo PVP con IVA, PVP con IVA dto SALA y PVD con IVA.",
+  "restricted_gamas": [
+    "LINEA CLASICA",
+    "LINEA HOSPITALARIA",
+    "LINEA HOTELERA"
+  ],
+  "restricted_message": "Producto no disponible para cotización en este canal. Esta línea corresponde a un segmento comercial especial. Por favor consultar con Dirección Comercial."
+}

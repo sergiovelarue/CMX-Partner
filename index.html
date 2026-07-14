@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comodísimos Partner v1.2</title>
+<style>
+:root{--bg:#eef4fb;--bg2:#f7f9fc;--card:#fff;--ink:#17324d;--muted:#667085;--brand:#123a63;--brand2:#1f6fb2;--line:#d9e2ec;--soft:#eef4fb;--ok:#127a4a;--warn:#b45309;--danger:#b42318;--gain:#fff7cc;--gainline:#f3d34a}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);color:var(--ink)}
+.wrap{max-width:1100px;margin:auto;padding:18px}.hero{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;border-radius:24px;padding:22px 20px;margin-bottom:16px;box-shadow:0 16px 40px rgba(18,58,99,.18)}
+.hero h1{margin:0 0 8px;font-size:1.45rem}.hero p{margin:0;opacity:.94;line-height:1.45;max-width:900px}.hero small{display:block;margin-top:10px;opacity:.86}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:16px;margin-bottom:14px;box-shadow:0 8px 22px rgba(16,24,40,.06)}
+.grid{display:grid;grid-template-columns:1.7fr .9fr;gap:12px}.prices{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+label{display:block;font-weight:700;margin-bottom:6px}input{width:100%;padding:14px;border:1px solid #cfd8e3;border-radius:14px;font-size:1rem}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}button{border:0;border-radius:14px;padding:13px 16px;font-weight:700;cursor:pointer}
+.p{background:var(--brand);color:#fff}.s{background:var(--soft);color:var(--brand)}.g{background:#fff;color:var(--brand);border:1px solid var(--line)}
+.price{background:#fbfdff;border:1px solid var(--line);border-radius:18px;padding:14px}.hl{background:#f4f9ff;border:2px solid #b9d7ff}.gain{background:var(--gain);border:2px solid var(--gainline)}
+.t{color:var(--muted);font-size:.86rem;font-weight:700}.v{font-size:1.28rem;font-weight:800;margin-top:6px}.row{display:grid;grid-template-columns:190px 1fr;gap:10px;margin:8px 0}
+.k{color:var(--muted);font-weight:700}.empty{color:var(--muted);text-align:center;padding:22px}.mono{font-family:monospace}
+.badge{display:inline-block;padding:7px 10px;border-radius:999px;font-size:.82rem;font-weight:700;margin-bottom:10px}.ok{background:#e9f7ef;color:var(--ok)}.warn{background:#fff7ed;color:var(--warn)}.danger{background:#fdecec;color:var(--danger)}
+.box{margin-top:10px;border:1px solid var(--line);border-radius:14px;background:#fff;display:none;max-height:240px;overflow:auto}.it{padding:10px 12px;border-bottom:1px solid #eef2f6;cursor:pointer}.it:last-child{border-bottom:none}.it:hover{background:#f7fbff}
+.footer{margin-top:16px;color:var(--muted);font-size:.82rem;line-height:1.45}#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#123a63;color:#fff;padding:10px 14px;border-radius:999px;font-size:.9rem;display:none;z-index:9999}
+.tag-good,.tag-mid,.tag-low{display:inline-block;margin-left:8px;padding:4px 8px;border-radius:999px;font-size:.78rem;font-weight:800}.tag-good{background:#e9f7ef;color:var(--ok)}.tag-mid{background:#fff7ed;color:var(--warn)}.tag-low{background:#fdecec;color:var(--danger)}
+
+.partner-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px;background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%)}
+.partner-box{max-width:920px;width:100%;display:grid;grid-template-columns:1fr 1.1fr;gap:14px}
+.partner-hero{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;border-radius:26px;padding:24px;box-shadow:0 16px 40px rgba(18,58,99,.22)}
+.partner-hero h1{margin:0 0 10px;font-size:1.7rem}.partner-hero p{line-height:1.5;opacity:.95}.benefits{margin-top:18px;display:grid;gap:8px}.benefits div{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:10px}
+.reg-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.consent{font-size:.86rem;color:var(--muted);line-height:1.4;margin-top:10px}.consent label{font-weight:400;display:flex;gap:8px;align-items:flex-start}.consent input{width:auto;margin-top:3px}.hidden{display:none!important}.userbar{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:12px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:10px 12px;color:var(--muted);font-size:.88rem}.linkbtn{background:transparent;color:var(--brand2);padding:0;border-radius:0}.admin-gate,.admin-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.mini{font-size:.78rem;padding:8px 10px}
+select{width:100%;padding:14px;border:1px solid #cfd8e3;border-radius:14px;font-size:1rem;background:#fff}
+@media(max-width:760px){.partner-box,.reg-grid{grid-template-columns:1fr}.partner-screen{align-items:flex-start}.partner-hero h1{font-size:1.4rem}.userbar{display:block}.userbar button{margin-top:8px}}
+
+@media(max-width:760px){.grid,.prices,.row{grid-template-columns:1fr}.hero h1{font-size:1.25rem}}
+</style>
+</head>
+<body>
+<div id="registerScreen" class="partner-screen">
+  <div class="partner-box">
+    <div class="partner-hero">
+      <h1>Comodísimos Partner</h1>
+      <p>Activa tu acceso profesional para cotizar más rápido, vender con seguridad y mejorar tu rentabilidad.</p>
+      <div class="benefits">
+        <div>✅ Calculador de precios</div>
+        <div>✅ Consulta de margen y ganancia</div>
+        <div>✅ Ofertas exclusivas para distribuidores</div>
+        <div>✅ Capacitaciones comerciales</div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:0">
+      <h2 style="margin:0 0 8px;color:var(--brand)">Activa tu acceso</h2>
+      <p style="margin:0 0 14px;color:var(--muted);line-height:1.4">Regístrate una sola vez para usar la herramienta de distribuidores.</p>
+      <div class="reg-grid">
+        <div><label>Nombre completo</label><input id="regName" autocomplete="name" required></div>
+        <div><label>Celular / WhatsApp</label><input id="regPhone" autocomplete="tel" inputmode="tel" placeholder="Ej: 3001234567" required></div>
+        <div><label>Correo electrónico</label><input id="regEmail" type="email" autocomplete="email" placeholder="nombre@empresa.com" required></div>
+        <div><label>Distribuidor / Empresa</label><input id="regCompany" required></div>
+        <div><label>Ciudad</label><input id="regCity" required></div>
+        <div><label>Punto de venta</label><input id="regStore"></div>
+        <div><label>Cargo</label><select id="regRole"><option value="">Seleccionar</option><option>Vendedor</option><option>Dependiente</option><option>Administrador</option><option>Propietario</option></select></div>
+      </div>
+      <div class="consent">
+        <label><input id="regConsent" type="checkbox"> <span>Autorizo a Comodísimos y/o Espumas Plásticas S.A.S. para recolectar, almacenar y tratar mis datos personales con fines comerciales, promocionales, formativos y de relacionamiento, conforme a la política de tratamiento de datos personales vigente.</span></label>
+      </div>
+      <div class="actions"><button class="p" id="activateAccess">Activar mi acceso</button></div>
+      <div id="regMsg" style="color:var(--danger);font-size:.86rem;margin-top:8px"></div>
+    </div>
+  </div>
+</div>
+<div id="appScreen" class='wrap hidden'>
+<div class="userbar"><div>Acceso activo: <b id="activeUser">-</b> · <span id="activeCompany">-</span></div><button class="linkbtn" id="changeUser">Cambiar usuario</button></div>
+<div class='hero'>
+<h1 id='appName'>Calculador de Precios Comodísimos</h1>
+<p id='introText'>Herramienta de cálculo de precios para el canal B2B Multimarca.</p>
+<p style='margin-top:10px;opacity:.9;font-size:.9rem'>Base de precios integrada: <span id="baseName">-</span> | Desarrollo calculador: <span id="devDate">-</span> | Referencias activas cargadas: <span id="statRefs">-</span></p>
+<small id='waNote'></small></div>
+<div class='card'><div class='grid'>
+<div><label>Referencia o nombre</label><input id='ref' autocomplete='off' placeholder='Ej: CSMPC0102 o parte del nombre'><div id='box' class='box'></div><div style='font-size:.84rem;color:#667085;margin-top:8px'>Solo se muestran productos activos.</div></div>
+<div><label>Descuento en Sala (%)</label><input id='sala' type='number' value='0' step='0.1'></div>
+</div><div class='actions'><button class='p' id='calc'>Consultar precio</button><button class='g' id='copy' disabled>Copiar resultado</button><button class='g' id='quote' disabled>Copiar cotización WhatsApp</button><button class='s' id='clear'>Limpiar</button></div></div>
+<div class='card' id='r'><div class='empty'>Cargando base de productos…</div></div>
+<div class='footer'>Herramienta para distribuidores autorizados de Comodísimos. Información de referencia comercial. Derechos reservados.<div class='admin-gate hidden' id='adminGate'><button class='s mini' id='adminLogin'>🔒 Acceso administrador</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Visible solo para correos administradores autorizados.</span></div><div class='admin-tools hidden' id='adminTools'><button class='s mini' id='exportUsers'>Exportar registros CSV</button><button class='s mini' id='exportLogs'>Exportar uso CSV</button><button class='s mini' id='adminLogout'>Bloquear descargas</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Descargas habilitadas para administrador validado.</span></div></div>
+</div><div id='toast'>Copiado</div>
+<script>
+const PRODUCTS_FILE="cmx30_products_core.json", RULES_FILE="cmx30_margin_rules.json", CONFIG_FILE="cmx30_app_config.json";
+const USER_KEY='cmx_partner_user_v1', USERS_KEY='cmx_partner_users_v1', LOGS_KEY='cmx_partner_logs_v1';
+// Correos autorizados para ver y descargar la información administrativa.
+// Para agregar o quitar administradores, edita esta lista manteniendo minúsculas y comillas.
+const ADMIN_EMAILS=['sergiovelasquez@me.com','sergio.velasquez@comodisimos.com','andres.barrera@comodisimos.com'];
+const ADMIN_PASSWORD='CMX2026';
+const ADMIN_UNLOCK_KEY='cmx_partner_admin_unlocked_v13';
+let CURRENT_USER=null;
+const qs=id=>document.getElementById(id);
+function readJSON(k,fallback){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(fallback));}catch(e){return fallback;}}
+function writeJSON(k,v){localStorage.setItem(k,JSON.stringify(v));}
+function csvEscape(v){return '"'+String(v??'').replaceAll('"','""')+'"';}
+function normalizeEmail(v){return String(v||'').trim().toLowerCase();}
+function isValidEmail(v){return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(normalizeEmail(v));}
+function normalizeColombiaPhone(v){let d=String(v||'').replace(/\D/g,'');if(d.startsWith('57')&&d.length===12)d=d.slice(2);return d;}
+function isValidColombiaMobile(v){const d=normalizeColombiaPhone(v);return /^3\d{9}$/.test(d);}
+function isAdmin(user=CURRENT_USER){return !!user&&ADMIN_EMAILS.includes(normalizeEmail(user.email));}
+function isAdminUnlocked(){return sessionStorage.getItem(ADMIN_UNLOCK_KEY)==='1';}
+function lockAdmin(){sessionStorage.removeItem(ADMIN_UNLOCK_KEY);updateAdminTools();}
+function updateAdminTools(){const gate=qs('adminGate'),tools=qs('adminTools');if(!gate||!tools)return;const allowed=isAdmin();gate.classList.toggle('hidden',!allowed||isAdminUnlocked());tools.classList.toggle('hidden',!allowed||!isAdminUnlocked());}
+function unlockAdmin(){if(!isAdmin()){showToast('Acceso solo para administrador');return;}const pass=prompt('Ingresa la clave de administrador');if(pass===ADMIN_PASSWORD){sessionStorage.setItem(ADMIN_UNLOCK_KEY,'1');updateAdminTools();showToast('Descargas habilitadas');}else if(pass!==null){showToast('Clave incorrecta');}}
+function downloadCSV(filename, rows){if(!isAdmin()||!isAdminUnlocked()){showToast('Acceso solo para administrador validado');return;}if(!rows.length){showToast('No hay datos para exportar');return;}const headers=Object.keys(rows[0]);const csv=[headers.join(','),...rows.map(r=>headers.map(h=>csvEscape(r[h])).join(','))].join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();URL.revokeObjectURL(a.href);}
+function showApp(user){CURRENT_USER=user;qs('registerScreen').classList.add('hidden');qs('appScreen').classList.remove('hidden');qs('activeUser').textContent=user.name||'-';qs('activeCompany').textContent=user.company||'-';updateAdminTools();}
+function showRegister(){CURRENT_USER=null;lockAdmin();qs('appScreen').classList.add('hidden');qs('registerScreen').classList.remove('hidden');}
+function activate(){const user={name:qs('regName').value.trim(),phone:normalizeColombiaPhone(qs('regPhone').value),email:normalizeEmail(qs('regEmail').value),company:qs('regCompany').value.trim(),city:qs('regCity').value.trim(),store:qs('regStore').value.trim(),role:qs('regRole').value,consent:qs('regConsent').checked,registeredAt:new Date().toISOString(),lastAccess:new Date().toISOString()};
+const required=['name','phone','email','company','city','role'];const missing=required.some(k=>!user[k]);if(missing||!user.consent){qs('regMsg').textContent='Completa todos los campos obligatorios y acepta la autorización de tratamiento de datos.';return;}if(!isValidEmail(user.email)){qs('regMsg').textContent='Ingresa un correo electrónico válido. Ejemplo: nombre@empresa.com';qs('regEmail').focus();return;}if(!isValidColombiaMobile(user.phone)){qs('regMsg').textContent='Ingresa un celular colombiano válido de 10 dígitos. Ejemplo: 3001234567';qs('regPhone').focus();return;}const users=readJSON(USERS_KEY,[]);const idx=users.findIndex(u=>(u.email||'').toLowerCase()===user.email.toLowerCase()||(u.phone&&normalizeColombiaPhone(u.phone)===user.phone));if(idx>=0){user.registeredAt=users[idx].registeredAt;users[idx]={...users[idx],...user};}else users.push(user);writeJSON(USERS_KEY,users);writeJSON(USER_KEY,user);showApp(user);showToast('Acceso activado');}
+function logUsage(item){if(!CURRENT_USER||!item)return;const logs=readJSON(LOGS_KEY,[]);logs.push({date:new Date().toLocaleDateString('es-CO'),time:new Date().toLocaleTimeString('es-CO'),iso:new Date().toISOString(),name:CURRENT_USER.name,email:CURRENT_USER.email,phone:CURRENT_USER.phone,company:CURRENT_USER.company,city:CURRENT_USER.city,store:CURRENT_USER.store,role:CURRENT_USER.role,reference:item.referencia,description:item.descripcion,gama:item.gama,product:item.producto});writeJSON(LOGS_KEY,logs);CURRENT_USER.lastAccess=new Date().toISOString();writeJSON(USER_KEY,CURRENT_USER);}
+let PRODUCTS=[],RULES=[],CONFIG={},DATA=[],byRef=new Map(),lastCopy="",lastQuote="";
+const ref=document.getElementById('ref'),sala=document.getElementById('sala'),r=document.getElementById('r'),box=document.getElementById('box'),copy=document.getElementById('copy'),quote=document.getElementById('quote'),toast=document.getElementById('toast');
+const money=v=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(Math.round(v));
+const pct=v=>Math.max(0,Math.min(100,Number(v)||0))/100; const now=()=>new Intl.DateTimeFormat('es-CO',{dateStyle:'medium',timeStyle:'short'}).format(new Date());
+const normalize=s=>String(s||'').trim().toUpperCase();
+const resolveMargin=g=>{g=normalize(g);for(const rule of RULES){const k=normalize(rule.match);if((rule.type||'prefix')==='prefix'&&g.startsWith(k))return Number(rule.margen||0);if(rule.type==='exact'&&g===k)return Number(rule.margen||0);}return 0;};
+const find=q=>{q=normalize(q);if(!q)return null;if(byRef.has(q))return byRef.get(q);return DATA.find(x=>x.search.includes(q));};
+const sugg=q=>{q=normalize(q);if(!q)return[];return DATA.filter(x=>x.search.includes(q)).slice(0,8);};
+function showToast(msg){toast.textContent=msg;toast.style.display='block';setTimeout(()=>toast.style.display='none',1500);}
+function showS(){const items=sugg(ref.value);if(!ref.value||!items.length){box.style.display='none';box.innerHTML='';return;}box.innerHTML=items.map(x=>`<div class='it' data-r='${x.referencia}'><b>${x.referencia}</b> — ${x.descripcion}</div>`).join('');box.style.display='block';[...box.querySelectorAll('.it')].forEach(el=>el.onclick=()=>{ref.value=el.dataset.r;box.style.display='none';calc();});}
+function badge(ds){if(ds>.35)return["badge danger","Descuento en sala muy alto: revisar política comercial"];if(ds>.30)return["badge warn","Descuento en sala alto: revisar política comercial"];return["badge ok","Consulta válida"];}
+function mTag(m){if(m>=.20)return"<span class='tag-good'>Margen alto</span>";if(m>=.15)return"<span class='tag-mid'>Margen medio</span>";return"<span class='tag-low'>Sin margen</span>";}
+function isRestricted(gama){const arr=Array.isArray(CONFIG.restricted_gamas)?CONFIG.restricted_gamas:[];return arr.map(normalize).includes(normalize(gama));}
+function calc(){const item=find(ref.value),ds=pct(sala.value);if(!item){r.innerHTML="<div class='badge warn'>Referencia no encontrada</div><div class='empty'>Revisa el código o selecciona una sugerencia.</div>";copy.disabled=true;quote.disabled=true;return;}
+logUsage(item);
+if(isRestricted(item.gama)){copy.disabled=true;quote.disabled=true;r.innerHTML=`<div class='badge warn'>No disponible</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='empty'>${CONFIG.restricted_message||'Producto no disponible para cotización en este canal.'}</div>`;return;}
+const m=resolveMargin(item.gama),pvpI=Number(item.c01||0),pvp=pvpI/1.19,pvpSI=pvpI*(1-ds),pvpS=pvpSI/1.19,pvdI=pvpSI*(1-m),pvd=pvdI/1.19,gain=pvpS-pvd,dt=now(),[bc,bt]=badge(ds);
+lastCopy=`Referencia: ${item.referencia}
+Descripción: ${item.descripcion}
+Gama: ${item.gama}
+Descuento en Sala: ${Number(sala.value||0).toFixed(1)}%
+Margen Distribuidor: ${(m*100).toFixed(0)}%
+PVP con IVA: ${money(pvpI)}
+PVP sin IVA: ${money(pvp)}
+PVP con IVA dto SALA: ${money(pvpSI)}
+PVP sin IVA dto SALA: ${money(pvpS)}
+PVD con IVA: ${money(pvdI)}
+PVD sin IVA: ${money(pvd)}
+Esto es lo que se puede ganar el distribuidor: ${money(gain)}
+Fecha cálculo: ${dt}`;
+lastQuote=`Cotización Comodísimos
+
+Referencia: ${item.referencia}
+Producto: ${item.descripcion}
+Gama: ${item.gama}
+
+PVP con IVA: ${money(pvpI)}
+PVP con IVA dto SALA: ${money(pvpSI)}
+PVD con IVA: ${money(pvdI)}
+
+Ganancia estimada distribuidor: ${money(gain)}
+Fecha cálculo: ${dt}`;
+copy.disabled=false;quote.disabled=false;
+r.innerHTML=`<div class='${bc}'>${bt}</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='row'><div class='k'>Producto</div><div>${item.producto}</div></div><div class='row'><div class='k'>Activo</div><div>${item.activo?'Sí':'No'}</div></div><div class='row'><div class='k'>Descuento en Sala</div><div>${Number(sala.value||0).toFixed(1)}%</div></div><div class='row'><div class='k'>Margen Distribuidor</div><div>${(m*100).toFixed(0)}% ${mTag(m)}</div></div><div class='row'><div class='k'>Fecha y hora del cálculo</div><div>${dt}</div></div><div class='prices'><div class='price'><div class='t'>PVP con IVA</div><div class='v'>${money(pvpI)}</div></div><div class='price'><div class='t'>PVP sin IVA</div><div class='v'>${money(pvp)}</div></div><div class='price'><div class='t'>PVP con IVA dto SALA</div><div class='v'>${money(pvpSI)}</div></div><div class='price'><div class='t'>PVP sin IVA dto SALA</div><div class='v'>${money(pvpS)}</div></div><div class='price hl'><div class='t'>PVD con IVA</div><div class='v'>${money(pvdI)}</div></div><div class='price hl'><div class='t'>PVD sin IVA</div><div class='v'>${money(pvd)}</div></div><div class='price gain'><div class='t'>Esto es lo que se puede ganar el distribuidor</div><div class='v'>${money(gain)}</div></div></div>`;}
+async function init(){try{const[pRes,rRes,cRes]=await Promise.all([fetch(PRODUCTS_FILE),fetch(RULES_FILE),fetch(CONFIG_FILE)]);PRODUCTS=await pRes.json();RULES=await rRes.json();CONFIG=await cRes.json();DATA=PRODUCTS.filter(x=>x.activo).map(x=>({...x,search:(`${x.referencia} ${x.descripcion} ${x.gama} ${x.producto}`).toUpperCase()}));byRef=new Map(DATA.map(x=>[normalize(x.referencia),x]));document.getElementById('appName').textContent=CONFIG.app_name||'Calculador de Precios Comodísimos';document.getElementById('introText').textContent=CONFIG.intro_text||'Herramienta de cálculo de precios para el canal B2B Multimarca.';document.getElementById('baseName').textContent=CONFIG.base_name||'-';document.getElementById('devDate').textContent=CONFIG.development_date||'-';document.getElementById('waNote').textContent=CONFIG.whatsapp_note||'';document.getElementById('statRefs').textContent=DATA.length.toLocaleString('es-CO');r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";}catch(err){r.innerHTML="<div class='badge danger'>Error de carga</div><div class='empty'>Revisa que index.html, cmx30_products_core.json, cmx30_margin_rules.json y cmx30_app_config.json estén juntos en Netlify.</div>";}}
+document.getElementById('calc').onclick=calc;document.getElementById('clear').onclick=()=>{ref.value='';sala.value='0';box.style.display='none';copy.disabled=true;quote.disabled=true;r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";ref.focus();};
+ref.addEventListener('input',showS);ref.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});sala.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});document.addEventListener('click',e=>{if(!box.contains(e.target)&&e.target!==ref)box.style.display='none';});
+copy.onclick=async()=>{if(!lastCopy)return;try{await navigator.clipboard.writeText(lastCopy);showToast('Resultado copiado');}catch(e){}};quote.onclick=async()=>{if(!lastQuote)return;try{await navigator.clipboard.writeText(lastQuote);showToast('Cotización copiada');}catch(e){}};
+qs('activateAccess').onclick=activate;qs('changeUser').onclick=()=>{localStorage.removeItem(USER_KEY);showRegister();};qs('adminLogin').onclick=unlockAdmin;qs('adminLogout').onclick=lockAdmin;qs('exportUsers').onclick=()=>downloadCSV('comodisimos_partner_registros.csv',readJSON(USERS_KEY,[]));qs('exportLogs').onclick=()=>downloadCSV('comodisimos_partner_uso.csv',readJSON(LOGS_KEY,[]));
+const savedUser=readJSON(USER_KEY,null);if(savedUser&&savedUser.consent)showApp(savedUser);else showRegister();
+init();
+</script></body></html>
