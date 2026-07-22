@@ -32,7 +32,12 @@ select{width:100%;padding:14px;border:1px solid #cfd8e3;border-radius:14px;font-
 @media(max-width:760px){.partner-box,.reg-grid{grid-template-columns:1fr}.partner-screen{align-items:flex-start}.partner-hero h1{font-size:1.4rem}.userbar{display:block}.userbar button{margin-top:8px}}
 
 @media(max-width:760px){.grid,.prices,.row{grid-template-columns:1fr}.hero h1{font-size:1.25rem}}
+.version-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:5px 12px;font-size:.78rem;margin-top:10px}
+.version-badge.stale{background:#fff3cd;color:#7a5b00;border-color:#f3d34a}
+.admin-login-box{display:none;gap:8px;margin-top:8px}
+.admin-login-box input{padding:10px 12px;font-size:.9rem}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div id="registerScreen" class="partner-screen">
@@ -73,7 +78,9 @@ select{width:100%;padding:14px;border:1px solid #cfd8e3;border-radius:14px;font-
 <h1 id='appName'>Comercial Partner APP</h1>
 <p id='introText'>Herramienta de cálculo de precios para el canal B2B Multimarca.</p>
 <p style='margin-top:10px;opacity:.9;font-size:.9rem'>Base de precios integrada: <span id="baseName">-</span> | Desarrollo calculador: <span id="devDate">-</span> | Referencias activas cargadas: <span id="statRefs">-</span></p>
-<small id='waNote'></small></div>
+<small id='waNote'></small>
+<div><span class="version-badge" id="versionBadge">Verificando lista de precios vigente…</span></div>
+</div>
 <div class='card'><div class='grid'>
 <div><label>Referencia o nombre</label><input id='ref' autocomplete='off' placeholder='Ej: CSMPC0102 o parte del nombre'><div id='box' class='box'></div><div style='font-size:.84rem;color:#667085;margin-top:8px'>Solo se muestran productos activos.</div></div>
 <div><label>Descuento en Sala (%)</label><input id='sala' type='number' value='0' step='0.1'></div>
@@ -82,13 +89,16 @@ select{width:100%;padding:14px;border:1px solid #cfd8e3;border-radius:14px;font-
 <div class='footer'>Herramienta para distribuidores autorizados. Información de referencia comercial. Derechos reservados.<div class='admin-gate hidden' id='adminGate'><button class='s mini' id='adminLogin'>🔒 Acceso administrador</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Visible solo para correos administradores autorizados.</span></div><div class='admin-tools hidden' id='adminTools'><button class='s mini' id='exportUsers'>Exportar registros CSV</button><button class='s mini' id='exportLogs'>Exportar uso CSV</button><button class='s mini' id='adminLogout'>Bloquear descargas</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Descargas habilitadas para administrador validado.</span></div><div style="margin-top:10px;font-size:.74rem;color:#a9b4c2">© Comercial Partner APP. Todos los derechos reservados — Sergio Velásquez.<span style="float:right;opacity:.45">23:1</span></div></div>
 </div><div id='toast'>Copiado</div>
 <script>
-const PRODUCTS_FILE="cmx30_products_core.json", RULES_FILE="cmx30_margin_rules.json", CONFIG_FILE="cmx30_app_config.json";
+const CONFIG_FILE="cmx30_app_config.json";
 const USER_KEY='cmx_partner_user_v1', USERS_KEY='cmx_partner_users_v1', LOGS_KEY='cmx_partner_logs_v1';
-// Correos autorizados para ver y descargar la información administrativa.
-// Para agregar o quitar administradores, edita esta lista manteniendo minúsculas y comillas.
+// Correos autorizados para ver el botón de acceso administrador.
+// El control de seguridad real vive en Supabase (Auth + Row Level Security), esto es solo la UI.
 const ADMIN_EMAILS=['sergiovelasquez@me.com'];
-const ADMIN_PASSWORD='CMX2026';
 const ADMIN_UNLOCK_KEY='cmx_partner_admin_unlocked_v13';
+// --- Conexión Supabase (proyecto "Calc Precios") ---
+const SUPABASE_URL='https://hixsuoiwdptzyrbgexli.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhpeHN1b2l3ZHB0enlyYmdleGxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMDA5NjcsImV4cCI6MjA5NjY3Njk2N30.L1DNuTyquRVhggBzJl61OP_NPaj3JIZep94imdredBE';
+const sb=window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let CURRENT_USER=null;
 const qs=id=>document.getElementById(id);
 function readJSON(k,fallback){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(fallback));}catch(e){return fallback;}}
@@ -99,10 +109,10 @@ function isValidEmail(v){return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(normalizeEm
 function normalizeColombiaPhone(v){let d=String(v||'').replace(/\D/g,'');if(d.startsWith('57')&&d.length===12)d=d.slice(2);return d;}
 function isValidColombiaMobile(v){const d=normalizeColombiaPhone(v);return /^3\d{9}$/.test(d);}
 function isAdmin(user=CURRENT_USER){return !!user&&ADMIN_EMAILS.includes(normalizeEmail(user.email));}
-function isAdminUnlocked(){return sessionStorage.getItem(ADMIN_UNLOCK_KEY)==='1';}
-function lockAdmin(){sessionStorage.removeItem(ADMIN_UNLOCK_KEY);updateAdminTools();}
-function updateAdminTools(){const gate=qs('adminGate'),tools=qs('adminTools');if(!gate||!tools)return;const allowed=isAdmin();gate.classList.toggle('hidden',!allowed||isAdminUnlocked());tools.classList.toggle('hidden',!allowed||!isAdminUnlocked());}
-function unlockAdmin(){if(!isAdmin()){showToast('Acceso solo para administrador');return;}const pass=prompt('Ingresa la clave de administrador');if(pass===ADMIN_PASSWORD){sessionStorage.setItem(ADMIN_UNLOCK_KEY,'1');updateAdminTools();showToast('Descargas habilitadas');}else if(pass!==null){showToast('Clave incorrecta');}}
+async function isAdminUnlocked(){const{data}=await sb.auth.getSession();return !!data?.session;}
+async function lockAdmin(){await sb.auth.signOut();await updateAdminTools();}
+async function updateAdminTools(){const gate=qs('adminGate'),tools=qs('adminTools');if(!gate||!tools)return;const allowed=isAdmin();const unlocked=await isAdminUnlocked();gate.classList.toggle('hidden',!allowed||unlocked);tools.classList.toggle('hidden',!allowed||!unlocked);}
+async function unlockAdmin(){if(!isAdmin()){showToast('Acceso solo para administrador');return;}const pass=prompt('Ingresa tu contraseña de administrador (Supabase)');if(pass===null)return;const{error}=await sb.auth.signInWithPassword({email:CURRENT_USER.email,password:pass});if(error){showToast('Clave incorrecta o usuario no autorizado');return;}await updateAdminTools();showToast('Descargas habilitadas');}
 function downloadCSV(filename, rows){if(!isAdmin()||!isAdminUnlocked()){showToast('Acceso solo para administrador validado');return;}if(!rows.length){showToast('No hay datos para exportar');return;}const headers=Object.keys(rows[0]);const csv=[headers.join(','),...rows.map(r=>headers.map(h=>csvEscape(r[h])).join(','))].join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();URL.revokeObjectURL(a.href);}
 function showApp(user){CURRENT_USER=user;qs('registerScreen').classList.add('hidden');qs('appScreen').classList.remove('hidden');qs('activeUser').textContent=user.name||'-';qs('activeCompany').textContent=user.company||'-';updateAdminTools();}
 function showRegister(){CURRENT_USER=null;lockAdmin();qs('appScreen').classList.add('hidden');qs('registerScreen').classList.remove('hidden');}
@@ -114,7 +124,7 @@ const ref=document.getElementById('ref'),sala=document.getElementById('sala'),r=
 const money=v=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(Math.round(v));
 const pct=v=>Math.max(0,Math.min(100,Number(v)||0))/100; const now=()=>new Intl.DateTimeFormat('es-CO',{dateStyle:'medium',timeStyle:'short'}).format(new Date());
 const normalize=s=>String(s||'').trim().toUpperCase();
-const resolveMargin=g=>{g=normalize(g);for(const rule of RULES){const k=normalize(rule.match);if((rule.type||'prefix')==='prefix'&&g.startsWith(k))return Number(rule.margen||0);if(rule.type==='exact'&&g===k)return Number(rule.margen||0);}return 0;};
+const resolveMargin=g=>{g=normalize(g);for(const rule of RULES){const k=normalize(rule.match_value);if((rule.type||'prefix')==='prefix'&&g.startsWith(k))return Number(rule.margen||0);if(rule.type==='exact'&&g===k)return Number(rule.margen||0);}return 0;};
 const find=q=>{q=normalize(q);if(!q)return null;if(byRef.has(q))return byRef.get(q);return DATA.find(x=>x.search.includes(q));};
 const sugg=q=>{q=normalize(q);if(!q)return[];return DATA.filter(x=>x.search.includes(q)).slice(0,8);};
 function showToast(msg){toast.textContent=msg;toast.style.display='block';setTimeout(()=>toast.style.display='none',1500);}
@@ -153,7 +163,17 @@ Ganancia estimada distribuidor: ${money(gain)}
 Fecha cálculo: ${dt}`;
 copy.disabled=false;quote.disabled=false;
 r.innerHTML=`<div class='${bc}'>${bt}</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='row'><div class='k'>Producto</div><div>${item.producto}</div></div><div class='row'><div class='k'>Activo</div><div>${item.activo?'Sí':'No'}</div></div><div class='row'><div class='k'>Descuento en Sala</div><div>${Number(sala.value||0).toFixed(1)}%</div></div><div class='row'><div class='k'>Margen Distribuidor</div><div>${(m*100).toFixed(0)}% ${mTag(m)}</div></div><div class='row'><div class='k'>Fecha y hora del cálculo</div><div>${dt}</div></div><div class='prices'><div class='price'><div class='t'>PVP con IVA</div><div class='v'>${money(pvpI)}</div></div><div class='price'><div class='t'>PVP sin IVA</div><div class='v'>${money(pvp)}</div></div><div class='price'><div class='t'>PVP con IVA dto SALA</div><div class='v'>${money(pvpSI)}</div></div><div class='price'><div class='t'>PVP sin IVA dto SALA</div><div class='v'>${money(pvpS)}</div></div><div class='price hl'><div class='t'>PVD con IVA</div><div class='v'>${money(pvdI)}</div></div><div class='price hl'><div class='t'>PVD sin IVA</div><div class='v'>${money(pvd)}</div></div><div class='price gain'><div class='t'>Esto es lo que se puede ganar el distribuidor</div><div class='v'>${money(gain)}</div></div></div>`;}
-async function init(){try{const[pRes,rRes,cRes]=await Promise.all([fetch(PRODUCTS_FILE),fetch(RULES_FILE),fetch(CONFIG_FILE)]);PRODUCTS=await pRes.json();RULES=await rRes.json();CONFIG=await cRes.json();DATA=PRODUCTS.filter(x=>x.activo).map(x=>({...x,search:(`${x.referencia} ${x.descripcion} ${x.gama} ${x.producto}`).toUpperCase()}));byRef=new Map(DATA.map(x=>[normalize(x.referencia),x]));document.getElementById('appName').textContent=CONFIG.app_name||'Comercial Partner APP';document.getElementById('introText').textContent=CONFIG.intro_text||'Herramienta de cálculo de precios para el canal B2B Multimarca.';document.getElementById('baseName').textContent=CONFIG.base_name||'-';document.getElementById('devDate').textContent=CONFIG.development_date||'-';document.getElementById('waNote').textContent=CONFIG.whatsapp_note||'';document.getElementById('statRefs').textContent=DATA.length.toLocaleString('es-CO');r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";}catch(err){r.innerHTML="<div class='badge danger'>Error de carga</div><div class='empty'>Revisa que index.html, cmx30_products_core.json, cmx30_margin_rules.json y cmx30_app_config.json estén juntos en Netlify.</div>";}}
+function renderVersionBadge(fecha){const el=qs('versionBadge');if(!el)return;if(!fecha){el.textContent='No fue posible verificar la fecha de la lista de precios';el.classList.add('stale');return;}const dt=new Intl.DateTimeFormat('es-CO',{dateStyle:'medium',timeStyle:'short'}).format(new Date(fecha));el.textContent=`Lista de precios vigente actualizada: ${dt}`;const hoursSince=(Date.now()-new Date(fecha).getTime())/36e5;el.classList.toggle('stale',hoursSince>24*30);}
+async function init(){try{const cRes=await fetch(CONFIG_FILE);CONFIG=await cRes.json();
+const[{data:productsData,error:pErr},{data:rulesData,error:rErr},{data:verData}]=await Promise.all([
+  sb.from('productos').select('*'),
+  sb.from('margin_rules').select('*'),
+  sb.from('ultima_actualizacion').select('*').maybeSingle()
+]);
+if(pErr||rErr)throw(pErr||rErr);
+PRODUCTS=productsData||[];RULES=rulesData||[];
+renderVersionBadge(verData?.fecha_actualizacion);
+DATA=PRODUCTS.filter(x=>x.activo).map(x=>({...x,search:(`${x.referencia} ${x.descripcion} ${x.gama} ${x.producto}`).toUpperCase()}));byRef=new Map(DATA.map(x=>[normalize(x.referencia),x]));document.getElementById('appName').textContent=CONFIG.app_name||'Comercial Partner APP';document.getElementById('introText').textContent=CONFIG.intro_text||'Herramienta de cálculo de precios para el canal B2B Multimarca.';document.getElementById('baseName').textContent=CONFIG.base_name||'-';document.getElementById('devDate').textContent=CONFIG.development_date||'-';document.getElementById('waNote').textContent=CONFIG.whatsapp_note||'';document.getElementById('statRefs').textContent=DATA.length.toLocaleString('es-CO');r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";}catch(err){console.error(err);r.innerHTML="<div class='badge danger'>Error de carga</div><div class='empty'>No fue posible conectar con la base de precios (Supabase). Intenta recargar la página; si el error persiste, contacta a soporte.</div>";renderVersionBadge(null);}}
 document.getElementById('calc').onclick=calc;document.getElementById('clear').onclick=()=>{ref.value='';sala.value='0';box.style.display='none';copy.disabled=true;quote.disabled=true;r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";ref.focus();};
 ref.addEventListener('input',showS);ref.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});sala.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});document.addEventListener('click',e=>{if(!box.contains(e.target)&&e.target!==ref)box.style.display='none';});
 copy.onclick=async()=>{if(!lastCopy)return;try{await navigator.clipboard.writeText(lastCopy);showToast('Resultado copiado');}catch(e){}};quote.onclick=async()=>{if(!lastQuote)return;try{await navigator.clipboard.writeText(lastQuote);showToast('Cotización copiada');}catch(e){}};
