@@ -36,8 +36,25 @@ select{width:100%;padding:14px;border:1px solid #cfd8e3;border-radius:14px;font-
 .version-badge.stale{background:#fff3cd;color:#7a5b00;border-color:#f3d34a}
 .admin-login-box{display:none;gap:8px;margin-top:8px}
 .admin-login-box input{padding:10px 12px;font-size:.9rem}
+.admin-panel{border:2px solid var(--brand2);background:#f7fbff}
+.admin-panel h3{margin:0 0 10px;color:var(--brand)}
+.admin-sub{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.admin-sub h4{margin:0 0 8px;font-size:.95rem}
+.inline-form{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.inline-form>div{flex:1;min-width:140px}
+.inline-form label{font-size:.8rem;margin-bottom:4px}
+.mini-status{font-size:.84rem;margin-top:8px;padding:8px 10px;border-radius:10px;display:none}
+.mini-status.ok{display:block;background:#e9f7ef;color:var(--ok)}
+.mini-status.err{display:block;background:#fdecec;color:var(--danger)}
+.mini-status.info{display:block;background:#f4f9ff;color:var(--brand2)}
+.preview-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:.82rem}
+.preview-table th,.preview-table td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left}
+.summary-row{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px}
+.summary-chip{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:.85rem}
+.summary-chip b{display:block;font-size:1.1rem}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 <body>
 <div id="registerScreen" class="partner-screen">
@@ -86,6 +103,32 @@ select{width:100%;padding:14px;border:1px solid #cfd8e3;border-radius:14px;font-
 <div><label>Descuento en Sala (%)</label><input id='sala' type='number' value='0' step='0.1'></div>
 </div><div class='actions'><button class='p' id='calc'>Consultar precio</button><button class='g' id='copy' disabled>Copiar resultado</button><button class='g' id='quote' disabled>Copiar cotización WhatsApp</button><button class='s' id='clear'>Limpiar</button></div></div>
 <div class='card' id='r'><div class='empty'>Cargando base de productos…</div></div>
+<div class='card admin-panel hidden' id='adminPricePanel'>
+  <h3>🔧 Panel de administración de precios</h3>
+  <p style="margin:0;color:var(--muted);font-size:.86rem">Visible solo para el administrador autenticado. Los cambios aquí afectan a todos los usuarios de inmediato.</p>
+
+  <div class="admin-sub">
+    <h4>Actualizar un precio individual</h4>
+    <div class="inline-form">
+      <div><label>Referencia</label><input id="editRef" placeholder="Ej: PROAP20"></div>
+      <div><label>Nuevo precio C01 (PVP con IVA)</label><input id="editPrice" type="number" step="1" placeholder="Ej: 518000"></div>
+      <div><button class="p mini" id="btnUpdateSingle" style="padding:12px 16px">Actualizar precio</button></div>
+    </div>
+    <div class="mini-status" id="singleStatus"></div>
+  </div>
+
+  <div class="admin-sub">
+    <h4>Carga masiva de lista de precios (CSV)</h4>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Columnas requeridas: <code>referencia, descripcion, gama, producto, c01</code>. Opcional: <code>activo</code> (si se omite, se asume activo). ⚠️ Los productos que NO estén en el archivo quedarán marcados como inactivos (no se borran).</p>
+    <div class="inline-form">
+      <div><label>Nombre de esta lista (trazabilidad)</label><input id="uploadOrigen" placeholder="Ej: C01 22 julio 2026"></div>
+      <div><label>Archivo CSV</label><input id="csvFile" type="file" accept=".csv"></div>
+      <div><button class="s mini" id="btnAnalyzeCSV" style="padding:12px 16px">Analizar archivo</button></div>
+    </div>
+    <div id="csvPreview"></div>
+    <div class="mini-status" id="bulkStatus"></div>
+  </div>
+</div>
 <div class='footer'>Herramienta para distribuidores autorizados. Información de referencia comercial. Derechos reservados.<div class='admin-gate hidden' id='adminGate'><button class='s mini' id='adminLogin'>🔒 Acceso administrador</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Visible solo para correos administradores autorizados.</span></div><div class='admin-tools hidden' id='adminTools'><button class='s mini' id='exportUsers'>Exportar registros CSV</button><button class='s mini' id='exportLogs'>Exportar uso CSV</button><button class='s mini' id='adminLogout'>Bloquear descargas</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Descargas habilitadas para administrador validado.</span></div><div style="margin-top:10px;font-size:.74rem;color:#a9b4c2">© Comercial Partner APP. Todos los derechos reservados — Sergio Velásquez.<span style="float:right;opacity:.45">23:1</span></div></div>
 </div><div id='toast'>Copiado</div>
 <script>
@@ -111,7 +154,7 @@ function isValidColombiaMobile(v){const d=normalizeColombiaPhone(v);return /^3\d
 function isAdmin(user=CURRENT_USER){return !!user&&ADMIN_EMAILS.includes(normalizeEmail(user.email));}
 async function isAdminUnlocked(){const{data}=await sb.auth.getSession();return !!data?.session;}
 async function lockAdmin(){await sb.auth.signOut();await updateAdminTools();}
-async function updateAdminTools(){const gate=qs('adminGate'),tools=qs('adminTools');if(!gate||!tools)return;const allowed=isAdmin();const unlocked=await isAdminUnlocked();gate.classList.toggle('hidden',!allowed||unlocked);tools.classList.toggle('hidden',!allowed||!unlocked);}
+async function updateAdminTools(){const gate=qs('adminGate'),tools=qs('adminTools'),panel=qs('adminPricePanel');if(!gate||!tools)return;const allowed=isAdmin();const unlocked=await isAdminUnlocked();gate.classList.toggle('hidden',!allowed||unlocked);tools.classList.toggle('hidden',!allowed||!unlocked);if(panel)panel.classList.toggle('hidden',!allowed||!unlocked);}
 async function unlockAdmin(){if(!isAdmin()){showToast('Acceso solo para administrador');return;}const pass=prompt('Ingresa tu contraseña de administrador (Supabase)');if(pass===null)return;const{error}=await sb.auth.signInWithPassword({email:CURRENT_USER.email,password:pass});if(error){showToast('Clave incorrecta o usuario no autorizado');return;}await updateAdminTools();showToast('Descargas habilitadas');}
 function downloadCSV(filename, rows){if(!isAdmin()||!isAdminUnlocked()){showToast('Acceso solo para administrador validado');return;}if(!rows.length){showToast('No hay datos para exportar');return;}const headers=Object.keys(rows[0]);const csv=[headers.join(','),...rows.map(r=>headers.map(h=>csvEscape(r[h])).join(','))].join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();URL.revokeObjectURL(a.href);}
 function showApp(user){CURRENT_USER=user;qs('registerScreen').classList.add('hidden');qs('appScreen').classList.remove('hidden');qs('activeUser').textContent=user.name||'-';qs('activeCompany').textContent=user.company||'-';updateAdminTools();}
@@ -163,6 +206,60 @@ Ganancia estimada distribuidor: ${money(gain)}
 Fecha cálculo: ${dt}`;
 copy.disabled=false;quote.disabled=false;
 r.innerHTML=`<div class='${bc}'>${bt}</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='row'><div class='k'>Producto</div><div>${item.producto}</div></div><div class='row'><div class='k'>Activo</div><div>${item.activo?'Sí':'No'}</div></div><div class='row'><div class='k'>Descuento en Sala</div><div>${Number(sala.value||0).toFixed(1)}%</div></div><div class='row'><div class='k'>Margen Distribuidor</div><div>${(m*100).toFixed(0)}% ${mTag(m)}</div></div><div class='row'><div class='k'>Fecha y hora del cálculo</div><div>${dt}</div></div><div class='prices'><div class='price'><div class='t'>PVP con IVA</div><div class='v'>${money(pvpI)}</div></div><div class='price'><div class='t'>PVP sin IVA</div><div class='v'>${money(pvp)}</div></div><div class='price'><div class='t'>PVP con IVA dto SALA</div><div class='v'>${money(pvpSI)}</div></div><div class='price'><div class='t'>PVP sin IVA dto SALA</div><div class='v'>${money(pvpS)}</div></div><div class='price hl'><div class='t'>PVD con IVA</div><div class='v'>${money(pvdI)}</div></div><div class='price hl'><div class='t'>PVD sin IVA</div><div class='v'>${money(pvd)}</div></div><div class='price gain'><div class='t'>Esto es lo que se puede ganar el distribuidor</div><div class='v'>${money(gain)}</div></div></div>`;}
+function setStatus(id,msg,type){const el=qs(id);if(!el)return;el.className='mini-status '+type;el.textContent=msg;}
+async function updateSinglePrice(){const ref=normalize(qs('editRef').value);const priceRaw=qs('editPrice').value;const price=Number(priceRaw);if(!ref){setStatus('singleStatus','Ingresa una referencia.','err');return;}if(!priceRaw||isNaN(price)||price<=0){setStatus('singleStatus','Ingresa un precio numérico válido mayor a 0.','err');return;}
+setStatus('singleStatus','Actualizando…','info');
+const{data,error}=await sb.from('productos').update({c01:price,updated_by:CURRENT_USER?.email||'admin'}).eq('referencia',ref).select();
+if(error){setStatus('singleStatus','Error al actualizar: '+error.message,'err');return;}
+if(!data||!data.length){setStatus('singleStatus',`No existe ninguna referencia "${ref}". Revisa el código o usa la carga masiva para crear productos nuevos.`,'err');return;}
+setStatus('singleStatus',`Precio actualizado: ${ref} → ${money(price)}. Recargando base…`,'ok');
+await init();qs('editRef').value='';qs('editPrice').value='';showToast('Precio actualizado');}
+
+let PENDING_BULK_ROWS=null;
+function validateBulkRow(row,idx){const errs=[];const ref=(row.referencia||'').trim();const desc=(row.descripcion||'').trim();const gama=(row.gama||'').trim();const prod=(row.producto||'').trim();const c01=Number(row.c01);
+if(!ref)errs.push('referencia vacía');if(!desc)errs.push('descripcion vacía');if(!gama)errs.push('gama vacía');if(!prod)errs.push('producto vacío');if(!row.c01||isNaN(c01)||c01<=0)errs.push('c01 inválido');
+return{ok:errs.length===0,errs,ref,desc,gama,prod,c01};}
+
+function analyzeCSV(){const file=qs('csvFile').files[0];if(!file){setStatus('bulkStatus','Selecciona un archivo CSV primero.','err');return;}
+const origen=qs('uploadOrigen').value.trim();if(!origen){setStatus('bulkStatus','Ingresa un nombre para esta lista (ej. "C01 22 julio 2026") antes de analizar.','err');return;}
+setStatus('bulkStatus','Leyendo archivo…','info');
+Papa.parse(file,{header:true,skipEmptyLines:true,complete:function(results){
+  const rawRows=results.data;const seen=new Set();const valid=[];const invalid=[];const dupes=[];
+  rawRows.forEach((row,i)=>{const v=validateBulkRow(row,i);const refKey=normalize(v.ref);
+    if(!v.ok){invalid.push({row:i+2,errs:v.errs.join(', ')});return;}
+    if(seen.has(refKey)){dupes.push({row:i+2,ref:v.ref});return;}
+    seen.add(refKey);
+    valid.push({referencia:v.ref,descripcion:v.desc,gama:v.gama,producto:v.prod,c01:v.c01,activo:(row.activo===undefined||row.activo===''||String(row.activo).toLowerCase()==='true'||String(row.activo)==='1'),origen:origen,updated_by:CURRENT_USER?.email||'admin'});
+  });
+  PENDING_BULK_ROWS=valid;
+  const currentActiveCount=DATA.length;
+  const previewHtml=`<div class="summary-row">
+    <div class="summary-chip"><b>${valid.length}</b>Productos válidos a cargar</div>
+    <div class="summary-chip"><b>${invalid.length}</b>Filas con error (se ignoran)</div>
+    <div class="summary-chip"><b>${dupes.length}</b>Referencias duplicadas en el archivo (se ignoran, se usa la primera)</div>
+    <div class="summary-chip"><b>${currentActiveCount}</b>Productos activos hoy (referencia)</div>
+  </div>
+  ${invalid.length?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--danger);font-size:.84rem">Ver filas con error</summary><table class="preview-table"><tr><th>Fila</th><th>Problema</th></tr>${invalid.slice(0,30).map(x=>`<tr><td>${x.row}</td><td>${x.errs}</td></tr>`).join('')}</table>${invalid.length>30?`<div style="font-size:.8rem;color:var(--muted);margin-top:4px">Mostrando 30 de ${invalid.length}</div>`:''}</details>`:''}
+  <div class="mini-status info" style="display:block;margin-top:10px">⚠️ Al confirmar: los <b>${valid.length}</b> productos del archivo quedarán activos y con el precio de este archivo. Todos los demás productos que existan hoy en la base y NO estén en este archivo quedarán marcados <b>inactivos</b> (no se borran).</div>
+  <div class="actions" style="margin-top:10px"><button class="p mini" id="btnApplyBulk">Confirmar y aplicar carga masiva</button></div>`;
+  qs('csvPreview').innerHTML=previewHtml;
+  setStatus('bulkStatus','','info');qs('bulkStatus').className='mini-status';
+  qs('btnApplyBulk').onclick=applyBulkUpload;
+}});}
+
+async function applyBulkUpload(){if(!PENDING_BULK_ROWS||!PENDING_BULK_ROWS.length){setStatus('bulkStatus','No hay datos analizados para aplicar.','err');return;}
+const confirmMsg=`Vas a reemplazar la lista de precios activa:\n\n- ${PENDING_BULK_ROWS.length} productos quedarán activos con precios de este archivo\n- Todo lo demás quedará INACTIVO (no se borra, solo deja de aparecer en el buscador)\n\n¿Confirmas que quieres aplicar este cambio para TODOS los usuarios ahora?`;
+if(!confirm(confirmMsg))return;
+setStatus('bulkStatus','Paso 1/2: desactivando lista anterior…','info');
+const{error:deErr}=await sb.from('productos').update({activo:false,updated_by:CURRENT_USER?.email||'admin'}).not('referencia','is',null);
+if(deErr){setStatus('bulkStatus','Error al desactivar lista anterior: '+deErr.message,'err');return;}
+setStatus('bulkStatus','Paso 2/2: cargando '+PENDING_BULK_ROWS.length+' productos…','info');
+const{error:upErr}=await sb.from('productos').upsert(PENDING_BULK_ROWS,{onConflict:'referencia'});
+if(upErr){setStatus('bulkStatus','Error al cargar productos nuevos: '+upErr.message+'. La lista anterior quedó desactivada — avisa para revisar antes de que los usuarios consulten precios.','err');return;}
+setStatus('bulkStatus','✅ Lista de precios actualizada correctamente. Recargando base…','ok');
+PENDING_BULK_ROWS=null;qs('csvPreview').innerHTML='';qs('csvFile').value='';
+await init();showToast('Lista de precios actualizada');}
+
 function renderVersionBadge(fecha){const el=qs('versionBadge');if(!el)return;if(!fecha){el.textContent='No fue posible verificar la fecha de la lista de precios';el.classList.add('stale');return;}const dt=new Intl.DateTimeFormat('es-CO',{dateStyle:'medium',timeStyle:'short'}).format(new Date(fecha));el.textContent=`Lista de precios vigente actualizada: ${dt}`;const hoursSince=(Date.now()-new Date(fecha).getTime())/36e5;el.classList.toggle('stale',hoursSince>24*30);}
 async function init(){try{const cRes=await fetch(CONFIG_FILE);CONFIG=await cRes.json();
 const[{data:productsData,error:pErr},{data:rulesData,error:rErr},{data:verData}]=await Promise.all([
@@ -178,6 +275,7 @@ document.getElementById('calc').onclick=calc;document.getElementById('clear').on
 ref.addEventListener('input',showS);ref.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});sala.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});document.addEventListener('click',e=>{if(!box.contains(e.target)&&e.target!==ref)box.style.display='none';});
 copy.onclick=async()=>{if(!lastCopy)return;try{await navigator.clipboard.writeText(lastCopy);showToast('Resultado copiado');}catch(e){}};quote.onclick=async()=>{if(!lastQuote)return;try{await navigator.clipboard.writeText(lastQuote);showToast('Cotización copiada');}catch(e){}};
 qs('activateAccess').onclick=activate;qs('changeUser').onclick=()=>{localStorage.removeItem(USER_KEY);showRegister();};qs('adminLogin').onclick=unlockAdmin;qs('adminLogout').onclick=lockAdmin;qs('exportUsers').onclick=()=>downloadCSV('comercial_partner_registros.csv',readJSON(USERS_KEY,[]));qs('exportLogs').onclick=()=>downloadCSV('comercial_partner_uso.csv',readJSON(LOGS_KEY,[]));
+qs('btnUpdateSingle').onclick=updateSinglePrice;qs('btnAnalyzeCSV').onclick=analyzeCSV;
 const savedUser=readJSON(USER_KEY,null);if(savedUser&&savedUser.consent)showApp(savedUser);else showRegister();
 init();
 </script></body></html>
