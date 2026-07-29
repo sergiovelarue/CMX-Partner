@@ -103,6 +103,7 @@ select{width:100%;padding:14px;border:1px solid #cfd8e3;border-radius:14px;font-
 <div><label>Descuento en Sala (%)</label><input id='sala' type='number' value='0' step='0.1'></div>
 </div><div class='actions'><button class='p' id='calc'>Consultar precio</button><button class='g' id='copy' disabled>Copiar resultado</button><button class='g' id='quote' disabled>Copiar cotización WhatsApp</button><button class='s' id='clear'>Limpiar</button></div></div>
 <div class='card' id='r'><div class='empty'>Cargando base de productos…</div></div>
+<div class='card hidden' id='mediaCard'><h3 style="margin:0 0 10px;color:var(--brand);font-size:1rem">📎 Información técnica</h3><div id='mediaContent'></div></div>
 <div class='card admin-panel hidden' id='adminPricePanel'>
   <h3>🔧 Panel de administración de precios</h3>
   <p style="margin:0;color:var(--muted);font-size:.86rem">Visible solo para el administrador autenticado. Los cambios aquí afectan a todos los usuarios de inmediato.</p>
@@ -127,6 +128,21 @@ select{width:100%;padding:14px;border:1px solid #cfd8e3;border-radius:14px;font-
     </div>
     <div id="csvPreview"></div>
     <div class="mini-status" id="bulkStatus"></div>
+  </div>
+
+  <div class="admin-sub">
+    <h4>📎 Información técnica del producto (imagen, plano, manual, video)</h4>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Imágenes y PDF se suben directo aquí. Para video, pega el enlace de YouTube/Vimeo (no se sube el archivo).</p>
+    <div class="inline-form">
+      <div><label>Referencia del producto</label><input id="mediaRef" placeholder="Ej: CCAPA6001"></div>
+      <div><label>Tipo</label><select id="mediaTipo"><option value="imagen">Imagen</option><option value="plano">Plano (PDF)</option><option value="manual">Manual / Ficha técnica (PDF)</option><option value="video">Video (enlace)</option></select></div>
+    </div>
+    <div class="inline-form" style="margin-top:8px">
+      <div id="mediaFileWrap"><label>Archivo (imagen o PDF)</label><input id="mediaFile" type="file" accept="image/*,.pdf"></div>
+      <div id="mediaUrlWrap" class="hidden"><label>Enlace del video</label><input id="mediaUrl" placeholder="https://youtube.com/..."></div>
+      <div><button class="p mini" id="btnUploadMedia" style="padding:12px 16px">Asociar al producto</button></div>
+    </div>
+    <div class="mini-status" id="mediaStatus"></div>
   </div>
 </div>
 <div class='footer'>Herramienta para distribuidores autorizados. Información de referencia comercial. Derechos reservados.<div class='admin-gate hidden' id='adminGate'><button class='s mini' id='adminLogin'>🔒 Acceso administrador</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Visible solo para correos administradores autorizados.</span></div><div class='admin-tools hidden' id='adminTools'><button class='s mini' id='exportUsers'>Exportar registros CSV</button><button class='s mini' id='exportLogs'>Exportar uso CSV</button><button class='s mini' id='adminLogout'>Bloquear descargas</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Descargas habilitadas para administrador validado.</span></div><div style="margin-top:10px;font-size:.74rem;color:#a9b4c2">© Comercial Partner APP. Todos los derechos reservados — Sergio Velásquez.<span style="float:right;opacity:.45">23:1</span></div></div>
@@ -175,9 +191,23 @@ function showS(){const items=sugg(ref.value);if(!ref.value||!items.length){box.s
 function badge(ds){if(ds>.35)return["badge danger","Descuento en sala muy alto: revisar política comercial"];if(ds>.30)return["badge warn","Descuento en sala alto: revisar política comercial"];return["badge ok","Consulta válida"];}
 function mTag(m){if(m>=.20)return"<span class='tag-good'>Margen alto</span>";if(m>=.15)return"<span class='tag-mid'>Margen medio</span>";return"<span class='tag-low'>Sin margen</span>";}
 function isRestricted(gama){const arr=Array.isArray(CONFIG.restricted_gamas)?CONFIG.restricted_gamas:[];return arr.map(normalize).includes(normalize(gama));}
-function calc(){const item=find(ref.value),ds=pct(sala.value);if(!item){r.innerHTML="<div class='badge warn'>Referencia no encontrada</div><div class='empty'>Revisa el código o selecciona una sugerencia.</div>";copy.disabled=true;quote.disabled=true;return;}
+async function renderProductMedia(referencia){
+  const card=qs('mediaCard'),content=qs('mediaContent');
+  if(!card||!content)return;
+  const{data,error}=await sb.from('producto_media').select('*').eq('referencia',referencia).eq('activo',true).order('orden');
+  if(error||!data||!data.length){card.classList.add('hidden');content.innerHTML='';return;}
+  const imgs=data.filter(x=>x.tipo==='imagen');
+  const docs=data.filter(x=>x.tipo==='plano'||x.tipo==='manual');
+  const vids=data.filter(x=>x.tipo==='video');
+  let html='';
+  if(imgs.length)html+=`<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">${imgs.map(x=>`<a href="${x.url}" target="_blank"><img src="${x.url}" alt="${x.nombre_archivo||'imagen'}" style="width:110px;height:110px;object-fit:cover;border-radius:10px;border:1px solid var(--line)"></a>`).join('')}</div>`;
+  if(docs.length)html+=`<div style="margin-bottom:10px">${docs.map(x=>`<a href="${x.url}" target="_blank" class="badge ok" style="display:inline-block;margin:0 6px 6px 0;text-decoration:none">${x.tipo==='plano'?'📐 Plano':'📄 Manual'}: ${x.nombre_archivo||'ver documento'}</a>`).join('')}</div>`;
+  if(vids.length)html+=`<div>${vids.map(x=>`<a href="${x.url}" target="_blank" class="badge warn" style="display:inline-block;margin:0 6px 6px 0;text-decoration:none">🎥 ${x.nombre_archivo||'Ver video'}</a>`).join('')}</div>`;
+  content.innerHTML=html;card.classList.remove('hidden');
+}
+function calc(){const item=find(ref.value),ds=pct(sala.value);if(!item){r.innerHTML="<div class='badge warn'>Referencia no encontrada</div><div class='empty'>Revisa el código o selecciona una sugerencia.</div>";copy.disabled=true;quote.disabled=true;qs('mediaCard').classList.add('hidden');return;}
 logUsage(item);
-if(isRestricted(item.gama)){copy.disabled=true;quote.disabled=true;r.innerHTML=`<div class='badge warn'>No disponible</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='empty'>${CONFIG.restricted_message||'Producto no disponible para cotización en este canal.'}</div>`;return;}
+if(isRestricted(item.gama)){copy.disabled=true;quote.disabled=true;qs('mediaCard').classList.add('hidden');r.innerHTML=`<div class='badge warn'>No disponible</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='empty'>${CONFIG.restricted_message||'Producto no disponible para cotización en este canal.'}</div>`;return;}
 const m=resolveMargin(item.gama),pvpI=Number(item.c01||0),pvp=pvpI/1.19,pvpSI=pvpI*(1-ds),pvpS=pvpSI/1.19,pvdI=pvpSI*(1-m),pvd=pvdI/1.19,gain=pvpS-pvd,dt=now(),[bc,bt]=badge(ds);
 lastCopy=`Referencia: ${item.referencia}
 Descripción: ${item.descripcion}
@@ -205,8 +235,36 @@ PVD con IVA: ${money(pvdI)}
 Ganancia estimada distribuidor: ${money(gain)}
 Fecha cálculo: ${dt}`;
 copy.disabled=false;quote.disabled=false;
-r.innerHTML=`<div class='${bc}'>${bt}</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='row'><div class='k'>Producto</div><div>${item.producto}</div></div><div class='row'><div class='k'>Activo</div><div>${item.activo?'Sí':'No'}</div></div><div class='row'><div class='k'>Descuento en Sala</div><div>${Number(sala.value||0).toFixed(1)}%</div></div><div class='row'><div class='k'>Margen Distribuidor</div><div>${(m*100).toFixed(0)}% ${mTag(m)}</div></div><div class='row'><div class='k'>Fecha y hora del cálculo</div><div>${dt}</div></div><div class='prices'><div class='price'><div class='t'>PVP con IVA</div><div class='v'>${money(pvpI)}</div></div><div class='price'><div class='t'>PVP sin IVA</div><div class='v'>${money(pvp)}</div></div><div class='price'><div class='t'>PVP con IVA dto SALA</div><div class='v'>${money(pvpSI)}</div></div><div class='price'><div class='t'>PVP sin IVA dto SALA</div><div class='v'>${money(pvpS)}</div></div><div class='price hl'><div class='t'>PVD con IVA</div><div class='v'>${money(pvdI)}</div></div><div class='price hl'><div class='t'>PVD sin IVA</div><div class='v'>${money(pvd)}</div></div><div class='price gain'><div class='t'>Esto es lo que se puede ganar el distribuidor</div><div class='v'>${money(gain)}</div></div></div>`;}
+r.innerHTML=`<div class='${bc}'>${bt}</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='row'><div class='k'>Producto</div><div>${item.producto}</div></div><div class='row'><div class='k'>Activo</div><div>${item.activo?'Sí':'No'}</div></div><div class='row'><div class='k'>Descuento en Sala</div><div>${Number(sala.value||0).toFixed(1)}%</div></div><div class='row'><div class='k'>Margen Distribuidor</div><div>${(m*100).toFixed(0)}% ${mTag(m)}</div></div><div class='row'><div class='k'>Fecha y hora del cálculo</div><div>${dt}</div></div><div class='prices'><div class='price'><div class='t'>PVP con IVA</div><div class='v'>${money(pvpI)}</div></div><div class='price'><div class='t'>PVP sin IVA</div><div class='v'>${money(pvp)}</div></div><div class='price'><div class='t'>PVP con IVA dto SALA</div><div class='v'>${money(pvpSI)}</div></div><div class='price'><div class='t'>PVP sin IVA dto SALA</div><div class='v'>${money(pvpS)}</div></div><div class='price hl'><div class='t'>PVD con IVA</div><div class='v'>${money(pvdI)}</div></div><div class='price hl'><div class='t'>PVD sin IVA</div><div class='v'>${money(pvd)}</div></div><div class='price gain'><div class='t'>Esto es lo que se puede ganar el distribuidor</div><div class='v'>${money(gain)}</div></div></div>`;renderProductMedia(item.referencia);}
 function setStatus(id,msg,type){const el=qs(id);if(!el)return;el.className='mini-status '+type;el.textContent=msg;}
+qs('mediaTipo').addEventListener('change',()=>{const isVideo=qs('mediaTipo').value==='video';qs('mediaFileWrap').classList.toggle('hidden',isVideo);qs('mediaUrlWrap').classList.toggle('hidden',!isVideo);});
+
+async function uploadMedia(){
+  const ref=normalize(qs('mediaRef').value);const tipo=qs('mediaTipo').value;
+  if(!ref){setStatus('mediaStatus','Ingresa la referencia del producto.','err');return;}
+  const{data:prod}=await sb.from('productos').select('referencia').eq('referencia',ref).maybeSingle();
+  if(!prod){setStatus('mediaStatus',`No existe la referencia "${ref}" en el catálogo.`,'err');return;}
+  let url='',nombreArchivo='';
+  if(tipo==='video'){
+    url=qs('mediaUrl').value.trim();
+    if(!url){setStatus('mediaStatus','Pega el enlace del video.','err');return;}
+    nombreArchivo='Video asociado';
+  }else{
+    const file=qs('mediaFile').files[0];
+    if(!file){setStatus('mediaStatus','Selecciona un archivo.','err');return;}
+    setStatus('mediaStatus','Subiendo archivo…','info');
+    const path=`${ref}/${Date.now()}_${file.name}`;
+    const{error:upErr}=await sb.storage.from('producto-media').upload(path,file);
+    if(upErr){setStatus('mediaStatus','Error al subir archivo: '+upErr.message,'err');return;}
+    const{data:pub}=sb.storage.from('producto-media').getPublicUrl(path);
+    url=pub.publicUrl;nombreArchivo=file.name;
+  }
+  setStatus('mediaStatus','Guardando…','info');
+  const{error:insErr}=await sb.from('producto_media').insert({referencia:ref,tipo,url,nombre_archivo:nombreArchivo,updated_by:CURRENT_USER?.email||'admin'});
+  if(insErr){setStatus('mediaStatus','Error al guardar: '+insErr.message,'err');return;}
+  setStatus('mediaStatus',`✅ ${tipo} asociado a ${ref} correctamente.`,'ok');
+  qs('mediaFile').value='';qs('mediaUrl').value='';
+}
 async function updateSinglePrice(){const ref=normalize(qs('editRef').value);const priceRaw=qs('editPrice').value;const price=Number(priceRaw);if(!ref){setStatus('singleStatus','Ingresa una referencia.','err');return;}if(!priceRaw||isNaN(price)||price<=0){setStatus('singleStatus','Ingresa un precio numérico válido mayor a 0.','err');return;}
 setStatus('singleStatus','Actualizando…','info');
 const{data,error}=await sb.from('productos').update({c01:price,updated_by:CURRENT_USER?.email||'admin'}).eq('referencia',ref).select();
@@ -271,11 +329,11 @@ if(pErr||rErr)throw(pErr||rErr);
 PRODUCTS=productsData||[];RULES=rulesData||[];
 renderVersionBadge(verData?.fecha_actualizacion);
 DATA=PRODUCTS.filter(x=>x.activo).map(x=>({...x,search:(`${x.referencia} ${x.descripcion} ${x.gama} ${x.producto}`).toUpperCase()}));byRef=new Map(DATA.map(x=>[normalize(x.referencia),x]));document.getElementById('appName').textContent=CONFIG.app_name||'Comercial Partner APP';document.getElementById('introText').textContent=CONFIG.intro_text||'Herramienta de cálculo de precios para el canal B2B Multimarca.';document.getElementById('baseName').textContent=CONFIG.base_name||'-';document.getElementById('devDate').textContent=CONFIG.development_date||'-';document.getElementById('waNote').textContent=CONFIG.whatsapp_note||'';document.getElementById('statRefs').textContent=DATA.length.toLocaleString('es-CO');r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";}catch(err){console.error(err);r.innerHTML="<div class='badge danger'>Error de carga</div><div class='empty'>No fue posible conectar con la base de precios (Supabase). Intenta recargar la página; si el error persiste, contacta a soporte.</div>";renderVersionBadge(null);}}
-document.getElementById('calc').onclick=calc;document.getElementById('clear').onclick=()=>{ref.value='';sala.value='0';box.style.display='none';copy.disabled=true;quote.disabled=true;r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";ref.focus();};
+document.getElementById('calc').onclick=calc;document.getElementById('clear').onclick=()=>{ref.value='';sala.value='0';box.style.display='none';copy.disabled=true;quote.disabled=true;r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";qs('mediaCard').classList.add('hidden');ref.focus();};
 ref.addEventListener('input',showS);ref.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});sala.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});document.addEventListener('click',e=>{if(!box.contains(e.target)&&e.target!==ref)box.style.display='none';});
 copy.onclick=async()=>{if(!lastCopy)return;try{await navigator.clipboard.writeText(lastCopy);showToast('Resultado copiado');}catch(e){}};quote.onclick=async()=>{if(!lastQuote)return;try{await navigator.clipboard.writeText(lastQuote);showToast('Cotización copiada');}catch(e){}};
 qs('activateAccess').onclick=activate;qs('changeUser').onclick=()=>{localStorage.removeItem(USER_KEY);showRegister();};qs('adminLogin').onclick=unlockAdmin;qs('adminLogout').onclick=lockAdmin;qs('exportUsers').onclick=()=>downloadCSV('comercial_partner_registros.csv',readJSON(USERS_KEY,[]));qs('exportLogs').onclick=()=>downloadCSV('comercial_partner_uso.csv',readJSON(LOGS_KEY,[]));
-qs('btnUpdateSingle').onclick=updateSinglePrice;qs('btnAnalyzeCSV').onclick=analyzeCSV;
+qs('btnUpdateSingle').onclick=updateSinglePrice;qs('btnAnalyzeCSV').onclick=analyzeCSV;qs('btnUploadMedia').onclick=uploadMedia;
 const savedUser=readJSON(USER_KEY,null);if(savedUser&&savedUser.consent)showApp(savedUser);else showRegister();
 init();
 </script></body></html>
