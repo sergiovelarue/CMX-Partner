@@ -52,6 +52,11 @@ select{width:100%;padding:14px;border:1px solid #cfd8e3;border-radius:14px;font-
 .summary-row{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px}
 .summary-chip{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:.85rem}
 .summary-chip b{display:block;font-size:1.1rem}
+[data-theme="dark"]{--bg:#0b0f14;--bg2:#11161d;--card:#161c24;--ink:#eef2f7;--muted:#9aa7b6;--brand:#0d1117;--brand2:#2f81f7;--line:#242c37;--soft:#1b2330;--ok:#3fb97c;--warn:#e2a03f;--danger:#e5534b;--gain:#2a2410;--gainline:#e2a03f}
+[data-theme="pastel"]{--bg:#fdf6f0;--bg2:#f7ecf7;--card:#ffffff;--ink:#4a3f55;--muted:#8d8098;--brand:#b98cce;--brand2:#7fb8cc;--line:#ecdff0;--soft:#f3e9f7;--ok:#5ba87e;--warn:#c08a3e;--danger:#c96b6b;--gain:#fff2c2;--gainline:#e8bf6e}
+.admin-tabs{display:flex;gap:8px;margin-bottom:10px}
+.logo-wrap{margin-bottom:10px}.logo-wrap img{max-height:56px;max-width:220px;display:block}
+.theme-swatch{display:inline-flex;align-items:center;gap:6px}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -60,6 +65,7 @@ select{width:100%;padding:14px;border:1px solid #cfd8e3;border-radius:14px;font-
 <div id="registerScreen" class="partner-screen">
   <div class="partner-box">
     <div class="partner-hero">
+      <div id="logoWrapReg" class="logo-wrap hidden"><img id="companyLogoReg" alt="Logo empresa"></div>
       <h1>ListaLoop B2B</h1>
       <p>Activa tu acceso profesional para cotizar más rápido, vender con seguridad y mejorar tu rentabilidad.</p>
       <div class="benefits">
@@ -92,8 +98,10 @@ select{width:100%;padding:14px;border:1px solid #cfd8e3;border-radius:14px;font-
 <div id="appScreen" class='wrap hidden'>
 <div class="userbar"><div>Acceso activo: <b id="activeUser">-</b> · <span id="activeCompany">-</span></div><button class="linkbtn" id="changeUser">Cambiar usuario</button></div>
 <div class='hero'>
+<div id="logoWrap" class="logo-wrap hidden"><img id="companyLogo" alt="Logo empresa"></div>
 <h1 id='appName'>ListaLoop B2B</h1>
-<p id='introText'>Herramienta de cálculo de precios para el canal B2B Multimarca.</p>
+<p id='introText'>Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.</p>
+<p id="empresaLine" class="hidden" style="margin-top:8px;font-weight:700"></p>
 <p style='margin-top:10px;opacity:.9;font-size:.9rem'>Base de precios integrada: <span id="baseName">-</span> | Desarrollo calculador: <span id="devDate">-</span> | Referencias activas cargadas: <span id="statRefs">-</span></p>
 <small id='waNote'></small>
 <div><span class="version-badge" id="versionBadge">Verificando lista de precios vigente…</span></div>
@@ -104,6 +112,10 @@ select{width:100%;padding:14px;border:1px solid #cfd8e3;border-radius:14px;font-
 </div><div class='actions'><button class='p' id='calc'>Consultar precio</button><button class='g' id='copy' disabled>Copiar resultado</button><button class='g' id='quote' disabled>Copiar cotización WhatsApp</button><button class='s' id='clear'>Limpiar</button></div></div>
 <div class='card' id='r'><div class='empty'>Cargando base de productos…</div></div>
 <div class='card hidden' id='mediaCard'><h3 style="margin:0 0 10px;color:var(--brand);font-size:1rem">📎 Información técnica</h3><div id='mediaContent'></div></div>
+<div class="admin-tabs hidden" id="adminTabs">
+  <button class="p mini" id="tabPrices">💲 Precios</button>
+  <button class="s mini" id="tabSettings">⚙️ Ajustes Generales</button>
+</div>
 <div class='card admin-panel hidden' id='adminPricePanel'>
   <h3>🔧 Panel de administración de precios</h3>
   <p style="margin:0;color:var(--muted);font-size:.86rem">Visible solo para el administrador autenticado. Los cambios aquí afectan a todos los usuarios de inmediato.</p>
@@ -115,6 +127,7 @@ select{width:100%;padding:14px;border:1px solid #cfd8e3;border-radius:14px;font-
       <div><label>Nuevo precio C01 (PVP con IVA)</label><input id="editPrice" type="number" step="1" placeholder="Ej: 518000"></div>
       <div><button class="p mini" id="btnUpdateSingle" style="padding:12px 16px">Actualizar precio</button></div>
     </div>
+    <div id="editCurrentPrice" style="font-size:.84rem;color:var(--muted);margin-top:8px"></div>
     <div class="mini-status" id="singleStatus"></div>
   </div>
 
@@ -145,6 +158,43 @@ select{width:100%;padding:14px;border:1px solid #cfd8e3;border-radius:14px;font-
     <div class="mini-status" id="mediaStatus"></div>
   </div>
 </div>
+<div class='card admin-panel hidden' id='adminSettingsPanel'>
+  <h3>⚙️ Ajustes Generales</h3>
+  <p style="margin:0;color:var(--muted);font-size:.86rem">Visible solo para el administrador autenticado. Los cambios aquí afectan a todos los usuarios de inmediato.</p>
+
+  <div class="admin-sub">
+    <h4>Empresa contratante</h4>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Se muestra como "Distribuidores autorizados por [EMPRESA]" y reemplaza el encabezado de las cotizaciones de WhatsApp. Se guarda siempre en MAYÚSCULAS.</p>
+    <div class="inline-form">
+      <div><label>Nombre de la empresa</label><input id="settingsCompany" placeholder="Ej: COMODISIMOS"></div>
+      <div><button class="p mini" id="btnSaveCompany" style="padding:12px 16px">Guardar</button></div>
+    </div>
+    <div class="mini-status" id="companyStatus"></div>
+  </div>
+
+  <div class="admin-sub">
+    <h4>Logo de la empresa</h4>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Formato recomendado: PNG o SVG con fondo transparente, máx. 1MB. Aparece en el encabezado de la app y en la pantalla de registro.</p>
+    <div class="inline-form">
+      <div><label>Archivo de logo</label><input id="logoFile" type="file" accept="image/png,image/svg+xml,image/jpeg"></div>
+      <div><button class="p mini" id="btnUploadLogo" style="padding:12px 16px">Subir logo</button></div>
+      <div><button class="g mini" id="btnRemoveLogo" style="padding:12px 16px">Quitar logo</button></div>
+    </div>
+    <div id="logoPreview" style="margin-top:10px"></div>
+    <div class="mini-status" id="logoStatus"></div>
+  </div>
+
+  <div class="admin-sub">
+    <h4>Tema visual de la aplicación</h4>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Aplica para todos los usuarios en todos los dispositivos.</p>
+    <div class="actions">
+      <button class="s mini theme-btn" data-theme="original">Original</button>
+      <button class="s mini theme-btn" data-theme="dark">Oscuro</button>
+      <button class="s mini theme-btn" data-theme="pastel">Pastel</button>
+    </div>
+    <div class="mini-status" id="themeStatus"></div>
+  </div>
+</div>
 <div class='footer'>Herramienta para distribuidores autorizados. Información de referencia comercial. Derechos reservados.<div class='admin-gate hidden' id='adminGate'><button class='s mini' id='adminLogin'>🔒 Acceso administrador</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Visible solo para correos administradores autorizados.</span></div><div class='admin-tools hidden' id='adminTools'><button class='s mini' id='exportUsers'>Exportar registros CSV</button><button class='s mini' id='exportLogs'>Exportar uso CSV</button><button class='s mini' id='adminLogout'>Bloquear descargas</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Descargas habilitadas para administrador validado.</span></div><div style="margin-top:10px;font-size:.74rem;color:#a9b4c2">© ListaLoop B2B. Todos los derechos reservados — Sergio Velásquez.<span style="float:right;opacity:.45">23:1</span></div></div>
 </div><div id='toast'>Copiado</div>
 <script>
@@ -170,7 +220,8 @@ function isValidColombiaMobile(v){const d=normalizeColombiaPhone(v);return /^3\d
 function isAdmin(user=CURRENT_USER){return !!user&&ADMIN_EMAILS.includes(normalizeEmail(user.email));}
 async function isAdminUnlocked(){const{data}=await sb.auth.getSession();return !!data?.session;}
 async function lockAdmin(){await sb.auth.signOut();await updateAdminTools();}
-async function updateAdminTools(){const gate=qs('adminGate'),tools=qs('adminTools'),panel=qs('adminPricePanel');if(!gate||!tools)return;const allowed=isAdmin();const unlocked=await isAdminUnlocked();gate.classList.toggle('hidden',!allowed||unlocked);tools.classList.toggle('hidden',!allowed||!unlocked);if(panel)panel.classList.toggle('hidden',!allowed||!unlocked);}
+function showAdminTab(tab){const pricePanel=qs('adminPricePanel'),settingsPanel=qs('adminSettingsPanel'),tp=qs('tabPrices'),ts=qs('tabSettings');if(!pricePanel||!settingsPanel)return;pricePanel.classList.toggle('hidden',tab!=='prices');settingsPanel.classList.toggle('hidden',tab!=='settings');if(tp)tp.className=(tab==='prices'?'p mini':'s mini');if(ts)ts.className=(tab==='settings'?'p mini':'s mini');if(tab==='settings'&&qs('settingsCompany'))qs('settingsCompany').value=SETTINGS.company_name||'';}
+async function updateAdminTools(){const gate=qs('adminGate'),tools=qs('adminTools'),tabs=qs('adminTabs'),pricePanel=qs('adminPricePanel'),settingsPanel=qs('adminSettingsPanel');if(!gate||!tools)return;const allowed=isAdmin();const unlocked=await isAdminUnlocked();gate.classList.toggle('hidden',!allowed||unlocked);tools.classList.toggle('hidden',!allowed||!unlocked);if(tabs)tabs.classList.toggle('hidden',!allowed||!unlocked);if(allowed&&unlocked){showAdminTab('prices');}else{if(pricePanel)pricePanel.classList.add('hidden');if(settingsPanel)settingsPanel.classList.add('hidden');}}
 async function unlockAdmin(){if(!isAdmin()){showToast('Acceso solo para administrador');return;}const pass=prompt('Ingresa tu contraseña de administrador (Supabase)');if(pass===null)return;const{error}=await sb.auth.signInWithPassword({email:CURRENT_USER.email,password:pass});if(error){showToast('Clave incorrecta o usuario no autorizado');return;}await updateAdminTools();showToast('Descargas habilitadas');}
 function downloadCSV(filename, rows){if(!isAdmin()||!isAdminUnlocked()){showToast('Acceso solo para administrador validado');return;}if(!rows.length){showToast('No hay datos para exportar');return;}const headers=Object.keys(rows[0]);const csv=[headers.join(','),...rows.map(r=>headers.map(h=>csvEscape(r[h])).join(','))].join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();URL.revokeObjectURL(a.href);}
 function showApp(user){CURRENT_USER=user;qs('registerScreen').classList.add('hidden');qs('appScreen').classList.remove('hidden');qs('activeUser').textContent=user.name||'-';qs('activeCompany').textContent=user.company||'-';updateAdminTools();}
@@ -179,6 +230,7 @@ function activate(){const user={name:qs('regName').value.trim(),phone:normalizeC
 const required=['name','phone','email','company','city','role'];const missing=required.some(k=>!user[k]);if(missing||!user.consent){qs('regMsg').textContent='Completa todos los campos obligatorios y acepta la autorización de tratamiento de datos.';return;}if(!isValidEmail(user.email)){qs('regMsg').textContent='Ingresa un correo electrónico válido. Ejemplo: nombre@empresa.com';qs('regEmail').focus();return;}if(!isValidColombiaMobile(user.phone)){qs('regMsg').textContent='Ingresa un celular colombiano válido de 10 dígitos. Ejemplo: 3001234567';qs('regPhone').focus();return;}const users=readJSON(USERS_KEY,[]);const idx=users.findIndex(u=>(u.email||'').toLowerCase()===user.email.toLowerCase()||(u.phone&&normalizeColombiaPhone(u.phone)===user.phone));if(idx>=0){user.registeredAt=users[idx].registeredAt;users[idx]={...users[idx],...user};}else users.push(user);writeJSON(USERS_KEY,users);writeJSON(USER_KEY,user);showApp(user);showToast('Acceso activado');}
 function logUsage(item){if(!CURRENT_USER||!item)return;const logs=readJSON(LOGS_KEY,[]);logs.push({date:new Date().toLocaleDateString('es-CO'),time:new Date().toLocaleTimeString('es-CO'),iso:new Date().toISOString(),name:CURRENT_USER.name,email:CURRENT_USER.email,phone:CURRENT_USER.phone,company:CURRENT_USER.company,city:CURRENT_USER.city,store:CURRENT_USER.store,role:CURRENT_USER.role,reference:item.referencia,description:item.descripcion,gama:item.gama,product:item.producto});writeJSON(LOGS_KEY,logs);CURRENT_USER.lastAccess=new Date().toISOString();writeJSON(USER_KEY,CURRENT_USER);}
 let PRODUCTS=[],RULES=[],CONFIG={},DATA=[],byRef=new Map(),lastCopy="",lastQuote="";
+let SETTINGS={company_name:'',logo_url:'',theme:'original'};
 const ref=document.getElementById('ref'),sala=document.getElementById('sala'),r=document.getElementById('r'),box=document.getElementById('box'),copy=document.getElementById('copy'),quote=document.getElementById('quote'),toast=document.getElementById('toast');
 const money=v=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(Math.round(v));
 const pct=v=>Math.max(0,Math.min(100,Number(v)||0))/100; const now=()=>new Intl.DateTimeFormat('es-CO',{dateStyle:'medium',timeStyle:'short'}).format(new Date());
@@ -191,6 +243,9 @@ function showS(){const items=sugg(ref.value);if(!ref.value||!items.length){box.s
 function badge(ds){if(ds>.35)return["badge danger","Descuento en sala muy alto: revisar política comercial"];if(ds>.30)return["badge warn","Descuento en sala alto: revisar política comercial"];return["badge ok","Consulta válida"];}
 function mTag(m){if(m>=.20)return"<span class='tag-good'>Margen alto</span>";if(m>=.15)return"<span class='tag-mid'>Margen medio</span>";return"<span class='tag-low'>Sin margen</span>";}
 function isRestricted(gama){const arr=Array.isArray(CONFIG.restricted_gamas)?CONFIG.restricted_gamas:[];return arr.map(normalize).includes(normalize(gama));}
+function applyCompanyName(){const company=(SETTINGS.company_name||'').trim().toUpperCase();const line=qs('empresaLine');if(!line)return;if(company){line.textContent=`Distribuidores autorizados por ${company}`;line.classList.remove('hidden');}else{line.textContent='';line.classList.add('hidden');}}
+function applyLogo(){const url=(SETTINGS.logo_url||'').trim();['logoWrap','logoWrapReg'].forEach(id=>{const w=qs(id);if(w)w.classList.toggle('hidden',!url);});['companyLogo','companyLogoReg'].forEach(id=>{const img=qs(id);if(img)img.src=url;});const preview=qs('logoPreview');if(preview)preview.innerHTML=url?`<img src="${url}" alt="Logo actual" style="max-height:60px;max-width:200px;border:1px solid var(--line);border-radius:8px;padding:6px;background:#fff">`:'<span style="color:var(--muted);font-size:.84rem">Sin logo cargado.</span>';}
+function applyTheme(theme){document.documentElement.setAttribute('data-theme',theme==='dark'||theme==='pastel'?theme:'');document.querySelectorAll('.theme-btn').forEach(b=>{b.className=(b.dataset.theme===theme?'p mini theme-btn':'s mini theme-btn');});}
 async function renderProductMedia(referencia){
   const card=qs('mediaCard'),content=qs('mediaContent');
   if(!card||!content)return;
@@ -222,7 +277,9 @@ PVD con IVA: ${money(pvdI)}
 PVD sin IVA: ${money(pvd)}
 Esto es lo que se puede ganar el distribuidor: ${money(gain)}
 Fecha cálculo: ${dt}`;
-lastQuote=`Cotización ListaLoop B2B
+const empresaQuote=(SETTINGS.company_name||'').trim().toUpperCase();
+const quoteHeader=empresaQuote?`Cotización ${empresaQuote}`:'Cotización';
+lastQuote=`${quoteHeader}
 
 Referencia: ${item.referencia}
 Producto: ${item.descripcion}
@@ -265,7 +322,10 @@ async function uploadMedia(){
   setStatus('mediaStatus',`✅ ${tipo} asociado a ${ref} correctamente.`,'ok');
   qs('mediaFile').value='';qs('mediaUrl').value='';
 }
+function updateCurrentPriceDisplay(){const el=qs('editCurrentPrice');if(!el)return;const refv=normalize(qs('editRef').value);const item=byRef.get(refv);if(!item){el.textContent='';return;}const current=Number(item.c01||0);let txt=`Precio actual: ${money(current)}`;const newRaw=qs('editPrice').value;if(newRaw!==''){const newPrice=Number(newRaw);if(!isNaN(newPrice)&&current>0){const delta=((newPrice-current)/current)*100;const sign=delta>=0?'+':'';txt+=` · Cambio: ${sign}${delta.toFixed(1)}%`;if(Math.abs(delta)>20)txt+=' ⚠️ Supera el 20%, pedirá confirmación';}}el.textContent=txt;}
 async function updateSinglePrice(){const ref=normalize(qs('editRef').value);const priceRaw=qs('editPrice').value;const price=Number(priceRaw);if(!ref){setStatus('singleStatus','Ingresa una referencia.','err');return;}if(!priceRaw||isNaN(price)||price<=0){setStatus('singleStatus','Ingresa un precio numérico válido mayor a 0.','err');return;}
+const currentItem=byRef.get(ref);
+if(currentItem){const current=Number(currentItem.c01||0);if(current>0){const delta=((price-current)/current)*100;if(Math.abs(delta)>20){const tipo=delta>=0?'incremento':'decremento';const ok=confirm(`Este cambio representa un ${tipo} de ${Math.abs(delta).toFixed(1)}% sobre el precio actual (${money(current)} → ${money(price)}).\n\nEsto supera el límite normal de 20%. ¿Confirmas que quieres aplicar este cambio?`);if(!ok){setStatus('singleStatus','Cambio cancelado: el incremento/decremento superaba el 20% y no fue confirmado.','err');return;}}}}
 setStatus('singleStatus','Actualizando…','info');
 const{data,error}=await sb.from('productos').update({c01:price,updated_by:CURRENT_USER?.email||'admin'}).eq('referencia',ref).select();
 if(error){setStatus('singleStatus','Error al actualizar: '+error.message,'err');return;}
@@ -320,20 +380,31 @@ await init();showToast('Lista de precios actualizada');}
 
 function renderVersionBadge(fecha){const el=qs('versionBadge');if(!el)return;if(!fecha){el.textContent='No fue posible verificar la fecha de la lista de precios';el.classList.add('stale');return;}const dt=new Intl.DateTimeFormat('es-CO',{dateStyle:'medium',timeStyle:'short'}).format(new Date(fecha));el.textContent=`Lista de precios vigente actualizada: ${dt}`;const hoursSince=(Date.now()-new Date(fecha).getTime())/36e5;el.classList.toggle('stale',hoursSince>24*30);}
 async function init(){try{const cRes=await fetch(CONFIG_FILE);CONFIG=await cRes.json();
-const[{data:productsData,error:pErr},{data:rulesData,error:rErr},{data:verData}]=await Promise.all([
+const[{data:productsData,error:pErr},{data:rulesData,error:rErr},{data:verData},{data:settingsData,error:sErr}]=await Promise.all([
   sb.from('productos').select('*'),
   sb.from('margin_rules').select('*'),
-  sb.from('ultima_actualizacion').select('*').maybeSingle()
+  sb.from('ultima_actualizacion').select('*').maybeSingle(),
+  sb.from('app_settings').select('*').eq('id',1).maybeSingle()
 ]);
 if(pErr||rErr)throw(pErr||rErr);
+if(sErr)console.warn('Ajustes generales (app_settings) no disponibles todavía:',sErr.message);
+if(settingsData)SETTINGS={company_name:settingsData.company_name||'',logo_url:settingsData.logo_url||'',theme:settingsData.theme||'original'};
 PRODUCTS=productsData||[];RULES=rulesData||[];
 renderVersionBadge(verData?.fecha_actualizacion);
-DATA=PRODUCTS.filter(x=>x.activo).map(x=>({...x,search:(`${x.referencia} ${x.descripcion} ${x.gama} ${x.producto}`).toUpperCase()}));byRef=new Map(DATA.map(x=>[normalize(x.referencia),x]));document.getElementById('appName').textContent=CONFIG.app_name||'ListaLoop B2B';document.getElementById('introText').textContent=CONFIG.intro_text||'Herramienta de cálculo de precios para el canal B2B Multimarca.';document.getElementById('baseName').textContent=CONFIG.base_name||'-';document.getElementById('devDate').textContent=CONFIG.development_date||'-';document.getElementById('waNote').textContent=CONFIG.whatsapp_note||'';document.getElementById('statRefs').textContent=DATA.length.toLocaleString('es-CO');r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";}catch(err){console.error(err);r.innerHTML="<div class='badge danger'>Error de carga</div><div class='empty'>No fue posible conectar con la base de precios (Supabase). Intenta recargar la página; si el error persiste, contacta a soporte.</div>";renderVersionBadge(null);}}
+DATA=PRODUCTS.filter(x=>x.activo).map(x=>({...x,search:(`${x.referencia} ${x.descripcion} ${x.gama} ${x.producto}`).toUpperCase()}));byRef=new Map(DATA.map(x=>[normalize(x.referencia),x]));document.getElementById('appName').textContent=CONFIG.app_name||'ListaLoop B2B';document.getElementById('introText').textContent=CONFIG.intro_text||'Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.';document.getElementById('baseName').textContent=CONFIG.base_name||'-';document.getElementById('devDate').textContent=CONFIG.development_date||'-';document.getElementById('waNote').textContent=CONFIG.whatsapp_note||'';document.getElementById('statRefs').textContent=DATA.length.toLocaleString('es-CO');
+applyCompanyName();applyLogo();applyTheme(SETTINGS.theme||'original');if(qs('settingsCompany'))qs('settingsCompany').value=SETTINGS.company_name||'';
+r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";}catch(err){console.error(err);r.innerHTML="<div class='badge danger'>Error de carga</div><div class='empty'>No fue posible conectar con la base de precios (Supabase). Intenta recargar la página; si el error persiste, contacta a soporte.</div>";renderVersionBadge(null);}}
 document.getElementById('calc').onclick=calc;document.getElementById('clear').onclick=()=>{ref.value='';sala.value='0';box.style.display='none';copy.disabled=true;quote.disabled=true;r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";qs('mediaCard').classList.add('hidden');ref.focus();};
 ref.addEventListener('input',showS);ref.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});sala.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});document.addEventListener('click',e=>{if(!box.contains(e.target)&&e.target!==ref)box.style.display='none';});
 copy.onclick=async()=>{if(!lastCopy)return;try{await navigator.clipboard.writeText(lastCopy);showToast('Resultado copiado');}catch(e){}};quote.onclick=async()=>{if(!lastQuote)return;try{await navigator.clipboard.writeText(lastQuote);showToast('Cotización copiada');}catch(e){}};
 qs('activateAccess').onclick=activate;qs('changeUser').onclick=()=>{localStorage.removeItem(USER_KEY);showRegister();};qs('adminLogin').onclick=unlockAdmin;qs('adminLogout').onclick=lockAdmin;qs('exportUsers').onclick=()=>downloadCSV('comercial_partner_registros.csv',readJSON(USERS_KEY,[]));qs('exportLogs').onclick=()=>downloadCSV('comercial_partner_uso.csv',readJSON(LOGS_KEY,[]));
 qs('btnUpdateSingle').onclick=updateSinglePrice;qs('btnAnalyzeCSV').onclick=analyzeCSV;qs('btnUploadMedia').onclick=uploadMedia;
+qs('editRef').addEventListener('input',updateCurrentPriceDisplay);qs('editPrice').addEventListener('input',updateCurrentPriceDisplay);
+qs('tabPrices').onclick=()=>showAdminTab('prices');qs('tabSettings').onclick=()=>showAdminTab('settings');
+qs('btnSaveCompany').onclick=async()=>{const raw=qs('settingsCompany').value.trim();if(!raw){setStatus('companyStatus','Ingresa un nombre de empresa.','err');return;}const company=raw.toUpperCase();setStatus('companyStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({company_name:company,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('companyStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.company_name=company;qs('settingsCompany').value=company;applyCompanyName();setStatus('companyStatus','✅ Empresa contratante actualizada para todos los usuarios.','ok');};
+qs('btnUploadLogo').onclick=async()=>{const file=qs('logoFile').files[0];if(!file){setStatus('logoStatus','Selecciona un archivo de imagen.','err');return;}if(file.size>1024*1024){setStatus('logoStatus','El archivo supera 1MB. Usa una imagen más liviana.','err');return;}setStatus('logoStatus','Subiendo…','info');const path=`logo_${Date.now()}_${file.name}`;const{error:upErr}=await sb.storage.from('app-assets').upload(path,file,{upsert:true});if(upErr){setStatus('logoStatus','Error al subir: '+upErr.message,'err');return;}const{data:pub}=sb.storage.from('app-assets').getPublicUrl(path);const{error}=await sb.from('app_settings').update({logo_url:pub.publicUrl,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('logoStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.logo_url=pub.publicUrl;applyLogo();setStatus('logoStatus','✅ Logo actualizado para todos los usuarios.','ok');qs('logoFile').value='';};
+qs('btnRemoveLogo').onclick=async()=>{setStatus('logoStatus','Quitando…','info');const{error}=await sb.from('app_settings').update({logo_url:'',updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('logoStatus','Error: '+error.message,'err');return;}SETTINGS.logo_url='';applyLogo();setStatus('logoStatus','Logo quitado.','ok');};
+document.querySelectorAll('.theme-btn').forEach(b=>{b.onclick=async()=>{const theme=b.dataset.theme;applyTheme(theme);setStatus('themeStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({theme,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('themeStatus','Error al guardar tema: '+error.message,'err');return;}SETTINGS.theme=theme;setStatus('themeStatus','✅ Tema aplicado para todos los usuarios.','ok');};});
 const savedUser=readJSON(USER_KEY,null);if(savedUser&&savedUser.consent)showApp(savedUser);else showRegister();
 init();
 </script></body></html>
