@@ -1,0 +1,16 @@
+{
+  "name": "ListaLoop B2B",
+  "short_name": "ListaLoop",
+  "description": "Plataforma para la gestión de listas de precios B2B, cálculo de precios e información técnica de producto para distribuidores autorizados.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#eef4fb",
+  "theme_color": "#123a63",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
