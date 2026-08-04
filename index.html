@@ -88,6 +88,9 @@ select{width:100%;padding:14px;border:1px solid #cfd8e3;border-radius:14px;font-
 .overlay-panel{background:var(--card);width:100%;max-width:640px;max-height:88vh;overflow-y:auto;border-radius:20px 20px 0 0;padding:18px}
 @media(min-width:761px){.overlay-backdrop{align-items:center}.overlay-panel{border-radius:20px}}
 @media(max-width:760px){.dest-grid{grid-template-columns:repeat(auto-fill,minmax(108px,1fr))}.dest-card{flex-basis:108px}}
+.admin-suggest-box{position:absolute;left:0;right:0;top:100%;z-index:20;width:auto}
+.qty-total{font-size:.72rem;color:var(--muted);margin-top:4px}
+.unit-note{font-size:.78rem;color:var(--muted);margin:8px 0 0}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -291,7 +294,7 @@ select{width:100%;padding:14px;border:1px solid #cfd8e3;border-radius:14px;font-
     <h4>Productos en Foco <span id="focoCount" style="color:var(--muted);font-weight:400;font-size:.85rem"></span></h4>
     <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Máximo 10 productos. Se muestran como carrusel con imagen en la pestaña Destacados.</p>
     <div class="inline-form">
-      <div><label>Referencia</label><input id="focoRef" placeholder="Ej: CSMPC0102"></div>
+      <div style="position:relative"><label>Referencia</label><input id="focoRef" autocomplete="off" placeholder="Ej: CSMPC0102 o parte del nombre"><div id="focoRefBox" class="box admin-suggest-box"></div></div>
       <div><label>Orden</label><input id="focoOrden" type="number" value="0" step="1"></div>
       <div><button class="p mini" id="btnAddFoco" style="padding:12px 16px">Agregar a Foco</button></div>
     </div>
@@ -302,7 +305,7 @@ select{width:100%;padding:14px;border:1px solid #cfd8e3;border-radius:14px;font-
   <div class="admin-sub">
     <h4>Productos en Best Sellers</h4>
     <div class="inline-form">
-      <div><label>Referencia</label><input id="bsRef" placeholder="Ej: CSMPC0102"></div>
+      <div style="position:relative"><label>Referencia</label><input id="bsRef" autocomplete="off" placeholder="Ej: CSMPC0102 o parte del nombre"><div id="bsRefBox" class="box admin-suggest-box"></div></div>
       <div><label>Orden</label><input id="bsOrden" type="number" value="0" step="1"></div>
       <div><button class="p mini" id="btnAddBs" style="padding:12px 16px">Agregar a Best Sellers</button></div>
     </div>
@@ -311,9 +314,9 @@ select{width:100%;padding:14px;border:1px solid #cfd8e3;border-radius:14px;font-
   </div>
 
   <div class="admin-sub">
-    <h4>Productos en Ofertas</h4>
+    <h4>Productos en oferta</h4>
     <div class="inline-form">
-      <div><label>Referencia</label><input id="ofRef" placeholder="Ej: CSMPC0102"></div>
+      <div style="position:relative"><label>Referencia</label><input id="ofRef" autocomplete="off" placeholder="Ej: CSMPC0102 o parte del nombre"><div id="ofRefBox" class="box admin-suggest-box"></div></div>
       <div><label>Orden</label><input id="ofOrden" type="number" value="0" step="1"></div>
       <div><label>Descuento</label><input id="ofDescuento" type="number" step="0.01" placeholder="Ej: 10 (%) o 15000 ($)"></div>
       <div><button class="p mini" id="btnAddOf" style="padding:12px 16px">Agregar a Ofertas</button></div>
@@ -398,43 +401,52 @@ async function renderProductMedia(referencia){
   if(vids.length)html+=`<div>${vids.map(x=>`<a href="${x.url}" target="_blank" class="badge warn" style="display:inline-block;margin:0 6px 6px 0;text-decoration:none">🎥 ${x.nombre_archivo||'Ver video'}</a>`).join('')}</div>`;
   content.innerHTML=html;card.classList.remove('hidden');
 }
-function calc(){const item=find(ref.value),ds=pct(sala.value);if(!item){r.innerHTML="<div class='badge warn'>Referencia no encontrada</div><div class='empty'>Revisa el código o selecciona una sugerencia.</div>";copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;qs('mediaCard').classList.add('hidden');return;}
+function calc(){const item=find(ref.value);if(!item){r.innerHTML="<div class='badge warn'>Referencia no encontrada</div><div class='empty'>Revisa el código o selecciona una sugerencia.</div>";copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;qs('mediaCard').classList.add('hidden');return;}
 logUsage(item);
 if(isRestricted(item.gama)){copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;qs('mediaCard').classList.add('hidden');r.innerHTML=`<div class='badge warn'>No disponible</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='empty'>${CONFIG.restricted_message||'Producto no disponible para cotización en este canal.'}</div>`;return;}
-const canMargin=canSeeMargin();
-const m=resolveMargin(item.gama),pvpI=Number(item.c01||0),pvp=pvpI/1.19,pvpSI=pvpI*(1-ds),pvpS=pvpSI/1.19,pvdI=pvpSI*(1-m),pvd=pvdI/1.19,gain=pvpS-pvd,dt=now(),[bc,bt]=badge(ds);
 lastItem=item;
-lastCopy=`Referencia: ${item.referencia}
+renderPriceCard();
+}
+function renderPriceCard(){
+  const item=lastItem;if(!item)return;
+  const ds=pct(sala.value),qty=Math.max(1,parseInt(cant?.value||'1',10)||1);
+  const canMargin=canSeeMargin();
+  const m=resolveMargin(item.gama),pvpI=Number(item.c01||0),pvp=pvpI/1.19,pvpSI=pvpI*(1-ds),pvpS=pvpSI/1.19,pvdI=pvpSI*(1-m),pvd=pvdI/1.19,gain=pvpS-pvd,dt=now(),[bc,bt]=badge(ds);
+  lastCopy=`Referencia: ${item.referencia}
 Descripción: ${item.descripcion}
 Gama: ${item.gama}
 Descuento en Sala: ${Number(sala.value||0).toFixed(1)}%
-PVP con IVA: ${money(pvpI)}
-PVP sin IVA: ${money(pvp)}
-PVP con IVA dto SALA: ${money(pvpSI)}
-PVP sin IVA dto SALA: ${money(pvpS)}${canMargin?`
+Cantidad: ${qty}
+PVP con IVA (unitario): ${money(pvpI)}
+PVP sin IVA (unitario): ${money(pvp)}
+PVP con IVA dto SALA (unitario): ${money(pvpSI)} · Total: ${money(pvpSI*qty)}
+PVP sin IVA dto SALA (unitario): ${money(pvpS)}${canMargin?`
 Margen Distribuidor: ${(m*100).toFixed(0)}%
-PVD con IVA: ${money(pvdI)}
-PVD sin IVA: ${money(pvd)}
-Esto es lo que se puede ganar el distribuidor: ${money(gain)}`:''}
+PVD con IVA (unitario): ${money(pvdI)}
+PVD sin IVA (unitario): ${money(pvd)}
+Esto es lo que se puede ganar el distribuidor (unitario): ${money(gain)} · Total: ${money(gain*qty)}`:''}
 Fecha cálculo: ${dt}`;
-const empresaQuote=(SETTINGS.company_name||'').trim().toUpperCase();
-const quoteHeader=empresaQuote?`Cotización ${empresaQuote}`:'Cotización';
-lastQuote=`${quoteHeader}
+  const empresaQuote=(SETTINGS.company_name||'').trim().toUpperCase();
+  const quoteHeader=empresaQuote?`Cotización ${empresaQuote}`:'Cotización';
+  lastQuote=`${quoteHeader}
 
 Referencia: ${item.referencia}
 Producto: ${item.descripcion}
 Gama: ${item.gama}
+Cantidad: ${qty}
 
-PVP con IVA: ${money(pvpI)}
-PVP con IVA dto SALA: ${money(pvpSI)}${canMargin?`
-PVD con IVA: ${money(pvdI)}
+PVP con IVA (unitario): ${money(pvpI)}
+PVP con IVA dto SALA (unitario): ${money(pvpSI)} · Total: ${money(pvpSI*qty)}${canMargin?`
+PVD con IVA (unitario): ${money(pvdI)}
 
-Ganancia estimada distribuidor: ${money(gain)}`:''}
+Ganancia estimada distribuidor (unitaria): ${money(gain)} · Total: ${money(gain*qty)}`:''}
 Fecha cálculo: ${dt}`;
-copy.disabled=false;quote.disabled=false;addBtn.disabled=false;
-const pvdBlocks=canMargin?`<div class='price hl'><div class='t'>PVD con IVA</div><div class='v'>${money(pvdI)}</div></div><div class='price hl'><div class='t'>PVD sin IVA</div><div class='v'>${money(pvd)}</div></div><div class='price gain'><div class='t'>Esto es lo que se puede ganar el distribuidor</div><div class='v'>${money(gain)}</div></div>`:'';
-const margenRow=canMargin?`<div class='row'><div class='k'>Margen Distribuidor</div><div>${(m*100).toFixed(0)}% ${mTag(m)}</div></div>`:'';
-r.innerHTML=`<div class='${bc}'>${bt}</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='row'><div class='k'>Producto</div><div>${item.producto}</div></div><div class='row'><div class='k'>Activo</div><div>${item.activo?'Sí':'No'}</div></div><div class='row'><div class='k'>Descuento en Sala</div><div>${Number(sala.value||0).toFixed(1)}%</div></div>${margenRow}<div class='row'><div class='k'>Fecha y hora del cálculo</div><div>${dt}</div></div><div class='prices'><div class='price'><div class='t'>PVP con IVA</div><div class='v'>${money(pvpI)}</div></div><div class='price'><div class='t'>PVP sin IVA</div><div class='v'>${money(pvp)}</div></div><div class='price'><div class='t'>PVP con IVA dto SALA</div><div class='v'>${money(pvpSI)}</div></div><div class='price'><div class='t'>PVP sin IVA dto SALA</div><div class='v'>${money(pvpS)}</div></div>${pvdBlocks}</div>`;renderProductMedia(item.referencia);}
+  copy.disabled=false;quote.disabled=false;addBtn.disabled=false;
+  const priceBox=(label,val,extraCls)=>`<div class='price${extraCls?(' '+extraCls):''}'><div class='t'>${label} <span style="font-weight:400;font-size:.7rem">(unitario)</span></div><div class='v'>${money(val)}</div><div class='qty-total'>Cant. ${qty} · Total: ${money(val*qty)}</div></div>`;
+  const pvdBlocks=canMargin?priceBox('PVD con IVA',pvdI,'hl')+priceBox('PVD sin IVA',pvd,'hl')+priceBox('Esto es lo que se puede ganar el distribuidor',gain,'gain'):'';
+  const margenRow=canMargin?`<div class='row'><div class='k'>Margen Distribuidor</div><div>${(m*100).toFixed(0)}% ${mTag(m)}</div></div>`:'';
+  r.innerHTML=`<div class='${bc}'>${bt}</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='row'><div class='k'>Producto</div><div>${item.producto}</div></div><div class='row'><div class='k'>Activo</div><div>${item.activo?'Sí':'No'}</div></div><div class='row'><div class='k'>Descuento en Sala</div><div>${Number(sala.value||0).toFixed(1)}%</div></div><div class='row'><div class='k'>Cantidad</div><div>${qty}</div></div>${margenRow}<div class='row'><div class='k'>Fecha y hora del cálculo</div><div>${dt}</div></div><p class='unit-note'>Los valores de cada casilla son por unidad; el total considera la cantidad indicada arriba.</p><div class='prices'>${priceBox('PVP con IVA',pvpI)}${priceBox('PVP sin IVA',pvp)}${priceBox('PVP con IVA dto SALA',pvpSI)}${priceBox('PVP sin IVA dto SALA',pvpS)}${pvdBlocks}</div>`;renderProductMedia(item.referencia);
+}
 function pushToQuote(referencia,cantidad,descuento){
   const qty=Math.max(1,parseInt(cantidad,10)||1);
   const ds=Number(descuento||0);
@@ -517,6 +529,18 @@ function copyMultiQuote(){
   navigator.clipboard.writeText(buildMultiQuoteText()).then(()=>showToast('Cotización múltiple copiada')).catch(()=>{});
 }
 function clearQuoteCart(){QUOTE_ITEMS=[];renderQuoteCart();}
+function wireRefAutocomplete(inputId,boxId){
+  const inp=qs(inputId),box=qs(boxId);
+  if(!inp||!box)return;
+  inp.addEventListener('input',()=>{
+    const items=sugg(inp.value);
+    if(!inp.value||!items.length){box.style.display='none';box.innerHTML='';return;}
+    box.innerHTML=items.map(x=>`<div class='it' data-r='${x.referencia}'><b>${x.referencia}</b> — ${x.descripcion}</div>`).join('');
+    box.style.display='block';
+    [...box.querySelectorAll('.it')].forEach(el=>el.onclick=()=>{inp.value=el.dataset.r;box.style.display='none';});
+  });
+  document.addEventListener('click',e=>{if(!box.contains(e.target)&&e.target!==inp)box.style.display='none';});
+}
 function focoActiveCount(){return CATALOGO_ITEMS.filter(x=>x.bloque==='foco'&&x.activo!==false).length;}
 function fillBadgeInputs(){
   if(qs('badgeFoco'))qs('badgeFoco').value=SETTINGS.catalogo_foco_badge||'';
@@ -614,12 +638,16 @@ function openDestOverlay(referencia,bloque){
   const catItem=CATALOGO_ITEMS.find(x=>x.bloque===bloque&&normalize(x.referencia)===normalize(referencia));
   const pvpI=Number(item.c01||0),pvp=pvpI/1.19;
   let ofertaHtml='';
+  let prefillDescuento=0;
   if(bloque==='oferta'&&catItem&&catItem.descuento_valor){
     const dv=Number(catItem.descuento_valor);
-    const precioOferta=SETTINGS.catalogo_oferta_formato==='absoluto'?Math.max(0,pvpI-dv):pvpI*(1-dv/100);
-    ofertaHtml=`<div class='price gain' style='margin-top:10px'><div class='t'>${SETTINGS.catalogo_oferta_badge||'Oferta'}</div><div class='v'>${money(precioOferta)} <span style='text-decoration:line-through;color:var(--muted);font-size:.85rem;font-weight:400'>${money(pvpI)}</span></div></div>`;
+    // El descuento de Oferta ES el Descuento en Sala que se aplica al PVP al cotizar
+    // (si el admin lo definió en valor absoluto, se convierte a su % equivalente sobre el PVP).
+    prefillDescuento=SETTINGS.catalogo_oferta_formato==='absoluto'?Math.min(100,Math.max(0,(dv/pvpI)*100)):Math.min(100,Math.max(0,dv));
+    const precioOferta=pvpI*(1-prefillDescuento/100);
+    ofertaHtml=`<div class='price gain' style='margin-top:10px'><div class='t'>${SETTINGS.catalogo_oferta_badge||'Oferta'}</div><div class='v'>${money(precioOferta)} <span style='text-decoration:line-through;color:var(--muted);font-size:.85rem;font-weight:400'>${money(pvpI)}</span></div><div class='qty-total'>Descuento en Sala aplicado: ${prefillDescuento.toFixed(1)}% (editable abajo)</div></div>`;
   }
-  content.innerHTML=`<div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='prices'><div class='price'><div class='t'>PVP con IVA</div><div class='v'>${money(pvpI)}</div></div><div class='price'><div class='t'>PVP sin IVA</div><div class='v'>${money(pvp)}</div></div></div>${ofertaHtml}<div class='inline-form' style='margin-top:14px'><div><label>Cantidad</label><input id='ovCantidad' type='number' value='1' min='1' step='1'></div><div><label>Descuento en Sala (%)</label><input id='ovDescuento' type='number' value='0' step='0.1'></div><div><button class='p mini' id='btnAddFromOverlay' style='padding:12px 16px'>🛒 Agregar a cotización</button></div></div>`;
+  content.innerHTML=`<div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><p class='unit-note'>Precios por unidad.</p><div class='prices'><div class='price'><div class='t'>PVP con IVA</div><div class='v'>${money(pvpI)}</div></div><div class='price'><div class='t'>PVP sin IVA</div><div class='v'>${money(pvp)}</div></div></div>${ofertaHtml}<div class='inline-form' style='margin-top:14px'><div><label>Cantidad</label><input id='ovCantidad' type='number' value='1' min='1' step='1'></div><div><label>Descuento en Sala (%)</label><input id='ovDescuento' type='number' value='${prefillDescuento.toFixed(1)}' step='0.1'></div><div><button class='p mini' id='btnAddFromOverlay' style='padding:12px 16px'>🛒 Agregar a cotización</button></div></div>`;
   qs('btnAddFromOverlay').onclick=()=>{pushToQuote(item.referencia,qs('ovCantidad').value,qs('ovDescuento').value);showToast('Agregado a la cotización');};
   overlay.classList.remove('hidden');
 }
@@ -733,6 +761,7 @@ renderDestacadosAdmin();renderDestacados();
 r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";}catch(err){console.error(err);r.innerHTML="<div class='badge danger'>Error de carga</div><div class='empty'>No fue posible conectar con la base de precios (Supabase). Intenta recargar la página; si el error persiste, contacta a soporte.</div>";renderVersionBadge(null);}}
 document.getElementById('calc').onclick=calc;document.getElementById('clear').onclick=()=>{ref.value='';sala.value='0';if(cant)cant.value='1';box.style.display='none';copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";qs('mediaCard').classList.add('hidden');ref.focus();};
 ref.addEventListener('input',showS);ref.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});sala.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});document.addEventListener('click',e=>{if(!box.contains(e.target)&&e.target!==ref)box.style.display='none';});
+if(cant)cant.addEventListener('input',()=>{if(lastItem)renderPriceCard();});
 copy.onclick=async()=>{if(!lastCopy)return;try{await navigator.clipboard.writeText(lastCopy);showToast('Resultado copiado');}catch(e){}};quote.onclick=async()=>{if(!lastQuote)return;try{await navigator.clipboard.writeText(lastQuote);showToast('Cotización copiada');}catch(e){}};
 qs('activateAccess').onclick=activate;qs('changeUser').onclick=()=>{localStorage.removeItem(USER_KEY);showRegister();};qs('adminLogin').onclick=unlockAdmin;qs('adminLogout').onclick=lockAdmin;qs('exportUsers').onclick=()=>downloadCSV('comercial_partner_registros.csv',readJSON(USERS_KEY,[]));qs('exportLogs').onclick=()=>downloadCSV('comercial_partner_uso.csv',readJSON(LOGS_KEY,[]));
 qs('btnUpdateSingle').onclick=updateSinglePrice;qs('btnAnalyzeCSV').onclick=analyzeCSV;qs('btnUploadMedia').onclick=uploadMedia;
@@ -742,6 +771,7 @@ qs('btnCloseOverlay').onclick=closeDestOverlay;qs('destOverlay').addEventListene
 qs('editRef').addEventListener('input',updateCurrentPriceDisplay);qs('editPrice').addEventListener('input',updateCurrentPriceDisplay);
 qs('tabPrices').onclick=()=>showAdminTab('prices');qs('tabSettings').onclick=()=>showAdminTab('settings');qs('tabDestacados').onclick=()=>showAdminTab('destacados');
 qs('btnSaveBadges').onclick=saveBadgeSettings;qs('btnAddFoco').onclick=()=>addDestacado('foco');qs('btnAddBs').onclick=()=>addDestacado('bestseller');qs('btnAddOf').onclick=()=>addDestacado('oferta');
+wireRefAutocomplete('focoRef','focoRefBox');wireRefAutocomplete('bsRef','bsRefBox');wireRefAutocomplete('ofRef','ofRefBox');
 qs('btnSaveCompany').onclick=async()=>{const raw=qs('settingsCompany').value.trim();if(!raw){setStatus('companyStatus','Ingresa un nombre de empresa.','err');return;}const company=raw.toUpperCase();setStatus('companyStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({company_name:company,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('companyStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.company_name=company;qs('settingsCompany').value=company;applyCompanyName();setStatus('companyStatus','✅ Empresa contratante actualizada para todos los usuarios.','ok');};
 qs('btnUploadLogo').onclick=async()=>{const file=qs('logoFile').files[0];if(!file){setStatus('logoStatus','Selecciona un archivo de imagen.','err');return;}if(file.size>1024*1024){setStatus('logoStatus','El archivo supera 1MB. Usa una imagen más liviana.','err');return;}setStatus('logoStatus','Subiendo…','info');const path=`logo_${Date.now()}_${file.name}`;const{error:upErr}=await sb.storage.from('app-assets').upload(path,file,{upsert:true});if(upErr){setStatus('logoStatus','Error al subir: '+upErr.message,'err');return;}const{data:pub}=sb.storage.from('app-assets').getPublicUrl(path);const{error}=await sb.from('app_settings').update({logo_url:pub.publicUrl,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('logoStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.logo_url=pub.publicUrl;applyLogo();setStatus('logoStatus','✅ Logo actualizado para todos los usuarios.','ok');qs('logoFile').value='';};
 qs('btnRemoveLogo').onclick=async()=>{setStatus('logoStatus','Quitando…','info');const{error}=await sb.from('app_settings').update({logo_url:'',updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('logoStatus','Error: '+error.message,'err');return;}SETTINGS.logo_url='';applyLogo();setStatus('logoStatus','Logo quitado.','ok');};
