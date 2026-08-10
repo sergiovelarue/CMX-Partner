@@ -374,8 +374,11 @@ function showApp(user){CURRENT_USER=user;qs('registerScreen').classList.add('hid
 function showRegister(){CURRENT_USER=null;lockAdmin();qs('appScreen').classList.add('hidden');qs('registerScreen').classList.remove('hidden');}
 function activate(){const user={name:qs('regName').value.trim(),phone:normalizeColombiaPhone(qs('regPhone').value),email:normalizeEmail(qs('regEmail').value),company:qs('regCompany').value.trim(),city:qs('regCity').value.trim(),store:qs('regStore').value.trim(),role:qs('regRole').value,consent:qs('regConsent').checked,registeredAt:new Date().toISOString(),lastAccess:new Date().toISOString()};
 const required=['name','phone','email','company','city','role'];const missing=required.some(k=>!user[k]);if(missing||!user.consent){qs('regMsg').textContent='Completa todos los campos obligatorios y acepta la autorización de tratamiento de datos.';return;}if(!isValidEmail(user.email)){qs('regMsg').textContent='Ingresa un correo electrónico válido. Ejemplo: nombre@empresa.com';qs('regEmail').focus();return;}if(!isValidColombiaMobile(user.phone)){qs('regMsg').textContent='Ingresa un celular colombiano válido de 10 dígitos. Ejemplo: 3001234567';qs('regPhone').focus();return;}const users=readJSON(USERS_KEY,[]);const idx=users.findIndex(u=>(u.email||'').toLowerCase()===user.email.toLowerCase()||(u.phone&&normalizeColombiaPhone(u.phone)===user.phone));if(idx>=0){user.registeredAt=users[idx].registeredAt;users[idx]={...users[idx],...user};}else users.push(user);writeJSON(USERS_KEY,users);writeJSON(USER_KEY,user);showApp(user);showToast('Acceso activado');}
-function logUsage(item){if(!CURRENT_USER||!item)return;const logs=readJSON(LOGS_KEY,[]);logs.push({date:new Date().toLocaleDateString('es-CO'),time:new Date().toLocaleTimeString('es-CO'),iso:new Date().toISOString(),name:CURRENT_USER.name,email:CURRENT_USER.email,phone:CURRENT_USER.phone,company:CURRENT_USER.company,city:CURRENT_USER.city,store:CURRENT_USER.store,role:CURRENT_USER.role,reference:item.referencia,description:item.descripcion,gama:item.gama,product:item.producto});writeJSON(LOGS_KEY,logs);CURRENT_USER.lastAccess=new Date().toISOString();writeJSON(USER_KEY,CURRENT_USER);}
-let PRODUCTS=[],RULES=[],CONFIG={},DATA=[],byRef=new Map(),lastCopy="",lastQuote="",lastItem=null,QUOTE_ITEMS=[],CATALOGO_ITEMS=[],MEDIA_IMAGES=new Map();
+function logUsage(item){if(!CURRENT_USER||!item)return;const logs=readJSON(LOGS_KEY,[]);logs.push({date:new Date().toLocaleDateString('es-CO'),time:new Date().toLocaleTimeString('es-CO'),iso:new Date().toISOString(),name:CURRENT_USER.name,email:CURRENT_USER.email,phone:CURRENT_USER.phone,company:CURRENT_USER.company,city:CURRENT_USER.city,store:CURRENT_USER.store,role:CURRENT_USER.role,reference:item.referencia,description:item.descripcion,gama:item.gama,product:item.producto});writeJSON(LOGS_KEY,logs);CURRENT_USER.lastAccess=new Date().toISOString();writeJSON(USER_KEY,CURRENT_USER);
+// Fase 3: registro agregado/anónimo (sin datos de usuario) para alimentar "más consultados" y venta cruzada.
+sb.from('consultas_log').insert({referencia:item.referencia}).then(({error})=>{if(error)console.warn('No se pudo registrar consulta agregada:',error.message);});
+}
+let PRODUCTS=[],RULES=[],CONFIG={},DATA=[],byRef=new Map(),lastCopy="",lastQuote="",lastItem=null,QUOTE_ITEMS=[],CATALOGO_ITEMS=[],MEDIA_IMAGES=new Map(),QUOTE_SESSION_ID=null;
 let SETTINGS={company_name:'',logo_url:'',theme:'original',catalogo_foco_badge:'Nuevo',catalogo_bestseller_badge:'Best Seller',catalogo_oferta_badge:'Oferta',catalogo_oferta_formato:'porcentaje'};
 const ref=document.getElementById('ref'),sala=document.getElementById('sala'),cant=document.getElementById('cantidad'),r=document.getElementById('r'),box=document.getElementById('box'),copy=document.getElementById('copy'),quote=document.getElementById('quote'),addBtn=document.getElementById('addToQuote'),toast=document.getElementById('toast');
 const money=v=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(Math.round(v));
@@ -455,12 +458,18 @@ Fecha cálculo: ${dt}`;
   const margenRow=canMargin?`<div class='row'><div class='k'>Margen Distribuidor</div><div>${(m*100).toFixed(0)}% ${mTag(m)}</div></div>`:'';
   r.innerHTML=`<div class='${bc}'>${bt}</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='row'><div class='k'>Producto</div><div>${item.producto}</div></div><div class='row'><div class='k'>Activo</div><div>${item.activo?'Sí':'No'}</div></div><div class='row'><div class='k'>Descuento en Sala</div><div>${Number(sala.value||0).toFixed(1)}%</div></div><div class='row'><div class='k'>Cantidad</div><div>${qty}</div></div>${margenRow}<div class='row'><div class='k'>Fecha y hora del cálculo</div><div>${dt}</div></div><p class='unit-note'>Los valores de cada casilla son por unidad; el total considera la cantidad indicada arriba.</p><div class='prices'>${priceBox('PVP con IVA',pvpI)}${priceBox('PVP sin IVA',pvp)}${priceBox('PVP con IVA dto SALA',pvpSI)}${priceBox('PVP sin IVA dto SALA',pvpS)}${pvdBlocks}</div>`;renderProductMedia(item.referencia);
 }
+function ensureQuoteSession(){if(!QUOTE_SESSION_ID)QUOTE_SESSION_ID=crypto.randomUUID();return QUOTE_SESSION_ID;}
+function logQuoteItem(referencia,cantidad){
+  const sessionId=ensureQuoteSession();
+  sb.from('cotizacion_items_log').insert({cotizacion_session_id:sessionId,referencia,cantidad}).then(({error})=>{if(error)console.warn('No se pudo registrar línea de cotización agregada:',error.message);});
+}
 function pushToQuote(referencia,cantidad,descuento){
   const qty=Math.max(1,parseInt(cantidad,10)||1);
   const ds=Number(descuento||0);
   const idx=QUOTE_ITEMS.findIndex(x=>x.referencia===referencia&&x.descuento===ds);
   if(idx>=0){QUOTE_ITEMS[idx].cantidad+=qty;}
   else{QUOTE_ITEMS.push({referencia,cantidad:qty,descuento:ds});}
+  logQuoteItem(referencia,qty);
   renderQuoteCart();
 }
 function addToQuote(){
@@ -536,7 +545,7 @@ function copyMultiQuote(){
   if(!QUOTE_ITEMS.length){showToast('La cotización está vacía');return;}
   navigator.clipboard.writeText(buildMultiQuoteText()).then(()=>showToast('Cotización múltiple copiada')).catch(()=>{});
 }
-function clearQuoteCart(){QUOTE_ITEMS=[];renderQuoteCart();}
+function clearQuoteCart(){QUOTE_ITEMS=[];QUOTE_SESSION_ID=null;renderQuoteCart();}
 function wireRefAutocomplete(inputId,boxId){
   const inp=qs(inputId),box=qs(boxId);
   if(!inp||!box)return;
