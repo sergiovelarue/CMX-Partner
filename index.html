@@ -20,6 +20,8 @@
 .wrap{max-width:1100px;margin:auto;padding:18px}.hero{background:var(--brand);color:#fff;border-radius:4px;padding:24px 22px;margin-bottom:16px;border:1px solid var(--brand);position:relative}
 .hero::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--brand2)}
 .hero h1{margin:0 0 8px;font-size:1.5rem;font-family:var(--font-head);font-weight:400;letter-spacing:.3px}.hero p{margin:0;opacity:.85;line-height:1.5;max-width:900px;font-size:.92rem}.hero small{display:block;margin-top:10px;opacity:.75}
+.hero summary{cursor:pointer;color:#fff;opacity:.85;font-size:.86rem;font-weight:600;list-style:revert}
+.hero summary:hover{opacity:1}
 .card{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:18px;margin-bottom:14px}
 .grid{display:grid;grid-template-columns:1.7fr .9fr;gap:12px}.prices{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
 label{display:block;font-weight:500;margin-bottom:6px;font-size:.86rem;color:var(--muted);letter-spacing:.2px}input{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;font-size:1rem;background:#fff;color:var(--ink)}
@@ -62,6 +64,12 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 .preview-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:.82rem}
 .preview-table th,.preview-table td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left}
 .preview-table th{color:var(--muted);font-weight:500;font-size:.76rem;text-transform:uppercase;letter-spacing:.3px}
+#quoteCartTable{overflow-x:auto;-webkit-overflow-scrolling:touch}
+#quoteCartTable table.preview-table{min-width:640px}
+#quoteCartTable th,#quoteCartTable td{white-space:nowrap}
+#quoteCartTable td:nth-child(2){white-space:normal;min-width:160px}
+.cart-scroll-hint{display:none;font-size:.76rem;color:var(--muted);margin:6px 0 0}
+@media(max-width:760px){.cart-scroll-hint{display:block}}
 .summary-row{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px}
 .summary-chip{background:var(--bg2);border:1px solid var(--line);border-radius:3px;padding:8px 12px;font-size:.84rem}
 .summary-chip b{display:block;font-size:1.1rem;font-weight:400;font-family:var(--font-head);color:var(--brand)}
@@ -151,11 +159,14 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div class='hero'>
 <div id="logoWrap" class="logo-wrap hidden"><img id="companyLogo" alt="Logo empresa"></div>
 <h1 id='appName'>ListaLoop B2B</h1>
-<p id='introText'>Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.</p>
+<details id='heroDetails'>
+<summary>Ver información de la plataforma</summary>
+<p id='introText' style="margin-top:10px">Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.</p>
 <p id="empresaLine" class="hidden" style="margin-top:8px;font-weight:700"></p>
 <p style='margin-top:10px;opacity:.9;font-size:.9rem'>Base de precios integrada: <span id="baseName">-</span> | Precios vigentes desde: <span id="devDate">-</span> | Referencias activas cargadas: <span id="statRefs">-</span></p>
 <small id='waNote'></small>
-<div><span class="version-badge" id="versionBadge">Verificando lista de precios vigente…</span></div>
+</details>
+<div style="margin-top:10px"><span class="version-badge" id="versionBadge">Verificando lista de precios vigente…</span></div>
 </div>
 <div class='main-tabs' id='mainTabs'>
   <button class='p mini main-tab-btn' id='navConsultar'>🔍 Consultar</button>
@@ -589,7 +600,7 @@ function renderQuoteCart(){
       <td><button class='rm-btn' data-i='${i}'>✕</button></td>
     </tr>`;
   }).join('');
-  table.innerHTML=`<table class='preview-table'><tr><th>Ref</th><th>Descripción</th><th>Cant.</th><th>Dto %</th><th>PVP unit c/IVA dto</th><th>Subtotal PVP</th>${canMargin?`<th>Subtotal PVD</th><th>Ganancia</th>`:''}<th></th></tr>${rows}</table>`;
+  table.innerHTML=`<div class='cart-scroll-hint'>← Desliza para ver todos los datos →</div><table class='preview-table'><tr><th>Ref</th><th>Descripción</th><th>Cant.</th><th>Dto %</th><th>PVP unit c/IVA dto</th><th>Subtotal PVP</th>${canMargin?`<th>Subtotal PVD</th><th>Ganancia</th>`:''}<th></th></tr>${rows}</table>`;
   totals.innerHTML=`<div class='summary-chip'><b>${money(totalPvp)}</b>Total PVP</div>${canMargin?`<div class='summary-chip'><b>${money(totalPvd)}</b>Total PVD</div><div class='summary-chip'><b>${money(totalPvp-totalPvd)}</b>Ganancia total estimada</div>`:''}`;
   table.querySelectorAll('input.qty-input').forEach(inp=>{
     inp.onchange=()=>{const i=Number(inp.dataset.i),f=inp.dataset.f;let v=Number(inp.value);if(f==='cantidad')v=Math.max(1,Math.round(v)||1);else v=Math.max(0,v||0);QUOTE_ITEMS[i][f]=v;renderQuoteCart();};
