@@ -168,6 +168,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div><label>Descuento en Sala (%)</label><input id='sala' type='number' value='0' step='0.1'><label style='margin-top:10px'>Cantidad</label><input id='cantidad' type='number' value='1' min='1' step='1'></div>
 </div><div class='actions'><button class='p' id='calc'>Consultar precio</button><button class='g' id='copy' disabled>Copiar resultado</button><button class='g' id='quote' disabled>Copiar cotización WhatsApp</button><button class='p' id='addToQuote' disabled>🛒 Agregar a cotización</button><button class='s' id='clear'>Limpiar</button></div></div>
 <div class='card' id='r'><div class='empty'>Cargando base de productos…</div></div>
+<div class='card hidden' id='suggestedCard'><h3 style="margin:0 0 10px;color:var(--brand);font-size:1rem">🎯 Productos Sugeridos</h3><div class='dest-grid' id='suggestedGrid'></div></div>
 <div class='card hidden' id='mediaCard'><details id='mediaDetails'><summary style="cursor:pointer;font-weight:700;color:var(--brand);font-size:1rem">📎 Información técnica (imágenes, planos, manuales)</summary><div id='mediaContent' style="margin-top:10px"></div></details></div>
 <div class='card'>
   <h3 style="margin:0 0 10px;color:var(--brand);font-size:1rem">🔎 Explorar catálogo</h3>
@@ -361,6 +362,19 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
     <div id="ofList"></div>
     <div class="mini-status" id="ofStatus"></div>
   </div>
+
+  <div class="admin-sub">
+    <h4>Productos Sugeridos (venta cruzada)</h4>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Define qué producto sugerir cuando un asesor consulta otro. Se muestra en la pestaña Consultar como "Productos Sugeridos".</p>
+    <div class="inline-form">
+      <div style="position:relative"><label>Si consultan (referencia disparadora)</label><input id="vcDisparadoraRef" autocomplete="off" placeholder="Ej: CSMPC0102"><div id="vcDisparadoraRefBox" class="box admin-suggest-box"></div></div>
+      <div style="position:relative"><label>Sugerir</label><input id="vcSugeridaRef" autocomplete="off" placeholder="Ej: CCAPA6001"><div id="vcSugeridaRefBox" class="box admin-suggest-box"></div></div>
+      <div><label>Orden</label><input id="vcOrden" type="number" value="0" step="1"></div>
+      <div><button class="p mini" id="btnAddVentaCruzada" style="padding:12px 16px">Agregar sugerencia</button></div>
+    </div>
+    <div id="vcList"></div>
+    <div class="mini-status" id="vcStatus"></div>
+  </div>
 </div>
 <div class='footer'><span id="footerDistribText">Herramienta para distribuidores autorizados.</span> Información de referencia comercial. Derechos reservados.<div class='admin-gate hidden' id='adminGate'><button class='s mini' id='adminLogin'>🔒 Acceso administrador</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Visible solo para correos administradores autorizados.</span></div><div class='admin-tools hidden' id='adminTools'><button class='s mini' id='exportUsers'>Exportar registros CSV</button><button class='s mini' id='exportLogs'>Exportar uso CSV</button><button class='s mini' id='adminLogout'>Bloquear descargas</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Descargas habilitadas para administrador validado.</span></div><div style="margin-top:10px;font-size:.74rem;color:#a9b4c2">© ListaLoop B2B. Todos los derechos reservados — Sergio Velásquez.<span style="float:right;opacity:.45">23:1</span></div></div>
 </div><div id='toast'>Copiado</div>
@@ -443,9 +457,9 @@ async function renderProductMedia(referencia){
   if(vids.length)html+=`<div>${vids.map(x=>`<a href="${x.url}" target="_blank" class="badge warn" style="display:inline-block;margin:0 6px 6px 0;text-decoration:none">🎥 ${x.nombre_archivo||'Ver video'}</a>`).join('')}</div>`;
   content.innerHTML=html;card.classList.remove('hidden');
 }
-function calc(){const item=find(ref.value);if(!item){r.innerHTML="<div class='badge warn'>Referencia no encontrada</div><div class='empty'>Revisa el código o selecciona una sugerencia.</div>";copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;qs('mediaCard').classList.add('hidden');return;}
+function calc(){const item=find(ref.value);if(!item){r.innerHTML="<div class='badge warn'>Referencia no encontrada</div><div class='empty'>Revisa el código o selecciona una sugerencia.</div>";copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;qs('mediaCard').classList.add('hidden');qs('suggestedCard').classList.add('hidden');return;}
 logUsage(item);
-if(isRestricted(item.gama)){copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;qs('mediaCard').classList.add('hidden');r.innerHTML=`<div class='badge warn'>No disponible</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='empty'>${CONFIG.restricted_message||'Producto no disponible para cotización en este canal.'}</div>`;return;}
+if(isRestricted(item.gama)){copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;qs('mediaCard').classList.add('hidden');qs('suggestedCard').classList.add('hidden');r.innerHTML=`<div class='badge warn'>No disponible</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='empty'>${CONFIG.restricted_message||'Producto no disponible para cotización en este canal.'}</div>`;return;}
 lastItem=item;
 renderPriceCard();
 }
@@ -487,7 +501,7 @@ Fecha cálculo: ${dt}`;
   const priceBox=(label,val,extraCls)=>`<div class='price${extraCls?(' '+extraCls):''}'><div class='t'>${label} <span style="font-weight:400;font-size:.7rem">(unitario)</span></div><div class='v'>${money(val)}</div><div class='qty-total'>Cant. ${qty} · Total: ${money(val*qty)}</div></div>`;
   const pvdBlocks=canMargin?priceBox('PVD con IVA',pvdI,'hl')+priceBox('PVD sin IVA',pvd,'hl')+priceBox('Esto es lo que se puede ganar el distribuidor',gain,'gain'):'';
   const margenRow=canMargin?`<div class='row'><div class='k'>Margen Distribuidor</div><div>${(m*100).toFixed(0)}% ${mTag(m)}</div></div>`:'';
-  r.innerHTML=`<div class='${bc}'>${bt}</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='row'><div class='k'>Producto</div><div>${item.producto}</div></div><div class='row'><div class='k'>Activo</div><div>${item.activo?'Sí':'No'}</div></div><div class='row'><div class='k'>Descuento en Sala</div><div>${Number(sala.value||0).toFixed(1)}%</div></div><div class='row'><div class='k'>Cantidad</div><div>${qty}</div></div>${margenRow}<div class='row'><div class='k'>Fecha y hora del cálculo</div><div>${dt}</div></div><p class='unit-note'>Los valores de cada casilla son por unidad; el total considera la cantidad indicada arriba.</p><div class='prices'>${priceBox('PVP con IVA',pvpI)}${priceBox('PVP sin IVA',pvp)}${priceBox('PVP con IVA dto SALA',pvpSI)}${priceBox('PVP sin IVA dto SALA',pvpS)}${pvdBlocks}</div>`;renderProductMedia(item.referencia);
+  r.innerHTML=`<div class='${bc}'>${bt}</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='row'><div class='k'>Producto</div><div>${item.producto}</div></div><div class='row'><div class='k'>Activo</div><div>${item.activo?'Sí':'No'}</div></div><div class='row'><div class='k'>Descuento en Sala</div><div>${Number(sala.value||0).toFixed(1)}%</div></div><div class='row'><div class='k'>Cantidad</div><div>${qty}</div></div>${margenRow}<div class='row'><div class='k'>Fecha y hora del cálculo</div><div>${dt}</div></div><p class='unit-note'>Los valores de cada casilla son por unidad; el total considera la cantidad indicada arriba.</p><div class='prices'>${priceBox('PVP con IVA',pvpI)}${priceBox('PVP sin IVA',pvp)}${priceBox('PVP con IVA dto SALA',pvpSI)}${priceBox('PVP sin IVA dto SALA',pvpS)}${pvdBlocks}</div>`;renderProductMedia(item.referencia);renderSuggestedProducts(item.referencia);
 }
 function ensureQuoteSession(){if(!QUOTE_SESSION_ID)QUOTE_SESSION_ID=crypto.randomUUID();return QUOTE_SESSION_ID;}
 function logQuoteItem(referencia,cantidad){
@@ -635,7 +649,7 @@ function fillBadgeInputs(){
   if(qs('badgeBestseller'))qs('badgeBestseller').value=SETTINGS.catalogo_bestseller_badge||'';
   if(qs('badgeOferta'))qs('badgeOferta').value=SETTINGS.catalogo_oferta_badge||'';
   if(qs('ofertaFormato'))qs('ofertaFormato').value=SETTINGS.catalogo_oferta_formato||'porcentaje';
-  renderDestacadosAdmin();
+  renderDestacadosAdmin();renderVentaCruzadaAdmin();
 }
 async function saveBadgeSettings(){
   const foco=(qs('badgeFoco').value||'').trim()||'Nuevo';
@@ -680,6 +694,31 @@ async function addDestacado(bloque){
   qs(refInputId).value='';
   await reloadCatalogoDestacados();
 }
+function renderVentaCruzadaAdmin(){
+  const el=qs('vcList');if(!el)return;
+  const items=CATALOGO_ITEMS.filter(x=>x.bloque==='venta_cruzada').sort((a,b)=>(normalize(a.referencia_disparadora).localeCompare(normalize(b.referencia_disparadora)))||((a.orden||0)-(b.orden||0)));
+  if(!items.length){el.innerHTML="<div class='empty' style='padding:10px'>Sin sugerencias definidas todavía.</div>";return;}
+  el.innerHTML=`<table class='preview-table'><tr><th>Si consultan</th><th>Sugerir</th><th>Orden</th><th></th></tr>${items.map(it=>{
+    const disp=byRef.get(normalize(it.referencia_disparadora)),sug=byRef.get(normalize(it.referencia));
+    return`<tr><td class='mono'>${it.referencia_disparadora}${disp?` — ${disp.descripcion}`:' <span style="color:var(--danger)">no encontrada</span>'}</td><td class='mono'>${it.referencia}${sug?` — ${sug.descripcion}`:' <span style="color:var(--danger)">no encontrada</span>'}</td><td>${it.orden}</td><td><button class='rm-btn' data-id='${it.id}'>✕</button></td></tr>`;
+  }).join('')}</table>`;
+  el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeDestacado(Number(btn.dataset.id));});
+}
+async function addVentaCruzada(){
+  const dispv=normalize(qs('vcDisparadoraRef').value),sugv=normalize(qs('vcSugeridaRef').value);
+  if(!dispv||!sugv){setStatus('vcStatus','Ingresa ambas referencias.','err');return;}
+  if(dispv===sugv){setStatus('vcStatus','La referencia disparadora y la sugerida no pueden ser la misma.','err');return;}
+  if(!byRef.has(dispv)){setStatus('vcStatus',`No existe la referencia disparadora "${dispv}" en el catálogo activo.`,'err');return;}
+  if(!byRef.has(sugv)){setStatus('vcStatus',`No existe la referencia sugerida "${sugv}" en el catálogo activo.`,'err');return;}
+  const orden=Number(qs('vcOrden').value||0);
+  const payload={referencia_disparadora:dispv,referencia:sugv,bloque:'venta_cruzada',orden,activo:true,updated_by:CURRENT_USER?.email||'admin'};
+  setStatus('vcStatus','Guardando…','info');
+  const{error}=await sb.from('catalogo_destacados').upsert(payload,{onConflict:'referencia_disparadora,referencia'});
+  if(error){setStatus('vcStatus','Error al guardar: '+error.message+'. ¿Ya corriste el script fase2_consultas_venta_cruzada.sql en Supabase?','err');return;}
+  setStatus('vcStatus','✅ Sugerencia agregada.','ok');
+  qs('vcDisparadoraRef').value='';qs('vcSugeridaRef').value='';
+  await reloadCatalogoDestacados();
+}
 async function removeDestacado(id){
   const{error}=await sb.from('catalogo_destacados').delete().eq('id',id);
   if(error){showToast('Error al quitar: '+error.message);return;}
@@ -688,10 +727,26 @@ async function removeDestacado(id){
 async function reloadCatalogoDestacados(){
   const{data,error}=await sb.from('catalogo_destacados').select('*').order('bloque').order('orden');
   if(error){console.warn('No se pudo recargar catalogo_destacados:',error.message);return;}
-  CATALOGO_ITEMS=data||[];renderDestacadosAdmin();
+  CATALOGO_ITEMS=data||[];renderDestacadosAdmin();renderVentaCruzadaAdmin();
   if(qs('viewDestacados')&&!qs('viewDestacados').classList.contains('hidden'))renderDestacados();
+  if(lastItem)renderSuggestedProducts(lastItem.referencia);
 }
 function destBadgeHtml(text,cls){return text?`<span class='dest-badge ${cls||''}'>${text}</span>`:'';}
+function renderSuggestedCard(refCode){
+  const prod=byRef.get(normalize(refCode));
+  if(!prod)return'';
+  const img=MEDIA_IMAGES.get(normalize(refCode));
+  return`<div class='dest-card' data-ref='${prod.referencia}'>${img?`<img src='${img}' alt='${prod.referencia}'>`:`<div class='ph'>📦</div>`}<div class='dest-name'>${prod.descripcion}</div><div class='dest-ref'>${prod.referencia}</div></div>`;
+}
+function renderSuggestedProducts(referencia){
+  const card=qs('suggestedCard'),grid=qs('suggestedGrid');
+  if(!card||!grid)return;
+  const items=CATALOGO_ITEMS.filter(x=>x.bloque==='venta_cruzada'&&x.activo!==false&&normalize(x.referencia_disparadora)===normalize(referencia)).sort((a,b)=>(a.orden||0)-(b.orden||0));
+  if(!items.length){card.classList.add('hidden');grid.innerHTML='';return;}
+  grid.innerHTML=items.map(it=>renderSuggestedCard(it.referencia)).join('');
+  grid.querySelectorAll('.dest-card').forEach(c=>{c.onclick=()=>openDestOverlay(c.dataset.ref,'venta_cruzada');});
+  card.classList.remove('hidden');
+}
 function renderDestCard(it,bloque){
   const prod=byRef.get(normalize(it.referencia));
   if(!prod)return'';
@@ -848,10 +903,10 @@ PRODUCTS=productsData||[];RULES=rulesData||[];
 renderVersionBadge(verData?.fecha_actualizacion);
 DATA=PRODUCTS.filter(x=>x.activo).map(x=>({...x,search:(`${x.referencia} ${x.descripcion} ${x.gama} ${x.producto}`).toUpperCase()}));byRef=new Map(DATA.map(x=>[normalize(x.referencia),x]));document.getElementById('appName').textContent=CONFIG.app_name||'ListaLoop B2B';document.title=CONFIG.app_name||'ListaLoop B2B';const amwt=document.querySelector('meta[name="apple-mobile-web-app-title"]'),anm=document.querySelector('meta[name="application-name"]');if(amwt)amwt.setAttribute('content',CONFIG.app_name||'ListaLoop B2B');if(anm)anm.setAttribute('content',CONFIG.app_name||'ListaLoop B2B');document.getElementById('introText').textContent=CONFIG.intro_text||'Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.';document.getElementById('baseName').textContent=CONFIG.base_name||'-';document.getElementById('devDate').textContent=CONFIG.development_date||'-';document.getElementById('waNote').textContent=CONFIG.whatsapp_note||'';document.getElementById('statRefs').textContent=DATA.length.toLocaleString('es-CO');
 applyCompanyName();applyLogo();applyTheme(SETTINGS.theme||'original');if(qs('settingsCompany'))qs('settingsCompany').value=SETTINGS.company_name||'';
-renderDestacadosAdmin();renderDestacados();
+renderDestacadosAdmin();renderVentaCruzadaAdmin();renderDestacados();
 populateExploreFilters();EXPLORE_PAGE=1;renderExplore();
 r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";}catch(err){console.error(err);r.innerHTML="<div class='badge danger'>Error de carga</div><div class='empty'>No fue posible conectar con la base de precios (Supabase). Intenta recargar la página; si el error persiste, contacta a soporte.</div>";renderVersionBadge(null);}}
-document.getElementById('calc').onclick=calc;document.getElementById('clear').onclick=()=>{ref.value='';sala.value='0';if(cant)cant.value='1';box.style.display='none';copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";qs('mediaCard').classList.add('hidden');ref.focus();};
+document.getElementById('calc').onclick=calc;document.getElementById('clear').onclick=()=>{ref.value='';sala.value='0';if(cant)cant.value='1';box.style.display='none';copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";qs('mediaCard').classList.add('hidden');qs('suggestedCard').classList.add('hidden');ref.focus();};
 ref.addEventListener('input',showS);ref.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});sala.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});document.addEventListener('click',e=>{if(!box.contains(e.target)&&e.target!==ref)box.style.display='none';});
 if(cant)cant.addEventListener('input',()=>{if(lastItem)renderPriceCard();});
 copy.onclick=async()=>{if(!lastCopy)return;try{await navigator.clipboard.writeText(lastCopy);showToast('Resultado copiado');}catch(e){}};quote.onclick=async()=>{if(!lastQuote)return;try{await navigator.clipboard.writeText(lastQuote);showToast('Cotización copiada');}catch(e){}};
@@ -869,6 +924,8 @@ qs('editRef').addEventListener('input',updateCurrentPriceDisplay);qs('editPrice'
 qs('tabPrices').onclick=()=>showAdminTab('prices');qs('tabSettings').onclick=()=>showAdminTab('settings');qs('tabDestacados').onclick=()=>showAdminTab('destacados');
 qs('btnSaveBadges').onclick=saveBadgeSettings;qs('btnAddFoco').onclick=()=>addDestacado('foco');qs('btnAddBs').onclick=()=>addDestacado('bestseller');qs('btnAddOf').onclick=()=>addDestacado('oferta');
 wireRefAutocomplete('focoRef','focoRefBox');wireRefAutocomplete('bsRef','bsRefBox');wireRefAutocomplete('ofRef','ofRefBox');
+wireRefAutocomplete('vcDisparadoraRef','vcDisparadoraRefBox');wireRefAutocomplete('vcSugeridaRef','vcSugeridaRefBox');
+qs('btnAddVentaCruzada').onclick=addVentaCruzada;
 qs('btnSaveCompany').onclick=async()=>{const raw=qs('settingsCompany').value.trim();if(!raw){setStatus('companyStatus','Ingresa un nombre de empresa.','err');return;}const company=raw.toUpperCase();setStatus('companyStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({company_name:company,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('companyStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.company_name=company;qs('settingsCompany').value=company;applyCompanyName();setStatus('companyStatus','✅ Empresa contratante actualizada para todos los usuarios.','ok');};
 qs('btnUploadLogo').onclick=async()=>{const file=qs('logoFile').files[0];if(!file){setStatus('logoStatus','Selecciona un archivo de imagen.','err');return;}if(file.size>1024*1024){setStatus('logoStatus','El archivo supera 1MB. Usa una imagen más liviana.','err');return;}setStatus('logoStatus','Subiendo…','info');const path=`logo_${Date.now()}_${file.name}`;const{error:upErr}=await sb.storage.from('app-assets').upload(path,file,{upsert:true});if(upErr){setStatus('logoStatus','Error al subir: '+upErr.message,'err');return;}const{data:pub}=sb.storage.from('app-assets').getPublicUrl(path);const{error}=await sb.from('app_settings').update({logo_url:pub.publicUrl,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('logoStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.logo_url=pub.publicUrl;applyLogo();setStatus('logoStatus','✅ Logo actualizado para todos los usuarios.','ok');qs('logoFile').value='';};
 qs('btnRemoveLogo').onclick=async()=>{setStatus('logoStatus','Quitando…','info');const{error}=await sb.from('app_settings').update({logo_url:'',updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('logoStatus','Error: '+error.message,'err');return;}SETTINGS.logo_url='';applyLogo();setStatus('logoStatus','Logo quitado.','ok');};
