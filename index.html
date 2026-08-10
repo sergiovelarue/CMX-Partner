@@ -168,6 +168,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div><label>Descuento en Sala (%)</label><input id='sala' type='number' value='0' step='0.1'><label style='margin-top:10px'>Cantidad</label><input id='cantidad' type='number' value='1' min='1' step='1'></div>
 </div><div class='actions'><button class='p' id='calc'>Consultar precio</button><button class='g' id='copy' disabled>Copiar resultado</button><button class='g' id='quote' disabled>Copiar cotización WhatsApp</button><button class='p' id='addToQuote' disabled>🛒 Agregar a cotización</button><button class='s' id='clear'>Limpiar</button></div></div>
 <div class='card' id='r'><div class='empty'>Cargando base de productos…</div></div>
+<div class='card hidden' id='stockCard'><h3 style="margin:0 0 10px;color:var(--brand);font-size:1rem">📦 Disponibilidad</h3><div id='stockContent'></div></div>
 <div class='card hidden' id='suggestedCard'><h3 style="margin:0 0 10px;color:var(--brand);font-size:1rem">🎯 Productos Sugeridos</h3><div class='dest-grid' id='suggestedGrid'></div></div>
 <div class='card hidden' id='relatedCard'><h3 style="margin:0 0 10px;color:var(--brand);font-size:1rem">🤝 Productos comprados en conjunto normalmente</h3><div class='dest-grid' id='relatedGrid'></div></div>
 <div class='card hidden' id='mediaCard'><details id='mediaDetails'><summary style="cursor:pointer;font-weight:700;color:var(--brand);font-size:1rem">📎 Información técnica (imágenes, planos, manuales)</summary><div id='mediaContent' style="margin-top:10px"></div></details></div>
@@ -272,6 +273,36 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
       <div><button class="p mini" id="btnUploadMedia" style="padding:12px 16px">Asociar al producto</button></div>
     </div>
     <div class="mini-status" id="mediaStatus"></div>
+  </div>
+
+  <div class="admin-sub">
+    <h4>📦 Disponibilidad MTS / MTO — actualizar una referencia</h4>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">MTS (Make to Stock): se muestran unidades disponibles y próximas a llegar. MTO (Make to Order): se muestran días de entrega aproximados.</p>
+    <div class="inline-form">
+      <div><label>Referencia</label><input id="stockRef" placeholder="Ej: CCAPA6001"></div>
+      <div><label>Tipo de abastecimiento</label><select id="stockTipo"><option value="MTS">MTS (Make to Stock)</option><option value="MTO">MTO (Make to Order)</option></select></div>
+    </div>
+    <div class="inline-form" style="margin-top:8px" id="stockMtsFields">
+      <div><label>Unidades disponibles</label><input id="stockUnidadesDisponibles" type="number" min="0" step="1"></div>
+      <div><label>Unidades próximas a llegar</label><input id="stockUnidadesProximas" type="number" min="0" step="1"></div>
+      <div><label>Fecha estimada de llegada</label><input id="stockFechaLlegada" type="date"></div>
+    </div>
+    <div class="inline-form hidden" style="margin-top:8px" id="stockMtoFields">
+      <div><label>Días de entrega aproximados</label><input id="stockDiasEntrega" type="number" min="0" step="1"></div>
+    </div>
+    <div class="actions" style="margin-top:8px"><button class="p mini" id="btnUpdateStock" style="padding:12px 16px">Actualizar disponibilidad</button></div>
+    <div class="mini-status" id="stockStatus"></div>
+  </div>
+
+  <div class="admin-sub">
+    <h4>📦 Disponibilidad MTS / MTO — carga masiva (CSV)</h4>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Columnas requeridas: <span class="mono">referencia, tipo_abastecimiento, unidades_disponibles, unidades_proximas_llegar, fecha_estimada_llegada, dias_entrega_aprox</span>. fecha_estimada_llegada en formato AAAA-MM-DD. Deja vacías las columnas que no apliquen según el tipo.</p>
+    <div class="inline-form">
+      <div><label>Archivo CSV</label><input id="stockCsvFile" type="file" accept=".csv"></div>
+      <div><button class="s mini" id="btnAnalyzeStockCSV" style="padding:12px 16px">Analizar archivo</button></div>
+    </div>
+    <div id="stockCsvPreview"></div>
+    <div class="mini-status" id="stockBulkStatus"></div>
   </div>
 </div>
 <div class='card admin-panel hidden' id='adminSettingsPanel'>
@@ -423,7 +454,7 @@ function logUsage(item){if(!CURRENT_USER||!item)return;const logs=readJSON(LOGS_
 // Fase 3: registro agregado/anónimo (sin datos de usuario) para alimentar "más consultados" y venta cruzada.
 sb.from('consultas_log').insert({referencia:item.referencia}).then(({error})=>{if(error)console.warn('No se pudo registrar consulta agregada:',error.message);});
 }
-let PRODUCTS=[],RULES=[],CONFIG={},DATA=[],byRef=new Map(),lastCopy="",lastQuote="",lastItem=null,QUOTE_ITEMS=[],CATALOGO_ITEMS=[],MEDIA_IMAGES=new Map(),QUOTE_SESSION_ID=null,RANKING_MAP=new Map(),EXPLORE_PAGE=1;
+let PRODUCTS=[],RULES=[],CONFIG={},DATA=[],byRef=new Map(),lastCopy="",lastQuote="",lastItem=null,QUOTE_ITEMS=[],CATALOGO_ITEMS=[],MEDIA_IMAGES=new Map(),QUOTE_SESSION_ID=null,RANKING_MAP=new Map(),EXPLORE_PAGE=1,DISPONIBILIDAD_MAP=new Map();
 const EXPLORE_PAGE_SIZE=20;
 let SETTINGS={company_name:'',logo_url:'',theme:'original',catalogo_foco_badge:'Nuevo',catalogo_bestseller_badge:'Best Seller',catalogo_oferta_badge:'Oferta',catalogo_oferta_formato:'porcentaje'};
 const ref=document.getElementById('ref'),sala=document.getElementById('sala'),cant=document.getElementById('cantidad'),r=document.getElementById('r'),box=document.getElementById('box'),copy=document.getElementById('copy'),quote=document.getElementById('quote'),addBtn=document.getElementById('addToQuote'),toast=document.getElementById('toast');
@@ -458,9 +489,9 @@ async function renderProductMedia(referencia){
   if(vids.length)html+=`<div>${vids.map(x=>`<a href="${x.url}" target="_blank" class="badge warn" style="display:inline-block;margin:0 6px 6px 0;text-decoration:none">🎥 ${x.nombre_archivo||'Ver video'}</a>`).join('')}</div>`;
   content.innerHTML=html;card.classList.remove('hidden');
 }
-function calc(){const item=find(ref.value);if(!item){r.innerHTML="<div class='badge warn'>Referencia no encontrada</div><div class='empty'>Revisa el código o selecciona una sugerencia.</div>";copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;qs('mediaCard').classList.add('hidden');qs('suggestedCard').classList.add('hidden');qs('relatedCard').classList.add('hidden');return;}
+function calc(){const item=find(ref.value);if(!item){r.innerHTML="<div class='badge warn'>Referencia no encontrada</div><div class='empty'>Revisa el código o selecciona una sugerencia.</div>";copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;qs('mediaCard').classList.add('hidden');qs('suggestedCard').classList.add('hidden');qs('relatedCard').classList.add('hidden');qs('stockCard').classList.add('hidden');return;}
 logUsage(item);
-if(isRestricted(item.gama)){copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;qs('mediaCard').classList.add('hidden');qs('suggestedCard').classList.add('hidden');qs('relatedCard').classList.add('hidden');r.innerHTML=`<div class='badge warn'>No disponible</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='empty'>${CONFIG.restricted_message||'Producto no disponible para cotización en este canal.'}</div>`;return;}
+if(isRestricted(item.gama)){copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;qs('mediaCard').classList.add('hidden');qs('suggestedCard').classList.add('hidden');qs('relatedCard').classList.add('hidden');qs('stockCard').classList.add('hidden');r.innerHTML=`<div class='badge warn'>No disponible</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='empty'>${CONFIG.restricted_message||'Producto no disponible para cotización en este canal.'}</div>`;return;}
 lastItem=item;
 renderPriceCard();
 }
@@ -502,7 +533,7 @@ Fecha cálculo: ${dt}`;
   const priceBox=(label,val,extraCls)=>`<div class='price${extraCls?(' '+extraCls):''}'><div class='t'>${label} <span style="font-weight:400;font-size:.7rem">(unitario)</span></div><div class='v'>${money(val)}</div><div class='qty-total'>Cant. ${qty} · Total: ${money(val*qty)}</div></div>`;
   const pvdBlocks=canMargin?priceBox('PVD con IVA',pvdI,'hl')+priceBox('PVD sin IVA',pvd,'hl')+priceBox('Esto es lo que se puede ganar el distribuidor',gain,'gain'):'';
   const margenRow=canMargin?`<div class='row'><div class='k'>Margen Distribuidor</div><div>${(m*100).toFixed(0)}% ${mTag(m)}</div></div>`:'';
-  r.innerHTML=`<div class='${bc}'>${bt}</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='row'><div class='k'>Producto</div><div>${item.producto}</div></div><div class='row'><div class='k'>Activo</div><div>${item.activo?'Sí':'No'}</div></div><div class='row'><div class='k'>Descuento en Sala</div><div>${Number(sala.value||0).toFixed(1)}%</div></div><div class='row'><div class='k'>Cantidad</div><div>${qty}</div></div>${margenRow}<div class='row'><div class='k'>Fecha y hora del cálculo</div><div>${dt}</div></div><p class='unit-note'>Los valores de cada casilla son por unidad; el total considera la cantidad indicada arriba.</p><div class='prices'>${priceBox('PVP con IVA',pvpI)}${priceBox('PVP sin IVA',pvp)}${priceBox('PVP con IVA dto SALA',pvpSI)}${priceBox('PVP sin IVA dto SALA',pvpS)}${pvdBlocks}</div>`;renderProductMedia(item.referencia);renderSuggestedProducts(item.referencia);renderRelatedProducts(item.referencia);
+  r.innerHTML=`<div class='${bc}'>${bt}</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='row'><div class='k'>Producto</div><div>${item.producto}</div></div><div class='row'><div class='k'>Activo</div><div>${item.activo?'Sí':'No'}</div></div><div class='row'><div class='k'>Descuento en Sala</div><div>${Number(sala.value||0).toFixed(1)}%</div></div><div class='row'><div class='k'>Cantidad</div><div>${qty}</div></div>${margenRow}<div class='row'><div class='k'>Fecha y hora del cálculo</div><div>${dt}</div></div><p class='unit-note'>Los valores de cada casilla son por unidad; el total considera la cantidad indicada arriba.</p><div class='prices'>${priceBox('PVP con IVA',pvpI)}${priceBox('PVP sin IVA',pvp)}${priceBox('PVP con IVA dto SALA',pvpSI)}${priceBox('PVP sin IVA dto SALA',pvpS)}${pvdBlocks}</div>`;renderProductMedia(item.referencia);renderSuggestedProducts(item.referencia);renderRelatedProducts(item.referencia);renderStockInfo(item.referencia);
 }
 function ensureQuoteSession(){if(!QUOTE_SESSION_ID)QUOTE_SESSION_ID=crypto.randomUUID();return QUOTE_SESSION_ID;}
 function logQuoteItem(referencia,cantidad){
@@ -516,6 +547,8 @@ function pushToQuote(referencia,cantidad,descuento){
   if(idx>=0){QUOTE_ITEMS[idx].cantidad+=qty;}
   else{QUOTE_ITEMS.push({referencia,cantidad:qty,descuento:ds});}
   logQuoteItem(referencia,qty);
+  const warn=stockWarningFor(referencia);
+  if(warn)showToast(`⚠️ ${referencia}: ${warn}`);
   renderQuoteCart();
 }
 function addToQuote(){
@@ -542,9 +575,10 @@ function renderQuoteCart(){
     const c=quoteLineCalc(line);
     if(!c)return'';
     totalPvp+=c.subtotalPvp;totalPvd+=c.subtotalPvd;
+    const warn=stockWarningFor(line.referencia);
     return`<tr>
       <td class='mono'>${c.item.referencia}</td>
-      <td>${c.item.descripcion}</td>
+      <td>${c.item.descripcion}${warn?`<div style="color:var(--danger);font-size:.76rem;margin-top:2px">⚠️ ${warn}</div>`:''}</td>
       <td><input class='qty-input' type='number' min='1' step='1' value='${line.cantidad}' data-i='${i}' data-f='cantidad'></td>
       <td><input class='qty-input' type='number' min='0' step='0.1' value='${line.descuento}' data-i='${i}' data-f='descuento'></td>
       <td>${money(c.pvpSI)}</td>
@@ -733,6 +767,108 @@ async function reloadCatalogoDestacados(){
   if(lastItem)renderSuggestedProducts(lastItem.referencia);
 }
 function destBadgeHtml(text,cls){return text?`<span class='dest-badge ${cls||''}'>${text}</span>`:'';}
+function stockBadgeClass(unidades){if(unidades===null||unidades===undefined)return'';if(unidades<=0)return'badge danger';if(unidades<10)return'badge warn';return'badge ok';}
+function formatFechaCorta(f){if(!f)return'';try{return new Intl.DateTimeFormat('es-CO',{dateStyle:'medium'}).format(new Date(f+'T00:00:00'));}catch(e){return f;}}
+function renderStockInfo(referencia){
+  const card=qs('stockCard'),content=qs('stockContent');
+  if(!card||!content)return;
+  const data=DISPONIBILIDAD_MAP.get(normalize(referencia));
+  if(!data){card.classList.add('hidden');content.innerHTML='';return;}
+  let html='';
+  if(data.tipo_abastecimiento==='MTS'){
+    const u=data.unidades_disponibles,p=data.unidades_proximas_llegar,f=data.fecha_estimada_llegada;
+    if(u!==null&&u!==undefined){
+      const txt=u<=0?'Agotado':(u<10?`Últimas unidades: ${u}`:`Disponible: ${u} unidades`);
+      html+=`<div class='${stockBadgeClass(u)}'>${txt}</div>`;
+    }
+    if(p!==null&&p!==undefined&&p>0){
+      html+=`<div class='row' style='margin-top:8px'><div class='k'>Próximas a llegar</div><div>${p} unidades${f?` — estimado ${formatFechaCorta(f)}`:''}</div></div>`;
+    }
+  }else if(data.tipo_abastecimiento==='MTO'){
+    const d=data.dias_entrega_aprox;
+    html+=`<div class='badge warn'>Producto sobre pedido</div><div class='row' style='margin-top:8px'><div class='k'>Entrega aproximada</div><div>${d!==null&&d!==undefined?`${d} días hábiles`:'No definida todavía'}</div></div>`;
+  }
+  if(!html){card.classList.add('hidden');content.innerHTML='';return;}
+  content.innerHTML=html;card.classList.remove('hidden');
+}
+async function reloadDisponibilidad(){
+  const{data,error}=await sb.from('producto_disponibilidad').select('*');
+  if(error){console.warn('No se pudo recargar disponibilidad:',error.message);return;}
+  DISPONIBILIDAD_MAP=new Map((data||[]).map(x=>[normalize(x.referencia),x]));
+  if(lastItem)renderStockInfo(lastItem.referencia);
+  renderQuoteCart();
+}
+function toggleStockFields(){const tipo=qs('stockTipo').value;qs('stockMtsFields').classList.toggle('hidden',tipo!=='MTS');qs('stockMtoFields').classList.toggle('hidden',tipo!=='MTO');}
+async function updateStockManual(){
+  const refv=normalize(qs('stockRef').value);const tipo=qs('stockTipo').value;
+  if(!refv){setStatus('stockStatus','Ingresa una referencia.','err');return;}
+  if(!byRef.has(refv)){setStatus('stockStatus',`No existe la referencia "${refv}" en el catálogo activo.`,'err');return;}
+  const payload={referencia:refv,tipo_abastecimiento:tipo,updated_by:CURRENT_USER?.email||'admin'};
+  if(tipo==='MTS'){
+    const ud=qs('stockUnidadesDisponibles').value,up=qs('stockUnidadesProximas').value,fl=qs('stockFechaLlegada').value;
+    payload.unidades_disponibles=ud===''?null:Number(ud);payload.unidades_proximas_llegar=up===''?null:Number(up);payload.fecha_estimada_llegada=fl||null;payload.dias_entrega_aprox=null;
+  }else{
+    const de=qs('stockDiasEntrega').value;
+    payload.dias_entrega_aprox=de===''?null:Number(de);payload.unidades_disponibles=null;payload.unidades_proximas_llegar=null;payload.fecha_estimada_llegada=null;
+  }
+  setStatus('stockStatus','Guardando…','info');
+  const{error}=await sb.from('producto_disponibilidad').upsert(payload,{onConflict:'referencia'});
+  if(error){setStatus('stockStatus','Error al guardar: '+error.message+'. ¿Ya corriste el script disponibilidad_mts_mto.sql en Supabase?','err');return;}
+  setStatus('stockStatus','✅ Disponibilidad actualizada.','ok');
+  qs('stockRef').value='';qs('stockUnidadesDisponibles').value='';qs('stockUnidadesProximas').value='';qs('stockFechaLlegada').value='';qs('stockDiasEntrega').value='';
+  await reloadDisponibilidad();
+}
+let PENDING_STOCK_ROWS=null;
+function validateStockRow(row){
+  const errs=[];const ref=(row.referencia||'').trim();const tipo=(row.tipo_abastecimiento||'').trim().toUpperCase();
+  if(!ref)errs.push('referencia vacía');
+  if(ref&&!byRef.has(normalize(ref)))errs.push('referencia no existe en el catálogo activo');
+  if(tipo!=='MTS'&&tipo!=='MTO')errs.push('tipo_abastecimiento debe ser MTS o MTO');
+  let ud=row.unidades_disponibles,up=row.unidades_proximas_llegar;const fl=(row.fecha_estimada_llegada||'').trim();let de=row.dias_entrega_aprox;
+  ud=(ud===undefined||ud===null||ud==='')?null:Number(ud);up=(up===undefined||up===null||up==='')?null:Number(up);de=(de===undefined||de===null||de==='')?null:Number(de);
+  if(ud!==null&&isNaN(ud))errs.push('unidades_disponibles inválido');
+  if(up!==null&&isNaN(up))errs.push('unidades_proximas_llegar inválido');
+  if(de!==null&&isNaN(de))errs.push('dias_entrega_aprox inválido');
+  return{ok:errs.length===0,errs,referencia:ref,tipo_abastecimiento:tipo,unidades_disponibles:tipo==='MTS'?ud:null,unidades_proximas_llegar:tipo==='MTS'?up:null,fecha_estimada_llegada:tipo==='MTS'?(fl||null):null,dias_entrega_aprox:tipo==='MTO'?de:null};
+}
+function analyzeStockCSV(){
+  const file=qs('stockCsvFile').files[0];
+  if(!file){setStatus('stockBulkStatus','Selecciona un archivo CSV primero.','err');return;}
+  setStatus('stockBulkStatus','Leyendo archivo…','info');
+  Papa.parse(file,{header:true,skipEmptyLines:true,complete:function(results){
+    const rawRows=results.data;const seen=new Set();const valid=[];const invalid=[];
+    rawRows.forEach((row,i)=>{
+      const v=validateStockRow(row);const refKey=normalize(v.referencia);
+      if(!v.ok){invalid.push({row:i+2,errs:v.errs.join(', ')});return;}
+      if(seen.has(refKey)){invalid.push({row:i+2,errs:'referencia duplicada en el archivo'});return;}
+      seen.add(refKey);
+      valid.push({referencia:refKey,tipo_abastecimiento:v.tipo_abastecimiento,unidades_disponibles:v.unidades_disponibles,unidades_proximas_llegar:v.unidades_proximas_llegar,fecha_estimada_llegada:v.fecha_estimada_llegada,dias_entrega_aprox:v.dias_entrega_aprox,updated_by:CURRENT_USER?.email||'admin'});
+    });
+    PENDING_STOCK_ROWS=valid.length?valid:null;
+    const preview=qs('stockCsvPreview');
+    preview.innerHTML=`<div class='mini-status ${invalid.length?'err':'ok'}'>${valid.length} fila(s) válidas${invalid.length?`, ${invalid.length} con error`:''}.</div>${valid.length?`<div class='actions' style='margin-top:8px'><button class='p mini' id='btnApplyStockCSV' style='padding:12px 16px'>Aplicar ${valid.length} actualizaciones</button></div>`:''}${invalid.length?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--danger);font-size:.84rem">Ver filas con error</summary><table class="preview-table"><tr><th>Fila</th><th>Problema</th></tr>${invalid.slice(0,30).map(x=>`<tr><td>${x.row}</td><td>${x.errs}</td></tr>`).join('')}</table>${invalid.length>30?`<div style="font-size:.8rem;color:var(--muted);margin-top:4px">Mostrando 30 de ${invalid.length}</div>`:''}</details>`:''}`;
+    if(valid.length)qs('btnApplyStockCSV').onclick=applyStockCSV;
+  }});
+}
+async function applyStockCSV(){
+  if(!PENDING_STOCK_ROWS||!PENDING_STOCK_ROWS.length)return;
+  const confirmMsg=`Vas a actualizar la disponibilidad de ${PENDING_STOCK_ROWS.length} referencias.\n\nEsto no afecta precios ni el resto del catálogo, solo la información de disponibilidad de esas referencias.\n\n¿Confirmas?`;
+  if(!confirm(confirmMsg))return;
+  setStatus('stockBulkStatus','Aplicando actualizaciones…','info');
+  const{error}=await sb.from('producto_disponibilidad').upsert(PENDING_STOCK_ROWS,{onConflict:'referencia'});
+  if(error){setStatus('stockBulkStatus','Error al guardar: '+error.message,'err');return;}
+  setStatus('stockBulkStatus','✅ Disponibilidad actualizada correctamente.','ok');
+  PENDING_STOCK_ROWS=null;qs('stockCsvPreview').innerHTML='';qs('stockCsvFile').value='';
+  await reloadDisponibilidad();
+}
+function totalQtyForRef(referencia){return QUOTE_ITEMS.filter(x=>x.referencia===referencia).reduce((s,x)=>s+x.cantidad,0);}
+function stockWarningFor(referencia){
+  const data=DISPONIBILIDAD_MAP.get(normalize(referencia));
+  if(!data||data.tipo_abastecimiento!=='MTS'||data.unidades_disponibles===null||data.unidades_disponibles===undefined)return null;
+  const total=totalQtyForRef(referencia);
+  if(total>data.unidades_disponibles)return`Pides ${total}, disponibles: ${data.unidades_disponibles}`;
+  return null;
+}
 function renderSuggestedCard(refCode){
   const prod=byRef.get(normalize(refCode));
   if(!prod)return'';
@@ -894,21 +1030,24 @@ await init();showToast('Lista de precios actualizada');}
 
 function renderVersionBadge(fecha){const el=qs('versionBadge');if(!el)return;if(!fecha){el.textContent='No fue posible verificar la fecha de la lista de precios';el.classList.add('stale');return;}const dt=new Intl.DateTimeFormat('es-CO',{dateStyle:'medium',timeStyle:'short'}).format(new Date(fecha));el.textContent=`Lista de precios vigente actualizada: ${dt}`;const hoursSince=(Date.now()-new Date(fecha).getTime())/36e5;el.classList.toggle('stale',hoursSince>24*30);}
 async function init(){try{const cRes=await fetch(CONFIG_FILE);CONFIG=await cRes.json();
-const[{data:productsData,error:pErr},{data:rulesData,error:rErr},{data:verData},{data:settingsData,error:sErr},{data:catalogoData,error:catErr},{data:mediaData,error:medErr},{data:rankingData,error:rankErr}]=await Promise.all([
+const[{data:productsData,error:pErr},{data:rulesData,error:rErr},{data:verData},{data:settingsData,error:sErr},{data:catalogoData,error:catErr},{data:mediaData,error:medErr},{data:rankingData,error:rankErr},{data:stockData,error:stockErr}]=await Promise.all([
   sb.from('productos').select('*'),
   sb.from('margin_rules').select('*'),
   sb.from('ultima_actualizacion').select('*').maybeSingle(),
   sb.from('app_settings').select('*').eq('id',1).maybeSingle(),
   sb.from('catalogo_destacados').select('*').order('bloque').order('orden'),
   sb.from('producto_media').select('referencia,url,orden').eq('tipo','imagen').eq('activo',true).order('orden'),
-  sb.from('vw_consultas_ranking').select('*')
+  sb.from('vw_consultas_ranking').select('*'),
+  sb.from('producto_disponibilidad').select('*')
 ]);
 if(pErr||rErr)throw(pErr||rErr);
 if(sErr)console.warn('Ajustes generales (app_settings) no disponibles todavía:',sErr.message);
 if(catErr)console.warn('Catálogo de destacados no disponible todavía (¿corriste setup_catalogo_destacados_supabase.sql?):',catErr.message);
 if(medErr)console.warn('Imágenes de producto no disponibles:',medErr.message);
 if(rankErr)console.warn('Ranking de más consultados no disponible todavía (¿corriste fase4_vista_ranking.sql?):',rankErr.message);
+if(stockErr)console.warn('Disponibilidad MTS/MTO no disponible todavía (¿corriste disponibilidad_mts_mto.sql?):',stockErr.message);
 RANKING_MAP=new Map((rankingData||[]).map(x=>[normalize(x.referencia),Number(x.veces_consultado||0)]));
+DISPONIBILIDAD_MAP=new Map((stockData||[]).map(x=>[normalize(x.referencia),x]));
 CATALOGO_ITEMS=catalogoData||[];
 const mediaMap=new Map();(mediaData||[]).forEach(mm=>{const k=normalize(mm.referencia);if(!mediaMap.has(k))mediaMap.set(k,mm.url);});MEDIA_IMAGES=mediaMap;
 if(settingsData)SETTINGS={company_name:settingsData.company_name||'',logo_url:settingsData.logo_url||'',theme:settingsData.theme||'original',catalogo_foco_badge:settingsData.catalogo_foco_badge||'Nuevo',catalogo_bestseller_badge:settingsData.catalogo_bestseller_badge||'Best Seller',catalogo_oferta_badge:settingsData.catalogo_oferta_badge||'Oferta',catalogo_oferta_formato:settingsData.catalogo_oferta_formato||'porcentaje'};
@@ -919,12 +1058,15 @@ applyCompanyName();applyLogo();applyTheme(SETTINGS.theme||'original');if(qs('set
 renderDestacadosAdmin();renderVentaCruzadaAdmin();renderDestacados();
 populateExploreFilters();EXPLORE_PAGE=1;renderExplore();
 r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";}catch(err){console.error(err);r.innerHTML="<div class='badge danger'>Error de carga</div><div class='empty'>No fue posible conectar con la base de precios (Supabase). Intenta recargar la página; si el error persiste, contacta a soporte.</div>";renderVersionBadge(null);}}
-document.getElementById('calc').onclick=calc;document.getElementById('clear').onclick=()=>{ref.value='';sala.value='0';if(cant)cant.value='1';box.style.display='none';copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";qs('mediaCard').classList.add('hidden');qs('suggestedCard').classList.add('hidden');qs('relatedCard').classList.add('hidden');ref.focus();};
+document.getElementById('calc').onclick=calc;document.getElementById('clear').onclick=()=>{ref.value='';sala.value='0';if(cant)cant.value='1';box.style.display='none';copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";qs('mediaCard').classList.add('hidden');qs('suggestedCard').classList.add('hidden');qs('relatedCard').classList.add('hidden');qs('stockCard').classList.add('hidden');ref.focus();};
 ref.addEventListener('input',showS);ref.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});sala.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});document.addEventListener('click',e=>{if(!box.contains(e.target)&&e.target!==ref)box.style.display='none';});
 if(cant)cant.addEventListener('input',()=>{if(lastItem)renderPriceCard();});
 copy.onclick=async()=>{if(!lastCopy)return;try{await navigator.clipboard.writeText(lastCopy);showToast('Resultado copiado');}catch(e){}};quote.onclick=async()=>{if(!lastQuote)return;try{await navigator.clipboard.writeText(lastQuote);showToast('Cotización copiada');}catch(e){}};
 qs('activateAccess').onclick=activate;qs('changeUser').onclick=()=>{localStorage.removeItem(USER_KEY);showRegister();};qs('adminLogin').onclick=unlockAdmin;qs('adminLogout').onclick=lockAdmin;qs('exportUsers').onclick=()=>downloadCSV('comercial_partner_registros.csv',readJSON(USERS_KEY,[]));qs('exportLogs').onclick=()=>downloadCSV('comercial_partner_uso.csv',readJSON(LOGS_KEY,[]));
 qs('btnUpdateSingle').onclick=updateSinglePrice;qs('btnAnalyzeCSV').onclick=analyzeCSV;qs('btnUploadMedia').onclick=uploadMedia;
+qs('stockTipo').addEventListener('change',toggleStockFields);toggleStockFields();
+qs('btnUpdateStock').onclick=updateStockManual;
+qs('btnAnalyzeStockCSV').onclick=analyzeStockCSV;
 qs('addToQuote').onclick=addToQuote;qs('btnCopyMultiQuote').onclick=copyMultiQuote;qs('btnClearQuoteCart').onclick=clearQuoteCart;
 qs('navConsultar').onclick=()=>showMainTab('consultar');qs('navCotizacion').onclick=()=>showMainTab('cotizacion');qs('navDestacados').onclick=()=>showMainTab('destacados');
 qs('exploreGama').addEventListener('change',()=>{EXPLORE_PAGE=1;renderExplore();});
