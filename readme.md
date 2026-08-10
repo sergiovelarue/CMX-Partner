@@ -1,43 +1,84 @@
-# Comercial Partner APP v3.0.2
+# ListaLoop B2B Industrial
 
-Calculador de precios para distribuidores autorizados y equipo comercial. Evolución de CMX30 con registro de usuario y panel administrativo.
+Plataforma de gestión de listas de precios, catálogo y disponibilidad B2B para distribuidores autorizados. Producto propio de Conaccion BPS / Loop Comercial, licenciado a empresas industriales que necesitan que su canal de distribuidores cotice rápido, con información actualizada y de forma controlada.
 
-## Origen
-Construido sobre el motor de precios de CMX30. Mantiene la numeración de versión de CMX30 para dar continuidad al historial (decisión tomada al iniciar el repositorio: se descartó reiniciar en v1.2, que era el número mostrado en el título de esta primera versión).
+La plataforma es **multi-empresa por diseño**: el nombre de la empresa contratante, su logo y sus datos de catálogo se configuran desde el panel administrador — no hay ningún nombre de cliente, marca ni razón social escrita en el código. Cada despliegue (repo + proyecto Supabase) sirve a una empresa contratante distinta.
+
+## Arquitectura
+
+- **Frontend:** una sola página (`index.html`), sin frameworks — HTML/CSS/JS vanilla + cliente JS de Supabase.
+- **Backend:** Supabase (Postgres + Auth + Storage), acceso vía `@supabase/supabase-js` con la anon key.
+- **Hosting:** Netlify, con auto-deploy desde este repositorio.
+- **Seguridad:** lectura de catálogo abierta (anon key); escritura de precios/catálogo/disponibilidad protegida por Supabase Auth (el panel admin abre sesión con `signInWithPassword`) y Row Level Security por rol `authenticated`.
 
 ## Archivos del deploy
-- `index.html`
-- `cmx30_products_core.json`
-- `cmx30_margin_rules.json`
-- `cmx30_app_config.json`
-- Backups incluidos: `backup_index_v302.html`, `backup_cmx30_products_core_v302.json`, `backup_cmx30_margin_rules_v302.json`, `backup_cmx30_app_config_v302.json`
+
+- `index.html` — aplicación completa (registro, Consultar, Cotización, Destacados, panel admin)
+- `cmx30_app_config.json` — textos y configuración estática de la app
+- `manifest.json` — manifiesto PWA
+
+## Estructura de datos (Supabase)
+
+| Tabla / vista / función | Uso |
+|---|---|
+| `productos` | Catálogo activo: referencia, descripción, gama, producto, precio C01 |
+| `margin_rules` | Reglas de margen de distribuidor por prefijo/exacto de gama |
+| `app_settings` | Empresa contratante, logo, tema visual, etiquetas de Destacados |
+| `catalogo_destacados` | Foco / Best Sellers / Ofertas / Productos Sugeridos (venta cruzada) |
+| `producto_media` | Imágenes, planos, manuales y videos por referencia |
+| `producto_disponibilidad` | Tipo de abastecimiento MTS/MTO, unidades disponibles/próximas a llegar, días de entrega |
+| `consultas_log` | Registro anónimo y agregado de consultas (solo referencia + fecha, sin dato de usuario) — alimenta "más consultados" |
+| `cotizacion_items_log` | Registro anónimo y agregado de líneas cotizadas, agrupadas por `cotizacion_session_id` (UUID de sesión, no de persona) — alimenta el motor de co-ocurrencia |
+| `vw_consultas_ranking` | Vista: conteo de consultas por referencia |
+| `productos_relacionados(referencia, límite)` | Función: productos que más se cotizan junto con una referencia dada |
+
+Los registros de `consultas_log` y `cotizacion_items_log` son deliberadamente anónimos y agregados — no se cruzan con la tabla de usuarios registrados, para mantenerlos fuera del alcance de tratamiento de datos personales de la Ley 1581/2012.
 
 ## Funcionalidades actuales
-- Registro obligatorio de usuario: nombre, celular, correo, empresa/distribuidor, ciudad, punto de venta, cargo (Vendedor / Dependiente / Administrador / Propietario), con consentimiento de tratamiento de datos.
-- Calculador de precios: PVP con IVA, PVP sin IVA, PVP con descuento en sala, PVD con/sin IVA, ganancia estimada del distribuidor.
+
+**Acceso**
+- Registro de usuario: nombre, celular, correo, empresa/distribuidor, ciudad, punto de venta, cargo, con consentimiento de tratamiento de datos.
+- Visibilidad de margen/PVD/ganancia según el cargo declarado (Administrador/Propietario ven margen; el resto no).
+
+**Consultar**
+- Búsqueda por referencia o nombre con autocompletado.
+- Ficha de precio: PVP con/sin IVA, descuento en sala, PVD con/sin IVA, ganancia estimada, por cantidad.
 - Restricción de cotización por gama de producto (líneas no disponibles para el canal).
-- Copia de resultado y de cotización formateada para WhatsApp.
-- Registro de uso: cada consulta de precio queda asociada al usuario que la realizó.
-- Panel administrador (correos autorizados fijos en el código + clave de acceso): exporta CSV de usuarios registrados y CSV de uso/consultas.
+- Información técnica (imágenes, planos, manuales, video) en panel plegable, oculto por defecto.
+- Disponibilidad: MTS (unidades disponibles / próximas a llegar) o MTO (días de entrega aproximados), cuando el dato existe para esa referencia.
+- Productos Sugeridos: definidos por el administrador (venta cruzada dirigida).
+- Productos comprados en conjunto normalmente: calculado automáticamente por co-ocurrencia en cotizaciones históricas.
+- Explorar catálogo: lista filtrable por gama/producto, ordenable (nombre, más consultados, precio) y paginada; filtro "Mostrar" para ver solo Productos Sugeridos o Comprados en conjunto de la referencia consultada.
+- Copia de resultado y de cotización individual formateada para WhatsApp.
+
+**Cotización**
+- Carrito de cotización múltiple con cantidad y descuento editables por línea.
+- Aviso si la cantidad pedida de un producto MTS supera las unidades disponibles.
+- Totales generales (PVP, PVD, ganancia estimada) y copia formateada para WhatsApp.
+
+**Destacados**
+- Bloques Foco, Best Sellers y Ofertas, con imagen, definidos por el administrador.
+- Overlay de detalle con opción de agregar directo a la cotización.
+
+**Panel administrador** (correo autorizado + sesión Supabase Auth)
+- Actualización de precio individual y carga masiva por CSV (reemplaza la lista activa completa).
+- Carga de información técnica por referencia (imagen/PDF directo, video por enlace).
+- Ajustes generales: nombre de empresa contratante, logo, tema visual (claro/oscuro/pastel).
+- Gestión de Destacados (Foco/Best Sellers/Ofertas) y de Productos Sugeridos (venta cruzada).
+- Gestión de disponibilidad MTS/MTO: formulario individual y carga masiva por CSV.
+- Exportación CSV de usuarios registrados y de log de uso local.
 
 ## Pendiente / decisiones para versiones futuras
-- **Lista negra de dominios/correos bloqueados:** no implementada. Se definirá más adelante.
-- **Acceso diferenciado según perfil (cargo):** el campo se captura en el registro, pero todavía no cambia qué puede ver o hacer cada perfil.
-- **Autenticación de administrador:** hoy es correo autorizado + clave fija en el código (nivel básico). Es suficiente para esta etapa de uso interno; se evaluará una autenticación más robusta si la herramienta se convierte en una versión para cliente externo.
+- **Lista negra de dominios/correos bloqueados:** no implementada.
+- **Multi-tenant a nivel de base de datos:** hoy cada empresa contratante usa un proyecto Supabase propio; está pendiente decidir si se migra a un solo proyecto con aislamiento por `empresa_id` a medida que se comercialice a más clientes.
+- **Motor de co-ocurrencia:** mejora en precisión a medida que crece el volumen de cotizaciones registradas; hoy es más útil cuantas más cotizaciones múltiples se hayan hecho.
+- **Autenticación de administrador:** Supabase Auth + correo autorizado en código. Suficiente para esta etapa; se evaluará algo más robusto si la comercialización escala.
 
-## v3.0.2 - Comodísimos Partner
-- Se agrega pantalla de registro/activación de acceso para distribuidores y equipo comercial.
-- Se agrega panel administrador con exportación de usuarios registrados y logs de uso.
-- Base de cálculo de precios heredada del motor de CMX30.
+## Historial de cambios
 
-## v3.0.2 - Rebranding a Comercial Partner APP
-- Cambio de nombre de la aplicación: "Comodísimos Partner" → "Comercial Partner APP" (título, encabezados, pie de página, encabezado de cotización WhatsApp, archivos CSV exportados).
-- Se conserva "Comodísimos" únicamente donde es dato real o texto legal: catálogo de productos (`cmx30_products_core.json`), texto de autorización de tratamiento de datos, y dominios de correo de administradores.
-- Se agrega favicon propio (`favicon.svg`), reemplazable sin tocar el HTML.
-- Se agrega texto de derechos reservados para Sergio Velásquez en el pie de página.
-- Pendiente para próxima iteración (según lo acordado): perfil de super administrador para actualización de lista de precios y cambio de esquema de colores (azul actual / verde / rojo / amarillo). Requiere definir antes si se maneja de forma manual (archivo regenerado + subida a GitHub) o con base de datos compartida, ya que la app es estática con localStorage.
-
-## v3.0.2 - Conaccion como nueva razón social
-- Se reemplaza "Comodísimos" por "Conaccion" en todo el desarrollo de la aplicación (nuevo nombre legal/comercial de la empresa), incluyendo el texto de autorización de tratamiento de datos.
-- El catálogo de productos (`cmx30_products_core.json`) NO se modifica: los nombres de producto ahí son datos reales del catálogo, no texto de marca.
-- Se reduce la lista de administradores a un solo correo válido: sergiovelasquez@me.com (se retiran sergio.velasquez@comodisimos.com y andres.barrera@comodisimos.com por no tener equivalente confirmado en el nuevo dominio).
+- **Textos y UI:** eliminada la denominación "calculador de precios" de toda la interfaz; información técnica convertida en panel plegable oculto por defecto; encabezado principal plegable para mejorar la vista en móvil.
+- **Explorar catálogo:** lista filtrable, ordenable y paginada agregada a Consultar, con filtro "Mostrar" independiente para ver solo Productos Sugeridos o Comprados en conjunto.
+- **Venta cruzada:** Productos Sugeridos (definidos por admin) y Comprados en conjunto normalmente (co-ocurrencia automática), ambos visibles en Consultar.
+- **Disponibilidad MTS/MTO:** nueva sección de disponibilidad de inventario, con actualización manual y por CSV, y aviso en el carrito de cotización si se excede el stock disponible.
+- **Carrito de cotización:** corregido el desbordamiento horizontal en móvil.
+- **Origen:** construido sobre un motor de precios previo (registro de usuario + panel administrador + cálculo de precios), evolucionado a plataforma multi-empresa con catálogo, disponibilidad y analítica agregada de comportamiento de consulta.
