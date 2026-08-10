@@ -106,7 +106,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 .admin-suggest-box{position:absolute;left:0;right:0;top:100%;z-index:20;width:auto}
 .qty-total{font-size:.72rem;color:var(--muted);margin-top:4px}
 .unit-note{font-size:.78rem;color:var(--muted);margin:8px 0 0}
-.explore-filters{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+.explore-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
 .explore-filters select{width:100%;padding:12px;border:1px solid #cfd8e3;border-radius:14px;font-size:.9rem;background:#fff}
 .explore-table{width:100%;border-collapse:collapse;font-size:.86rem}
 .explore-table th{color:var(--muted);font-weight:700;font-size:.76rem;text-transform:uppercase;letter-spacing:.3px;text-align:left;padding:8px;border-bottom:2px solid var(--line)}
@@ -186,14 +186,17 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div class='card'>
   <h3 style="margin:0 0 10px;color:var(--brand);font-size:1rem">🔎 Explorar catálogo</h3>
   <div class='explore-filters'>
+    <div><label>Mostrar</label><select id='exploreVista'>
+      <option value='todos'>Todos los productos</option>
+      <option value='sugeridos'>Solo Productos Sugeridos</option>
+      <option value='comprados_conjunto'>Solo Comprados en conjunto</option>
+    </select></div>
     <div><label>Gama</label><select id='exploreGama'><option value=''>Todas las gamas</option></select></div>
     <div><label>Producto</label><select id='exploreProducto'><option value=''>Todos los productos</option></select></div>
     <div><label>Ordenar por</label><select id='exploreSort'>
       <option value='nombre_asc'>Nombre A-Z</option>
       <option value='nombre_desc'>Nombre Z-A</option>
       <option value='consultado_desc'>Más consultados</option>
-      <option value='sugeridos'>Productos Sugeridos</option>
-      <option value='comprados_conjunto'>Comprados en conjunto</option>
       <option value='precio_asc'>Precio: menor a mayor</option>
       <option value='precio_desc'>Precio: mayor a menor</option>
     </select></div>
@@ -662,20 +665,22 @@ function populateExploreFilters(){
 }
 function getExploreList(){
   const gamaF=qs('exploreGama')?.value||'',prodF=qs('exploreProducto')?.value||'',sortBy=qs('exploreSort')?.value||'nombre_asc';
+  const vista=qs('exploreVista')?.value||'todos';
   let list=DATA.filter(x=>(!gamaF||x.gama===gamaF)&&(!prodF||x.producto===prodF));
+  if(vista==='sugeridos'){
+    list=list.filter(x=>SUGGESTED_FOR_LAST.includes(normalize(x.referencia)));
+    list.sort((a,b)=>SUGGESTED_FOR_LAST.indexOf(normalize(a.referencia))-SUGGESTED_FOR_LAST.indexOf(normalize(b.referencia)));
+    return list;
+  }
+  if(vista==='comprados_conjunto'){
+    list=list.filter(x=>RELATED_FOR_LAST.has(normalize(x.referencia)));
+    list.sort((a,b)=>(RELATED_FOR_LAST.get(normalize(b.referencia))||0)-(RELATED_FOR_LAST.get(normalize(a.referencia))||0));
+    return list;
+  }
   const ranking=r=>RANKING_MAP.get(normalize(r.referencia))||0;
   switch(sortBy){
     case'nombre_desc':list.sort((a,b)=>b.descripcion.localeCompare(a.descripcion,'es'));break;
     case'consultado_desc':list.sort((a,b)=>ranking(b)-ranking(a)||a.descripcion.localeCompare(b.descripcion,'es'));break;
-    case'sugeridos':list.sort((a,b)=>{
-      const ia=SUGGESTED_FOR_LAST.indexOf(normalize(a.referencia)),ib=SUGGESTED_FOR_LAST.indexOf(normalize(b.referencia));
-      const ra=ia===-1?Infinity:ia,rb=ib===-1?Infinity:ib;
-      return ra!==rb?ra-rb:a.descripcion.localeCompare(b.descripcion,'es');
-    });break;
-    case'comprados_conjunto':list.sort((a,b)=>{
-      const va=RELATED_FOR_LAST.get(normalize(a.referencia))||0,vb=RELATED_FOR_LAST.get(normalize(b.referencia))||0;
-      return vb!==va?vb-va:a.descripcion.localeCompare(b.descripcion,'es');
-    });break;
     case'precio_asc':list.sort((a,b)=>Number(a.c01||0)-Number(b.c01||0));break;
     case'precio_desc':list.sort((a,b)=>Number(b.c01||0)-Number(a.c01||0));break;
     default:list.sort((a,b)=>a.descripcion.localeCompare(b.descripcion,'es'));
@@ -683,21 +688,33 @@ function getExploreList(){
   return list;
 }
 function renderExplore(){
-  const wrap=qs('exploreTableWrap'),pageInfo=qs('explorePageInfo'),prevBtn=qs('explorePrev'),nextBtn=qs('exploreNext');
+  const wrap=qs('exploreTableWrap'),pageInfo=qs('explorePageInfo'),prevBtn=qs('explorePrev'),nextBtn=qs('exploreNext'),sortSel=qs('exploreSort');
   if(!wrap)return;
-  const sortBy=qs('exploreSort')?.value||'nombre_asc';
-  let hint='';
-  if(sortBy==='sugeridos'&&!SUGGESTED_FOR_LAST.length)hint="<div class='empty' style='padding:8px 0'>Consulta un producto en la ficha de precio para ver sus sugerencias aquí primero.</div>";
-  if(sortBy==='comprados_conjunto'&&!RELATED_FOR_LAST.size)hint="<div class='empty' style='padding:8px 0'>Consulta un producto en la ficha de precio para ver aquí primero lo que suele comprarse junto con él.</div>";
+  const vista=qs('exploreVista')?.value||'todos';
+  if(sortSel)sortSel.disabled=(vista!=='todos');
+  if(vista!=='todos'){
+    if(!lastItem){
+      wrap.innerHTML="<div class='empty'>Consulta un producto en la ficha de precio para usar este filtro.</div>";
+      if(pageInfo)pageInfo.textContent='';if(prevBtn)prevBtn.disabled=true;if(nextBtn)nextBtn.disabled=true;
+      return;
+    }
+    const sinDatos=vista==='sugeridos'?!SUGGESTED_FOR_LAST.length:!RELATED_FOR_LAST.size;
+    if(sinDatos){
+      const msg=vista==='sugeridos'?`No hay productos sugeridos definidos para ${lastItem.referencia}.`:`Todavía no hay información de compra en conjunto para ${lastItem.referencia}.`;
+      wrap.innerHTML=`<div class='empty'>${msg}</div>`;
+      if(pageInfo)pageInfo.textContent='';if(prevBtn)prevBtn.disabled=true;if(nextBtn)nextBtn.disabled=true;
+      return;
+    }
+  }
   const list=getExploreList();
   const totalPages=Math.max(1,Math.ceil(list.length/EXPLORE_PAGE_SIZE));
   if(EXPLORE_PAGE>totalPages)EXPLORE_PAGE=totalPages;
   if(EXPLORE_PAGE<1)EXPLORE_PAGE=1;
   const start=(EXPLORE_PAGE-1)*EXPLORE_PAGE_SIZE;
   const pageItems=list.slice(start,start+EXPLORE_PAGE_SIZE);
-  if(!pageItems.length){wrap.innerHTML=hint+"<div class='empty'>No hay productos que coincidan con los filtros seleccionados.</div>";}
+  if(!pageItems.length){wrap.innerHTML="<div class='empty'>No hay productos que coincidan con los filtros seleccionados.</div>";}
   else{
-    wrap.innerHTML=hint+`<table class='explore-table'><tr><th>Referencia</th><th>Descripción</th><th>Gama</th><th>PVP con IVA</th></tr>${pageItems.map(x=>`<tr class='explore-row' data-ref='${x.referencia}'><td class='mono'>${x.referencia}</td><td>${x.descripcion}</td><td>${x.gama}</td><td>${money(Number(x.c01||0))}</td></tr>`).join('')}</table>`;
+    wrap.innerHTML=`<table class='explore-table'><tr><th>Referencia</th><th>Descripción</th><th>Gama</th><th>PVP con IVA</th></tr>${pageItems.map(x=>`<tr class='explore-row' data-ref='${x.referencia}'><td class='mono'>${x.referencia}</td><td>${x.descripcion}</td><td>${x.gama}</td><td>${money(Number(x.c01||0))}</td></tr>`).join('')}</table>`;
     wrap.querySelectorAll('.explore-row').forEach(row=>{row.onclick=()=>{ref.value=row.dataset.ref;box.style.display='none';calc();wrap.scrollIntoView({behavior:'smooth',block:'nearest'});r.scrollIntoView({behavior:'smooth',block:'start'});};});
   }
   if(pageInfo)pageInfo.textContent=`Página ${EXPLORE_PAGE} de ${totalPages} · ${list.length} producto${list.length===1?'':'s'}`;
@@ -1099,6 +1116,7 @@ qs('btnUpdateStock').onclick=updateStockManual;
 qs('btnAnalyzeStockCSV').onclick=analyzeStockCSV;
 qs('addToQuote').onclick=addToQuote;qs('btnCopyMultiQuote').onclick=copyMultiQuote;qs('btnClearQuoteCart').onclick=clearQuoteCart;
 qs('navConsultar').onclick=()=>showMainTab('consultar');qs('navCotizacion').onclick=()=>showMainTab('cotizacion');qs('navDestacados').onclick=()=>showMainTab('destacados');
+qs('exploreVista').addEventListener('change',()=>{EXPLORE_PAGE=1;renderExplore();});
 qs('exploreGama').addEventListener('change',()=>{EXPLORE_PAGE=1;renderExplore();});
 qs('exploreProducto').addEventListener('change',()=>{EXPLORE_PAGE=1;renderExplore();});
 qs('exploreSort').addEventListener('change',()=>{EXPLORE_PAGE=1;renderExplore();});
