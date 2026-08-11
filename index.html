@@ -357,6 +357,17 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
     </div>
     <div class="mini-status" id="themeStatus"></div>
   </div>
+
+  <div class="admin-sub">
+    <h4>👤 Administradores</h4>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Solo un administrador ya autenticado puede agregar o quitar a otro. El acceso se valida con un código de un solo uso enviado al correo, sin contraseña.</p>
+    <div class="inline-form">
+      <div><label>Correo del nuevo administrador</label><input id="newAdminEmail" type="email" placeholder="nombre@empresa.com"></div>
+      <div><button class="p mini" id="btnAddAdmin" style="padding:12px 16px">Agregar administrador</button></div>
+    </div>
+    <div id="adminsList" style="margin-top:10px"></div>
+    <div class="mini-status" id="adminsStatus"></div>
+  </div>
 </div>
 <div class='card admin-panel hidden' id='adminDestacadosPanel'>
   <h3>⭐ Catálogo comercial — Destacados</h3>
@@ -431,7 +442,7 @@ const CONFIG_FILE="cmx30_app_config.json";
 const USER_KEY='cmx_partner_user_v1', USERS_KEY='cmx_partner_users_v1', LOGS_KEY='cmx_partner_logs_v1';
 // Correos autorizados para ver el botón de acceso administrador.
 // El control de seguridad real vive en Supabase (Auth + Row Level Security), esto es solo la UI.
-const ADMIN_EMAILS=['sergiovelasquez@me.com','acadavid@traincol.com.co'];
+let ADMIN_EMAILS=new Set();
 const ADMIN_UNLOCK_KEY='cmx_partner_admin_unlocked_v13';
 // --- Conexión Supabase (proyecto "Calc Precios") ---
 const SUPABASE_URL='https://hixsuoiwdptzyrbgexli.supabase.co';
@@ -446,14 +457,54 @@ function normalizeEmail(v){return String(v||'').trim().toLowerCase();}
 function isValidEmail(v){return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(normalizeEmail(v));}
 function normalizeColombiaPhone(v){let d=String(v||'').replace(/\D/g,'');if(d.startsWith('57')&&d.length===12)d=d.slice(2);return d;}
 function isValidColombiaMobile(v){const d=normalizeColombiaPhone(v);return /^3\d{9}$/.test(d);}
-function isAdmin(user=CURRENT_USER){return !!user&&ADMIN_EMAILS.includes(normalizeEmail(user.email));}
+function isAdmin(user=CURRENT_USER){return !!user&&ADMIN_EMAILS.has(normalizeEmail(user.email));}
 // Visibilidad de margen/PVD/ganancia por perfil declarado en el registro (no confundir con isAdmin, que controla el panel de administración).
 function canSeeMargin(user=CURRENT_USER){const role=String(user?.role||'').trim().toLowerCase();return role==='administrador'||role==='propietario';}
 async function isAdminUnlocked(){const{data}=await sb.auth.getSession();return !!data?.session;}
+async function reloadAdminEmails(){
+  const{data,error}=await sb.from('app_admins').select('email');
+  if(error){console.warn('No se pudo cargar la lista de administradores (¿corriste app_admins_setup.sql?):',error.message);return;}
+  ADMIN_EMAILS=new Set((data||[]).map(x=>normalizeEmail(x.email)));
+}
 async function lockAdmin(){await sb.auth.signOut();await updateAdminTools();}
-function showAdminTab(tab){const pricePanel=qs('adminPricePanel'),settingsPanel=qs('adminSettingsPanel'),destPanel=qs('adminDestacadosPanel'),tp=qs('tabPrices'),ts=qs('tabSettings'),td=qs('tabDestacados');if(!pricePanel||!settingsPanel)return;pricePanel.classList.toggle('hidden',tab!=='prices');settingsPanel.classList.toggle('hidden',tab!=='settings');if(destPanel)destPanel.classList.toggle('hidden',tab!=='destacados');if(tp)tp.className=(tab==='prices'?'p mini':'s mini');if(ts)ts.className=(tab==='settings'?'p mini':'s mini');if(td)td.className=(tab==='destacados'?'p mini':'s mini');if(tab==='settings'&&qs('settingsCompany'))qs('settingsCompany').value=SETTINGS.company_name||'';if(tab==='destacados')fillBadgeInputs();}
+async function renderAdminsList(){
+  const el=qs('adminsList');if(!el)return;
+  const{data,error}=await sb.from('app_admins').select('*').order('added_at');
+  if(error){el.innerHTML="<div class='empty' style='padding:8px 0'>No se pudo cargar la lista de administradores.</div>";return;}
+  const admins=data||[];
+  if(!admins.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin administradores registrados.</div>";return;}
+  el.innerHTML=`<table class='preview-table'><tr><th>Correo</th><th>Agregado por</th><th></th></tr>${admins.map(a=>`<tr><td class='mono'>${a.email}</td><td>${a.added_by||'-'}</td><td>${admins.length>1?`<button class='rm-btn' data-email='${a.email}'>✕</button>`:''}</td></tr>`).join('')}</table>`;
+  el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeAdminEmail(btn.dataset.email);});
+}
+async function addAdminEmail(){
+  const email=normalizeEmail(qs('newAdminEmail').value);
+  if(!isValidEmail(email)){setStatus('adminsStatus','Ingresa un correo válido.','err');return;}
+  setStatus('adminsStatus','Guardando…','info');
+  const{error}=await sb.from('app_admins').insert({email,added_by:CURRENT_USER?.email||'admin'});
+  if(error){setStatus('adminsStatus','Error al guardar: '+error.message,'err');return;}
+  setStatus('adminsStatus','✅ Administrador agregado. Recuerda crear también su usuario en Supabase Auth (Authentication → Users) para que pueda iniciar sesión con código por correo.','ok');
+  qs('newAdminEmail').value='';
+  await reloadAdminEmails();await renderAdminsList();
+}
+async function removeAdminEmail(email){
+  if(!confirm(`¿Quitar a ${email} como administrador?`))return;
+  const{error}=await sb.from('app_admins').delete().eq('email',email);
+  if(error){showToast('Error al quitar: '+error.message);return;}
+  await reloadAdminEmails();await renderAdminsList();showToast('Administrador removido');
+}
+function showAdminTab(tab){const pricePanel=qs('adminPricePanel'),settingsPanel=qs('adminSettingsPanel'),destPanel=qs('adminDestacadosPanel'),tp=qs('tabPrices'),ts=qs('tabSettings'),td=qs('tabDestacados');if(!pricePanel||!settingsPanel)return;pricePanel.classList.toggle('hidden',tab!=='prices');settingsPanel.classList.toggle('hidden',tab!=='settings');if(destPanel)destPanel.classList.toggle('hidden',tab!=='destacados');if(tp)tp.className=(tab==='prices'?'p mini':'s mini');if(ts)ts.className=(tab==='settings'?'p mini':'s mini');if(td)td.className=(tab==='destacados'?'p mini':'s mini');if(tab==='settings'&&qs('settingsCompany'))qs('settingsCompany').value=SETTINGS.company_name||'';if(tab==='settings')renderAdminsList();if(tab==='destacados')fillBadgeInputs();}
 async function updateAdminTools(){const gate=qs('adminGate'),tools=qs('adminTools'),tabs=qs('adminTabs'),pricePanel=qs('adminPricePanel'),settingsPanel=qs('adminSettingsPanel');if(!gate||!tools)return;const allowed=isAdmin();const unlocked=await isAdminUnlocked();gate.classList.toggle('hidden',!allowed||unlocked);tools.classList.toggle('hidden',!allowed||!unlocked);if(tabs)tabs.classList.toggle('hidden',!allowed||!unlocked);if(allowed&&unlocked){showAdminTab('prices');}else{if(pricePanel)pricePanel.classList.add('hidden');if(settingsPanel)settingsPanel.classList.add('hidden');}}
-async function unlockAdmin(){if(!isAdmin()){showToast('Acceso solo para administrador');return;}const pass=prompt('Ingresa tu contraseña de administrador (Supabase)');if(pass===null)return;const{error}=await sb.auth.signInWithPassword({email:CURRENT_USER.email,password:pass});if(error){showToast('Clave incorrecta o usuario no autorizado');return;}await updateAdminTools();showToast('Descargas habilitadas');}
+async function unlockAdmin(){
+  if(!isAdmin()){showToast('Acceso solo para administrador');return;}
+  const{error:otpErr}=await sb.auth.signInWithOtp({email:CURRENT_USER.email,options:{shouldCreateUser:false}});
+  if(otpErr){showToast('No se pudo enviar el código: '+otpErr.message);return;}
+  showToast('Código enviado a '+CURRENT_USER.email);
+  const code=prompt('Ingresa el código de 6 dígitos que llegó a tu correo');
+  if(code===null)return;
+  const{error:verErr}=await sb.auth.verifyOtp({email:CURRENT_USER.email,token:code.trim(),type:'email'});
+  if(verErr){showToast('Código incorrecto o vencido: '+verErr.message);return;}
+  await updateAdminTools();showToast('Acceso de administrador habilitado');
+}
 function downloadCSV(filename, rows){if(!isAdmin()||!isAdminUnlocked()){showToast('Acceso solo para administrador validado');return;}if(!rows.length){showToast('No hay datos para exportar');return;}const headers=Object.keys(rows[0]);const csv=[headers.join(','),...rows.map(r=>headers.map(h=>csvEscape(r[h])).join(','))].join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();URL.revokeObjectURL(a.href);}
 function showMainTab(tab){
   const views={consultar:qs('viewConsultar'),cotizacion:qs('viewCotizacion'),destacados:qs('viewDestacados')};
@@ -1077,7 +1128,7 @@ await init();showToast('Lista de precios actualizada');}
 
 function renderVersionBadge(fecha){const el=qs('versionBadge');if(!el)return;if(!fecha){el.textContent='No fue posible verificar la fecha de la lista de precios';el.classList.add('stale');return;}const dt=new Intl.DateTimeFormat('es-CO',{dateStyle:'medium',timeStyle:'short'}).format(new Date(fecha));el.textContent=`Lista de precios vigente actualizada: ${dt}`;const hoursSince=(Date.now()-new Date(fecha).getTime())/36e5;el.classList.toggle('stale',hoursSince>24*30);}
 async function init(){try{const cRes=await fetch(CONFIG_FILE);CONFIG=await cRes.json();
-const[{data:productsData,error:pErr},{data:rulesData,error:rErr},{data:verData},{data:settingsData,error:sErr},{data:catalogoData,error:catErr},{data:mediaData,error:medErr},{data:rankingData,error:rankErr},{data:stockData,error:stockErr}]=await Promise.all([
+const[{data:productsData,error:pErr},{data:rulesData,error:rErr},{data:verData},{data:settingsData,error:sErr},{data:catalogoData,error:catErr},{data:mediaData,error:medErr},{data:rankingData,error:rankErr},{data:stockData,error:stockErr},{data:adminsData,error:adminsErr}]=await Promise.all([
   sb.from('productos').select('*'),
   sb.from('margin_rules').select('*'),
   sb.from('ultima_actualizacion').select('*').maybeSingle(),
@@ -1085,7 +1136,8 @@ const[{data:productsData,error:pErr},{data:rulesData,error:rErr},{data:verData},
   sb.from('catalogo_destacados').select('*').order('bloque').order('orden'),
   sb.from('producto_media').select('referencia,url,orden').eq('tipo','imagen').eq('activo',true).order('orden'),
   sb.from('vw_consultas_ranking').select('*'),
-  sb.from('producto_disponibilidad').select('*')
+  sb.from('producto_disponibilidad').select('*'),
+  sb.from('app_admins').select('email')
 ]);
 if(pErr||rErr)throw(pErr||rErr);
 if(sErr)console.warn('Ajustes generales (app_settings) no disponibles todavía:',sErr.message);
@@ -1093,6 +1145,8 @@ if(catErr)console.warn('Catálogo de destacados no disponible todavía (¿corris
 if(medErr)console.warn('Imágenes de producto no disponibles:',medErr.message);
 if(rankErr)console.warn('Ranking de más consultados no disponible todavía (¿corriste fase4_vista_ranking.sql?):',rankErr.message);
 if(stockErr)console.warn('Disponibilidad MTS/MTO no disponible todavía (¿corriste disponibilidad_mts_mto.sql?):',stockErr.message);
+if(adminsErr)console.warn('Lista de administradores no disponible todavía (¿corriste app_admins_setup.sql?):',adminsErr.message);
+ADMIN_EMAILS=new Set((adminsData||[]).map(x=>normalizeEmail(x.email)));
 RANKING_MAP=new Map((rankingData||[]).map(x=>[normalize(x.referencia),Number(x.veces_consultado||0)]));
 DISPONIBILIDAD_MAP=new Map((stockData||[]).map(x=>[normalize(x.referencia),x]));
 CATALOGO_ITEMS=catalogoData||[];
@@ -1130,6 +1184,7 @@ wireRefAutocomplete('focoRef','focoRefBox');wireRefAutocomplete('bsRef','bsRefBo
 wireRefAutocomplete('vcDisparadoraRef','vcDisparadoraRefBox');wireRefAutocomplete('vcSugeridaRef','vcSugeridaRefBox');
 qs('btnAddVentaCruzada').onclick=addVentaCruzada;
 qs('btnSaveCompany').onclick=async()=>{const raw=qs('settingsCompany').value.trim();if(!raw){setStatus('companyStatus','Ingresa un nombre de empresa.','err');return;}const company=raw.toUpperCase();setStatus('companyStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({company_name:company,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('companyStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.company_name=company;qs('settingsCompany').value=company;applyCompanyName();setStatus('companyStatus','✅ Empresa contratante actualizada para todos los usuarios.','ok');};
+qs('btnAddAdmin').onclick=addAdminEmail;
 qs('btnUploadLogo').onclick=async()=>{const file=qs('logoFile').files[0];if(!file){setStatus('logoStatus','Selecciona un archivo de imagen.','err');return;}if(file.size>1024*1024){setStatus('logoStatus','El archivo supera 1MB. Usa una imagen más liviana.','err');return;}setStatus('logoStatus','Subiendo…','info');const path=`logo_${Date.now()}_${file.name}`;const{error:upErr}=await sb.storage.from('app-assets').upload(path,file,{upsert:true});if(upErr){setStatus('logoStatus','Error al subir: '+upErr.message,'err');return;}const{data:pub}=sb.storage.from('app-assets').getPublicUrl(path);const{error}=await sb.from('app_settings').update({logo_url:pub.publicUrl,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('logoStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.logo_url=pub.publicUrl;applyLogo();setStatus('logoStatus','✅ Logo actualizado para todos los usuarios.','ok');qs('logoFile').value='';};
 qs('btnRemoveLogo').onclick=async()=>{setStatus('logoStatus','Quitando…','info');const{error}=await sb.from('app_settings').update({logo_url:'',updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('logoStatus','Error: '+error.message,'err');return;}SETTINGS.logo_url='';applyLogo();setStatus('logoStatus','Logo quitado.','ok');};
 document.querySelectorAll('.theme-btn').forEach(b=>{b.onclick=async()=>{const theme=b.dataset.theme;applyTheme(theme);setStatus('themeStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({theme,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('themeStatus','Error al guardar tema: '+error.message,'err');return;}SETTINGS.theme=theme;setStatus('themeStatus','✅ Tema aplicado para todos los usuarios.','ok');};});
