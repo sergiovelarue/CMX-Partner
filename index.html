@@ -1,1138 +1,1112 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ListaLoop B2B</title>
-<link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="alternate icon" href="favicon.ico">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#2B2620">
-<meta name="application-name" content="ListaLoop B2B">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="ListaLoop B2B">
-<style>
-:root{--bg:#F4F5F6;--bg2:#EBEDEF;--card:#FFFFFF;--ink:#1B1F24;--muted:#5B6470;--brand:#20262E;--brand2:#B08A3E;--line:#DCE0E4;--soft:#EBEDEF;--ok:#3F6B4E;--warn:#9C6A22;--danger:#9C3B34;--gain:#FBF1D9;--gainline:#D9B968;--accent-text:#8A6D2E;--font-head:Georgia,'Times New Roman',serif}
-*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-weight:400;background:var(--bg);color:var(--ink);letter-spacing:.1px}
-.wrap{max-width:1100px;margin:auto;padding:18px}.hero{background:var(--brand);color:#fff;border-radius:4px;padding:24px 22px;margin-bottom:16px;border:1px solid var(--brand);position:relative}
-.hero::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--brand2)}
-.hero h1{margin:0 0 8px;font-size:1.5rem;font-family:var(--font-head);font-weight:400;letter-spacing:.3px}.hero p{margin:0;opacity:.85;line-height:1.5;max-width:900px;font-size:.92rem}.hero small{display:block;margin-top:10px;opacity:.75}
-.hero summary{cursor:pointer;color:#fff;opacity:.85;font-size:.86rem;font-weight:600;list-style:revert}
-.hero summary:hover{opacity:1}
-.card{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:18px;margin-bottom:14px}
-.grid{display:grid;grid-template-columns:1.7fr .9fr;gap:12px}.prices{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
-label{display:block;font-weight:500;margin-bottom:6px;font-size:.86rem;color:var(--muted);letter-spacing:.2px}input{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;font-size:1rem;background:#fff;color:var(--ink)}
-.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}button{border-radius:3px;padding:12px 18px;font-weight:500;cursor:pointer;font-size:.9rem;letter-spacing:.2px;transition:opacity .15s}
-button:hover{opacity:.85}
-.p{background:var(--brand);color:#fff;border:1px solid var(--brand)}.s{background:transparent;color:var(--brand);border:1px solid var(--line)}.g{background:transparent;color:var(--brand2);border:1px solid var(--brand2)}
-.price{background:var(--bg2);border:1px solid var(--line);border-radius:3px;padding:14px}.hl{background:#fff;border:1px solid var(--brand2)}.gain{background:var(--gain);border:1px solid var(--gainline)}
-.t{color:var(--muted);font-size:.8rem;font-weight:500;letter-spacing:.3px;text-transform:uppercase}.v{font-size:1.3rem;font-weight:400;margin-top:6px;font-family:var(--font-head)}.row{display:grid;grid-template-columns:190px 1fr;gap:10px;margin:8px 0}
-.k{color:var(--muted);font-weight:500;font-size:.86rem}.empty{color:var(--muted);text-align:center;padding:22px}.mono{font-family:'Courier New',monospace}
-.badge{display:inline-block;padding:5px 10px;border-radius:2px;font-size:.76rem;font-weight:500;margin-bottom:10px;letter-spacing:.3px;border:1px solid transparent}.ok{background:transparent;color:var(--ok);border-color:var(--ok)}.warn{background:transparent;color:var(--warn);border-color:var(--warn)}.danger{background:transparent;color:var(--danger);border-color:var(--danger)}
-.box{margin-top:10px;border:1px solid var(--line);border-radius:3px;background:#fff;display:none;max-height:240px;overflow:auto}.it{padding:10px 12px;border-bottom:1px solid var(--line);cursor:pointer}.it:last-child{border-bottom:none}.it:hover{background:var(--bg2)}
-.footer{margin-top:16px;color:var(--muted);font-size:.8rem;line-height:1.45}#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--brand);color:#fff;padding:10px 16px;border-radius:3px;font-size:.88rem;display:none;z-index:9999;border:1px solid var(--brand2)}
-.tag-good,.tag-mid,.tag-low{display:inline-block;margin-left:8px;padding:3px 8px;border-radius:2px;font-size:.74rem;font-weight:500;border:1px solid transparent}.tag-good{color:var(--ok);border-color:var(--ok)}.tag-mid{color:var(--warn);border-color:var(--warn)}.tag-low{color:var(--danger);border-color:var(--danger)}
-
-.partner-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px;background:var(--bg)}
-.partner-box{max-width:920px;width:100%;display:grid;grid-template-columns:1fr 1.1fr;gap:14px}
-.partner-hero{background:var(--brand);color:#fff;border-radius:4px;padding:26px;border:1px solid var(--brand);position:relative}
-.partner-hero::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--brand2)}
-.partner-hero h1{margin:0 0 10px;font-size:1.8rem;font-family:var(--font-head);font-weight:400}.partner-hero p{line-height:1.55;opacity:.85;font-size:.94rem}.benefits{margin-top:18px;display:grid;gap:8px}.benefits div{background:transparent;border:1px solid rgba(255,255,255,.22);border-radius:3px;padding:10px;font-size:.88rem}
-.reg-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.consent{font-size:.84rem;color:var(--muted);line-height:1.4;margin-top:10px}.consent label{font-weight:400;display:flex;gap:8px;align-items:flex-start}.consent input{width:auto;margin-top:3px}.hidden{display:none!important}.userbar{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:12px;background:#fff;border:1px solid var(--line);border-radius:4px;padding:10px 12px;color:var(--muted);font-size:.86rem}.linkbtn{background:transparent;color:var(--brand2);padding:0;border-radius:0;border:0}.admin-gate,.admin-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.mini{font-size:.78rem;padding:8px 10px}
-select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;font-size:1rem;background:#fff;color:var(--ink)}
-@media(max-width:760px){.partner-box,.reg-grid{grid-template-columns:1fr}.partner-screen{align-items:flex-start}.partner-hero h1{font-size:1.5rem}.userbar{display:block}.userbar button{margin-top:8px}}
-
-@media(max-width:760px){.grid,.prices,.row{grid-template-columns:1fr}.hero h1{font-size:1.3rem}}
-.version-badge{display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid rgba(255,255,255,.3);border-radius:3px;padding:5px 12px;font-size:.76rem;margin-top:10px;letter-spacing:.2px}
-.version-badge.stale{background:transparent;color:#f0d68a;border-color:#f0d68a}
-.admin-login-box{display:none;gap:8px;margin-top:8px}
-.admin-login-box input{padding:10px 12px;font-size:.9rem}
-.admin-panel{border:1px solid var(--brand2);background:var(--card)}
-.admin-panel h3{margin:0 0 10px;color:var(--brand);font-weight:400;font-family:var(--font-head)}
-.admin-sub{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
-.admin-sub h4{margin:0 0 8px;font-size:.92rem;font-weight:500;color:var(--brand)}
-.inline-form{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
-.inline-form>div{flex:1;min-width:140px}
-.inline-form label{font-size:.8rem;margin-bottom:4px}
-.mini-status{font-size:.84rem;margin-top:8px;padding:8px 10px;border-radius:3px;display:none;border:1px solid transparent}
-.mini-status.ok{display:block;color:var(--ok);border-color:var(--ok)}
-.mini-status.err{display:block;color:var(--danger);border-color:var(--danger)}
-.mini-status.info{display:block;color:var(--brand2);border-color:var(--brand2)}
-.preview-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:.82rem}
-.preview-table th,.preview-table td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left}
-.preview-table th{color:var(--muted);font-weight:500;font-size:.76rem;text-transform:uppercase;letter-spacing:.3px}
-#quoteCartTable{overflow-x:auto;-webkit-overflow-scrolling:touch}
-#quoteCartTable table.preview-table{min-width:640px}
-#quoteCartTable th,#quoteCartTable td{white-space:nowrap}
-#quoteCartTable td:nth-child(2){white-space:normal;min-width:160px}
-.cart-scroll-hint{display:none;font-size:.76rem;color:var(--muted);margin:6px 0 0}
-@media(max-width:760px){.cart-scroll-hint{display:block}}
-.summary-row{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px}
-.summary-chip{background:var(--bg2);border:1px solid var(--line);border-radius:3px;padding:8px 12px;font-size:.84rem}
-.summary-chip b{display:block;font-size:1.1rem;font-weight:400;font-family:var(--font-head);color:var(--brand)}
-[data-theme="dark"]{--bg:#1A1D21;--bg2:#22262B;--card:#262A30;--ink:#F0F2F4;--muted:#A7AEB6;--brand:#3A4048;--brand2:#D9B25E;--line:#3C424A;--soft:#22262B;--ok:#7FC79A;--warn:#E3B15E;--danger:#E58A80;--gain:#3A2F14;--gainline:#D9B25E;--accent-text:#D9B25E}
-[data-theme="dark"] .hero,[data-theme="dark"] .partner-hero{background:var(--brand);border-color:var(--brand2)}
-[data-theme="dark"] .hero h1,[data-theme="dark"] .partner-hero h1,[data-theme="dark"] .admin-panel h3,[data-theme="dark"] .admin-sub h4,[data-theme="dark"] .dest-section-title,[data-theme="dark"] .summary-chip b,[data-theme="dark"] h2,[data-theme="dark"] h3{color:var(--brand2)}
-[data-theme="dark"] .admin-panel{background:var(--card);border-color:var(--brand2)}
-[data-theme="pastel"]{--bg:#eef4fb;--bg2:#f7f9fc;--card:#fff;--ink:#17324d;--muted:#667085;--brand:#123a63;--brand2:#1f6fb2;--line:#d9e2ec;--soft:#eef4fb;--ok:#127a4a;--warn:#b45309;--danger:#b42318;--gain:#fff7cc;--gainline:#f3d34a;--accent-text:#1f6fb2}
-.admin-tabs{display:flex;gap:8px;margin-bottom:10px}
-.logo-wrap{margin-bottom:10px}.logo-wrap img{max-height:56px;max-width:220px;display:block}
-.theme-swatch{display:inline-flex;align-items:center;gap:6px}
-.qty-input{width:70px;padding:6px;border:1px solid var(--line);border-radius:3px;font-size:.85rem}
-.rm-btn{background:transparent;color:var(--danger);border:1px solid var(--danger);border-radius:3px;padding:4px 8px;cursor:pointer;font-size:.8rem}
-.main-tabs{display:flex;gap:8px;margin-bottom:14px}
-.main-tab-btn{flex:1;padding:14px 12px;font-size:.9rem;display:flex;align-items:center;justify-content:center;gap:6px;letter-spacing:.2px}
-.tab-badge{background:var(--brand2);color:var(--brand);border-radius:2px;padding:1px 8px;font-size:.72rem;font-weight:500;min-width:18px;text-align:center}
-@media(max-width:760px){.main-tab-btn{padding:14px 8px;font-size:.86rem}}
-.dest-section-title{font-size:.95rem;color:var(--brand);margin:0 0 10px;font-weight:400;letter-spacing:.3px;text-transform:uppercase;font-size:.8rem}
-.dest-empty{color:var(--muted);font-size:.84rem;padding:14px 0}
-.carousel{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
-.dest-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px}
-.dest-card{flex:0 0 128px;background:var(--bg2);border:1px solid var(--line);border-radius:3px;padding:8px;cursor:pointer;position:relative}
-.dest-card img{width:100%;height:96px;object-fit:cover;border-radius:2px;background:var(--line);display:block}
-.dest-card .ph{width:100%;height:96px;border-radius:2px;background:var(--line);display:flex;align-items:center;justify-content:center;font-size:1.6rem}
-.dest-badge{position:absolute;top:6px;left:6px;background:var(--brand);color:#fff;font-size:.62rem;font-weight:500;padding:2px 7px;border-radius:2px;z-index:1;letter-spacing:.3px;text-transform:uppercase}
-.dest-badge.oferta{background:var(--brand2);color:var(--brand)}
-.dest-name{font-size:.8rem;font-weight:500;margin-top:6px;line-height:1.25;max-height:2.5em;overflow:hidden}
-.dest-ref{font-size:.72rem;color:var(--muted);font-family:'Courier New',monospace;margin-top:2px}
-.dest-discount{font-size:.76rem;color:var(--danger);font-weight:500;margin-top:2px}
-.overlay-backdrop{position:fixed;inset:0;background:rgba(20,18,15,.55);display:flex;align-items:flex-end;justify-content:center;z-index:9998}
-.overlay-panel{background:var(--card);width:100%;max-width:640px;max-height:88vh;overflow-y:auto;border-radius:6px 6px 0 0;padding:18px;border:1px solid var(--line)}
-@media(min-width:761px){.overlay-backdrop{align-items:center}.overlay-panel{border-radius:4px}}
-@media(max-width:760px){.dest-grid{grid-template-columns:repeat(auto-fill,minmax(108px,1fr))}.dest-card{flex-basis:108px}}
-.admin-suggest-box{position:absolute;left:0;right:0;top:100%;z-index:20;width:auto}
-.qty-total{font-size:.72rem;color:var(--muted);margin-top:4px}
-.unit-note{font-size:.78rem;color:var(--muted);margin:8px 0 0}
-.explore-filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
-.explore-filters select{width:100%;padding:12px;border:1px solid #cfd8e3;border-radius:14px;font-size:.9rem;background:#fff}
-.explore-table{width:100%;border-collapse:collapse;font-size:.86rem}
-.explore-table th{color:var(--muted);font-weight:700;font-size:.76rem;text-transform:uppercase;letter-spacing:.3px;text-align:left;padding:8px;border-bottom:2px solid var(--line)}
-.explore-table td{padding:10px 8px;border-bottom:1px solid #eef2f6}
-.explore-row{cursor:pointer}
-.explore-row:hover{background:#f7fbff}
-.explore-pager{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;flex-wrap:wrap}
-.explore-pager span{color:var(--muted);font-size:.84rem}
-@media(max-width:760px){.explore-filters{grid-template-columns:1fr}.explore-table{font-size:.8rem}.explore-table th:nth-child(3),.explore-table td:nth-child(3){display:none}}
-</style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Radar Comercial ConAccion Industria</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+  <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
-<div id="registerScreen" class="partner-screen">
-  <div class="partner-box">
-    <div class="partner-hero">
-      <div id="logoWrapReg" class="logo-wrap hidden"><img id="companyLogoReg" alt="Logo empresa"></div>
-      <h1>ListaLoop B2B</h1>
-      <p>Activa tu acceso profesional para cotizar más rápido, vender con seguridad y mejorar tu rentabilidad.</p>
-      <div class="benefits">
-        <div>✅ Precios actualizados al instante</div>
-        <div>✅ Consulta de margen y ganancia</div>
-        <div>✅ Ofertas exclusivas para distribuidores</div>
-        <div>✅ Capacitaciones comerciales</div>
+
+  <div class="subliminal-mark" aria-hidden="true">23:1</div>
+
+  <div class="login-overlay" id="loginOverlay">
+    <div class="login-card">
+      <div class="login-brand">
+        <div class="login-icon">R</div>
+        <div>
+          <h1>Radar Comercial Industria</h1>
+          <p>Acceso seguro · ConAccion</p>
+        </div>
+      </div>
+
+      <div class="login-form">
+        <label>Correo autorizado</label>
+        <input type="email" id="loginEmail" placeholder="tucorreo@ejemplo.com" autocomplete="email"/>
+
+        <label>Teléfono celular</label>
+        <input type="tel" id="loginPhone" placeholder="3001234567" autocomplete="tel"/>
+
+        <label>Tipo de acceso</label>
+        <select id="loginRoleSelect">
+          <option value="asesor">Asesor</option>
+          <option value="administrador">Administrador</option>
+        </select>
+        <small class="field-help">Solo la primera vez que ingresas con este correo. Si ya ingresaste antes, se recuerda automáticamente.</small>
+
+        <div id="loginAdvisorWrapper">
+          <label>Asesor</label>
+          <select id="loginAdvisorSelect"></select>
+        </div>
+
+        <label class="remember-row">
+          <input type="checkbox" id="rememberSession" checked/>
+          Recordar sesión en este equipo
+        </label>
+
+        <button class="btn login-btn" id="loginBtn">Ingresar a Radar</button>
+        <p class="login-error" id="loginError"></p>
+      </div>
+
+      <small class="login-note">El acceso queda registrado para seguimiento de uso interno.</small>
+    </div>
+  </div>
+
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">R</div>
+        <div><h1>Radar Comercial Industria</h1><small>ConAccion · V9.8</small></div>
+      </div>
+      <nav><a class="active" id="navRoute">Hoja de ruta</a><a id="navUpdate">Actualización diaria</a><a id="navSeguimiento">Seguimiento diario</a><a id="navDashboard">Dashboard</a><a id="navProspeccion">Prospección</a><a id="navMetas">Metas y presupuestos</a><a id="navAlarmas">Panel de alarmas</a><a id="navRanking">Ranking</a><a id="navClients">Gestión de clientes</a><a id="navAdvisors">Gestión de asesores</a><a id="navLog">Log de cambios</a><a id="navGlossary">Glosario comercial</a></nav>
+      <div class="sidebar-footer">
+        <button class="btn ghost" id="refreshDataBtn" style="width:100%;margin-bottom:10px">↻ Actualizar datos</button>
+        <small id="sessionRoleLabel"></small>
+        <a id="logoutBtn" class="logout-link">Cerrar sesión</a>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div><h2>Hoja de Ruta del Mes</h2><div class="today-badge" id="todayBadgeV89">Fecha actual</div>
+          <p id="contextLabel">Base maestra y operación diaria separadas</p></div>
+        <button class="btn ghost" id="exportCsvBtn">Exportar CSV</button>
+      </header>
+      <section class="admin-panel" id="dailyUpdatePanel">
+        <div class="panel-header"><div><h3>Actualización diaria de ventas 2026</h3><p>Solo reemplaza ventas operativas. No modifica histórico 2025 ni asignación.</p></div></div>
+        <div class="upload-grid">
+          <article><h4>Ventas Espumas 2026</h4><input type="file" id="fileEspumas" accept=".xlsx,.xls,.csv"/></article>
+          <article style="display:none"><h4>Ventas Colchones 2026</h4><input type="file" id="fileColchones" accept=".xlsx,.xls,.csv"/></article>
+        </div>
+        <div class="actions"><button class="btn" id="validateBtn">Validar archivos</button><button class="btn secondary" id="applyBtn">Procesar actualización</button><button class="btn ghost" id="clearLocalBtn">Limpiar actualización local</button></div>
+        <div class="update-result" id="updateResult"><strong>Estado:</strong> pendiente de carga.</div>
+      </section>
+
+      <section class="admin-panel" id="growthConfigPanel">
+        <div class="panel-header">
+          <div>
+            <h3>Configuración comercial por clasificación</h3>
+            <p>Solo Super Administrador. Define el crecimiento esperado para recalcular metas sugeridas.</p>
+          </div>
+        </div>
+        <div class="growth-grid">
+          <label>A <input type="number" id="growthA" value="12"/>%</label>
+          <label>B <input type="number" id="growthB" value="10"/>%</label>
+          <label>C <input type="number" id="growthC" value="5"/>%</label>
+          <label>E <input type="number" id="growthE" value="15"/>%</label>
+          <label>N <input type="number" id="growthN" value="0"/>%</label>
+        </div>
+        <div class="actions">
+          <button class="btn" id="applyGrowthBtn">Aplicar crecimientos</button>
+        </div>
+      </section>
+
+      
+      <section class="admin-panel" id="usageAdminPanel">
+        <div class="panel-header">
+          <div>
+            <h3>Estadísticas de uso Radar</h3>
+            <p>Visible solo para Super Administrador. Mide accesos y adopción de la herramienta.</p>
+          </div>
+        </div>
+
+        <div class="usage-grid">
+          <article><span>Total accesos</span><strong id="usageTotalAccess">0</strong></article>
+          <article><span>Usuarios únicos</span><strong id="usageUniqueUsers">0</strong></article>
+          <article><span>Accesos hoy</span><strong id="usageTodayAccess">0</strong></article>
+          <article><span>Seguimientos guardados</span><strong id="usageFollowups">0</strong></article>
+        </div>
+
+        <div class="usage-actions">
+          <button class="btn" id="downloadAccessLogBtn">Descargar log de accesos</button>
+        </div>
+
+        <div class="usage-table-wrap">
+          <table class="usage-table">
+            <thead>
+              <tr>
+                <th>Usuario</th>
+                <th>Perfil</th>
+                <th>Asesor</th>
+                <th>Accesos</th>
+                <th>Último acceso</th>
+              </tr>
+            </thead>
+            <tbody id="usageTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="admin-panel" id="masterDataAdminPanel" style="display:none">
+        <div class="usage-actions">
+          <button class="btn" id="downloadMasterDataBtn">Descargar asignación actualizada</button>
+          <button class="btn ghost" id="downloadMasterLogBtn">Descargar historial de cambios</button>
+        </div>
+      </section>
+
+
+      <section class="admin-panel" id="syncAdminPanel">
+        <div class="panel-header">
+          <div>
+            <h3>Sincronización de datos</h3>
+            <p>Solo administrador. Exporta un respaldo con ventas actualizadas, asignaciones y cambios maestros para compartir o conservar.</p>
+          </div>
+        </div>
+        <div class="usage-actions">
+          <button class="btn" id="exportSyncBtn">Exportar respaldo Radar</button>
+        </div>
+      </section>
+
+<section class="filters">
+        <div>
+          <label>Perfil</label>
+          <select id="profileSelect">
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
+        <div>
+          <label>Mes hoja de ruta</label>
+          <select id="monthSelect">
+            <option value="Enero">Enero</option>
+            <option value="Febrero">Febrero</option>
+            <option value="Marzo">Marzo</option>
+            <option value="Abril">Abril</option>
+            <option value="Mayo" selected>Mayo</option>
+            <option value="Junio">Junio</option>
+            <option value="Julio">Julio</option>
+            <option value="Agosto">Agosto</option>
+            <option value="Septiembre">Septiembre</option>
+            <option value="Octubre">Octubre</option>
+            <option value="Noviembre">Noviembre</option>
+            <option value="Diciembre">Diciembre</option>
+          </select>
+          <small id="monthHelpV83" class="field-help">Mes base para venta actual y comparativo 2025</small>
+        </div>
+        <div>
+          <label>Ordenar hoja de ruta</label>
+          <select id="sortSelect">
+            <option value="venta2025">Mayor venta 2025</option>
+            <option value="faltante">Mayor faltante</option>
+            <option value="ventaActual">Mayor venta actual</option>
+            <option value="cumplimientoAsc">Menor cumplimiento</option>
+            <option value="cliente">Cliente A-Z</option>
+          </select>
+        </div>
+        <div style="display:none"><label>Vista negocio</label><select id="businessView"><option value="total">Total Radar</option><option value="espumas">Solo Espumas</option></select></div>
+        <div><label>Asesor</label><select id="advisorFilter"></select></div>
+        <div><label>Tipo cliente</label><select id="typeFilter"><option value="todos">Todos</option><option value="Espumas">Espumas</option><option value="Nuevo">Nuevo</option><option value="Bloqueado">Bloqueado</option></select></div>
+        <div><label>Estado</label><select id="statusFilter"><option value="todos">Todos</option><option value="Activo">Activo</option><option value="Inactivo">Inactivo</option><option value="Posible Baja">Posible Baja</option><option value="Baja">Baja</option><option value="Reingreso">Reingreso</option><option value="Nuevo">Nuevo</option><option value="Bloqueado">Bloqueado</option></select></div>
+        <div><label>Clasificación</label><select id="classFilter"><option value="todos">Todas</option></select></div>
+        <div><label>Buscar</label><input type="search" id="searchInput" placeholder="Cliente o NIT"/></div>
+      </section>
+      <section class="kpi-grid">
+        <article><span>Clientes</span><strong id="kClients">0</strong><small id="kClientsSub">Filtrados</small></article>
+        <article><span>Venta actual</span><strong id="kCurrentSale">$0</strong><small id="kCurrentSaleSub">Mes actual</small></article>
+        <article><span>Venta mismo mes 2025</span><strong id="kPrevSale">$0</strong><small>Comparativo histórico</small></article>
+        <article><span>Meta</span><strong id="kGoal">$0</strong><small>Meta sugerida/asesor</small></article>
+        <article><span>Cumplimiento</span><strong id="kCompliance">0%</strong><small>Venta / meta</small></article>
+        <article><span>Faltante</span><strong id="kMissing">$0</strong><small>Meta - venta</small></article>
+      </section>
+      <section class="type-grid" id="statusCardsGrid"></section>
+      <section class="type-grid" id="classCardsGrid"></section>
+      <span id="tColchones" hidden>0</span>
+      <span id="tMixto" hidden>0</span>
+      <section class="breakdown" id="breakdownTotal" style="display:none">
+        <article><span>Espumas actual</span><strong id="bEspActual">$0</strong><small id="bEsp2025">2025: $0</small></article>
+        <article><span>Colchones actual</span><strong id="bColActual">$0</strong><small id="bCol2025">2025: $0</small></article>
+      </section>
+      <section class="table-card">
+        <div class="table-header"><h3>Hoja de ruta</h3><span id="rowCount">0 clientes</span></div>
+        <div class="table-scroll">
+          <table id="routeTable">
+            <thead><tr><th>Cliente</th><th>NIT</th><th>Asesor</th><th>Estado</th><th>Venta 2025</th><th>Venta actual</th><th>Meta</th><th>Cump.</th><th>Faltante</th><th>Detalle</th></tr></thead>
+            <tbody id="routeBody"></tbody>
+          </table>
+        </div>
+      </section>
+    
+      <section class="director-dashboard hidden-view" id="directorDashboardView">
+        <div class="dashboard-title">
+          <div>
+            <h2>Dashboard</h2>
+            <p id="dashboardSubtitle">Vista ejecutiva para analizar evolución, composición, asesores y clientes Pareto.</p>
+          </div>
+          <div class="dashboard-actions"><button class="btn ghost" id="exportDashboardBtn">Exportar resumen CSV</button></div>
+        </div>
+
+        <section class="director-kpi-grid">
+          <article><span>Venta 2026</span><strong id="dVenta2026">$0</strong><small>Acumulado año actual</small></article>
+          <article><span>Venta 2025 comparable</span><strong id="dVenta2025">$0</strong><small>Mismos meses disponibles</small></article>
+          <article><span>Crecimiento</span><strong id="dCrecimiento">0%</strong><small>2026 vs 2025</small></article>
+          <article><span>Clientes con venta</span><strong id="dClientesVenta">0</strong><small>Año actual</small></article>
+          <article><span>Pareto 80%</span><strong id="dParetoClientes">0</strong><small>Clientes que explican 80%</small></article>
+          <article><span>Ticket promedio</span><strong id="dTicketPromedio">$0</strong><small>Venta / clientes con venta</small></article>
+        </section>
+
+        <section class="chart-grid">
+          <article class="chart-card wide"><div class="chart-header"><h3>Venta mensual 2025 vs 2026</h3><p>Comparativo mes a mes por valor vendido.</p></div><canvas id="monthlySalesChart"></canvas></article>
+          <article class="chart-card"><div class="chart-header"><h3>Venta por asesor 2025 vs 2026</h3><p>Comparativo acumulado al mes disponible.</p></div><canvas id="advisorSalesChart"></canvas></article>
+          <article class="chart-card"><div class="chart-header"><h3>Clasificación: clientes y facturación</h3><p>Número de clientes y participación en facturación del mes seleccionado.</p></div><canvas id="classSalesChart"></canvas></article>
+          <article class="chart-card"><div class="chart-header"><h3>Estado comercial: clientes por estado</h3><p>Número de clientes según estado en el mes seleccionado.</p></div><canvas id="statusChart"></canvas></article>
+        </section>
+
+        <section class="chart-grid"><article class="chart-card wide"><div class="chart-header"><h3>Clientes facturando y orden promedio mensual</h3><p>Permite ver si el crecimiento viene por más clientes comprando o por mayor valor promedio por cliente.</p></div><canvas id="monthlyCustomersChart"></canvas></article></section>
+        <section class="commercial-segment-section" id="commercialSegmentSection">
+          <div class="chart-header">
+            <h3>Segmentos Comerciales</h3>
+            <p>Industria, B2B y B2P/B2C según asesor asignado. Permite entender de dónde viene el crecimiento.</p>
+          </div>
+
+          <section class="chart-grid">
+            <article class="chart-card wide">
+              <div class="chart-header">
+                <h3>Evolución mensual por segmento</h3>
+                <p>Venta mensual 2026 por segmento comercial.</p>
+              </div>
+              <canvas id="segmentEvolutionChart"></canvas>
+            </article>
+
+            <article class="chart-card">
+              <div class="chart-header">
+                <h3>Venta por segmento</h3>
+                <p>Participación acumulada en el año actual.</p>
+              </div>
+              <canvas id="segmentSalesChart"></canvas>
+            </article>
+
+            <article class="chart-card">
+              <div class="chart-header">
+                <h3>Activación por segmento</h3>
+                <p>Clientes que facturaron en el mes vs portafolio del segmento.</p>
+              </div>
+              <canvas id="segmentActivationChart"></canvas>
+            </article>
+          </section>
+
+          <section class="director-tables">
+            <article class="director-table-card">
+              <div class="chart-header">
+                <h3>Resumen por segmento</h3>
+                <p>Venta, clientes facturando, ticket y participación.</p>
+              </div>
+              <div class="table-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Segmento</th>
+                      <th>Venta 2026</th>
+                      <th>Venta 2025</th>
+                      <th>Crec.</th>
+                      <th>Clientes mes</th>
+                      <th>Ticket mes</th>
+                      <th>Part.</th>
+                    </tr>
+                  </thead>
+                  <tbody id="segmentSummaryBody"></tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="director-table-card">
+              <div class="chart-header">
+                <h3>Salud del portafolio por segmento</h3>
+                <p>Activos, PB, baja, nuevos y reingresados.</p>
+              </div>
+              <div class="table-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Segmento</th>
+                      <th>Activos</th>
+                      <th>Nuevos</th>
+                      <th>PB</th>
+                      <th>Baja</th>
+                      <th>Reing.</th>
+                    </tr>
+                  </thead>
+                  <tbody id="segmentHealthBody"></tbody>
+                </table>
+              </div>
+            </article>
+          </section>
+        </section>
+
+        <section class="portfolio-health-section" id="portfolioHealthSection">
+          <div class="chart-header">
+            <h3>Salud del Portafolio de Clientes</h3>
+            <p>Lectura mensual de actividad, recuperación, riesgo y sostenibilidad del portafolio comercial.</p>
+          </div>
+          <section class="director-kpi-grid compact">
+            <article><span>Cumplimiento mes</span><strong id="hCumplimientoMes">0%</strong><small>Venta mes / meta estimada</small></article>
+            <article><span>Clientes activos</span><strong id="hActivos">0</strong><small>Activos + reingresados</small></article>
+            <article><span>Orden promedio mes</span><strong id="hOrdenPromedio">$0</strong><small>Venta mes / clientes facturando</small></article>
+            <article><span>Índice actividad</span><strong id="hIndiceActividad">0%</strong><small>Activos / (Activos + Nuevos + PB)</small></article>
+            <article><span>Recuperación</span><strong id="hRecuperacion">0%</strong><small>Recuperados / PB mes anterior</small></article>
+            <article><span>Pérdida</span><strong id="hPerdida">0%</strong><small>Nuevas bajas / PB mes anterior</small></article>
+          </section>
+          <section class="chart-grid">
+            <article class="chart-card wide">
+              <div class="chart-header"><h3>Evolución del Portafolio de Clientes</h3><p>Activos, nuevos, PB, baja y reingresados mes a mes.</p></div>
+              <canvas id="portfolioEvolutionChart"></canvas>
+            </article>
+          </section>
+          <section class="director-tables">
+            <article class="director-table-card">
+              <div class="chart-header"><h3>Evolución de clasificación A-B-C-E-N</h3><p>Comparativo de clientes y venta acumulada 2025 vs 2026.</p></div>
+              <div class="table-scroll"><table><thead><tr><th>Clasificación</th><th>Clientes 2025</th><th>Clientes 2026</th><th>Var.</th><th>Venta 2025</th><th>Venta 2026</th><th>Crec.</th></tr></thead><tbody id="classificationEvolutionBody"></tbody></table></div>
+            </article>
+            <article class="director-table-card">
+              <div class="chart-header"><h3>Estado comercial del mes</h3><p>Comparativo contra mes anterior y mismo mes año anterior.</p></div>
+              <div class="table-scroll"><table><thead><tr><th>Estado</th><th>Año ant.</th><th>Mes ant.</th><th>Actual</th><th>Lectura</th></tr></thead><tbody id="stateEvolutionBody"></tbody></table></div>
+            </article>
+          </section>
+          <div class="median-box">
+            <article><span>Mediana 2025</span><strong id="median2025">$0</strong><small>Referencia alto/bajo valor año anterior</small></article>
+            <article><span>Mediana 2026</span><strong id="median2026">$0</strong><small>Referencia alto/bajo valor actual</small></article>
+            <article><span>Crecimiento mediana</span><strong id="medianGrowth">0%</strong><small>Variación de referencia cartera</small></article>
+          </div>
+        </section>
+
+        <section class="director-tables">
+          <article class="director-table-card">
+            <div class="chart-header"><h3>Top 15 clientes Pareto general</h3><p>Clientes con mayor venta acumulada del año actual.</p></div>
+            <div class="table-scroll"><table><thead><tr><th>#</th><th>Cliente</th><th>Asesor</th><th>Tipo</th><th>Venta 2026</th><th>% Acum.</th></tr></thead><tbody id="paretoTableBody"></tbody></table></div>
+          </article>
+          <article class="director-table-card">
+            <div class="chart-header"><h3>Top 10 por asesor</h3><select id="advisorTopSelector" class="director-select"><option value="todos">Todos</option></select><p>Principales clientes de cada asesor.</p></div>
+            <div class="table-scroll"><table><thead><tr><th>Asesor</th><th>#</th><th>Cliente</th><th>Venta 2026</th><th>Venta 2025</th><th>Crec.</th></tr></thead><tbody id="advisorTopTableBody"></tbody></table></div>
+          </article>
+        </section>
+
+        <section class="insight-card"><h3>Lectura estratégica sugerida</h3><ul id="directorInsights"></ul></section>
+      </section>
+
+    
+      <section class="log-view hidden-view" id="seguimientoView">
+        <div class="dashboard-title"><div><h2>Seguimiento diario</h2><p>Próximas acciones ordenadas cronológicamente, con la fecha actual como referencia: <strong id="seguimientoHoyLabel">—</strong>.</p></div></div>
+
+        <section class="table-card" id="metaDiariaPanel">
+          <div class="table-header">
+            <h3>Venta diaria y semanal requerida para cumplir la meta del mes</h3>
+            <span id="metaDiariaSubtitle" style="color:var(--muted);font-weight:600"></span>
+          </div>
+          <p class="field-help">Cuota dinámica: se recalcula cada día sobre el faltante real y los días hábiles (lunes a viernes) que quedan en el mes. Si un asesor se atrasa, su cuota diaria sube; si se adelanta, baja.</p>
+          <div class="table-scroll">
+            <table class="mgmt-table" id="metaDiariaTable">
+              <thead>
+                <tr>
+                  <th>Asesor</th>
+                  <th>Meta del mes</th>
+                  <th>Venta actual</th>
+                  <th>Cumplimiento</th>
+                  <th>Faltante</th>
+                  <th>Venta diaria requerida</th>
+                  <th>Venta semanal requerida</th>
+                </tr>
+              </thead>
+              <tbody id="metaDiariaBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <div class="log-toolbar">
+          <label>Rango
+            <select id="seguimientoRangoSelect">
+              <option value="vencidas">Vencidas (sin ejecutar)</option>
+              <option value="pasada">Semana pasada</option>
+              <option value="actual" selected>Semana actual</option>
+              <option value="siguiente">Semana siguiente</option>
+              <option value="todas">Todas (3 semanas)</option>
+            </select>
+          </label>
+          <label id="seguimientoAsesorFilterWrap" style="display:none">Asesor
+            <select id="seguimientoAsesorSelect"><option value="todos">Todos</option></select>
+          </label>
+          <label>
+            <input type="checkbox" id="seguimientoOcultarEjecutadas"/> Ocultar ya ejecutadas
+          </label>
+          <span id="seguimientoCount" style="margin-left:auto;color:var(--muted);font-weight:800"></span>
+        </div>
+        <div class="log-feed" id="seguimientoFeed"><p style="color:var(--muted)">Cargando…</p></div>
+
+        <section class="table-card" id="accionesRecomendadasPanel">
+          <div class="table-header">
+            <h3>Acciones recomendadas</h3>
+            <span id="recomendadasCount" style="color:var(--muted);font-weight:800"></span>
+          </div>
+          <p class="field-help">Clientes sugeridos según probabilidad de éxito para ayudarte a cumplir tu presupuesto diario y semanal. Ábrelos, define una acción y una fecha, y pasan a tus acciones planeadas arriba.</p>
+
+          <div id="sinAsignarAvisoBox" style="display:none;background:#fff7e6;border:1px solid #f0c36d;border-radius:8px;padding:12px 16px;margin-bottom:16px;">
+            <strong id="sinAsignarAvisoTexto"></strong>
+            <p style="margin:4px 0 8px;color:var(--muted)">Estos clientes no aparecen en las sugerencias porque aún no tienen un asesor responsable. Es normal con clientes nuevos de facturación, pero deben asignarse para que alguien los gestione y para que cuenten en metas y cumplimiento.</p>
+            <button class="btn ghost small-btn" id="irAsignarClientesBtn" type="button">Ir a Gestión de Clientes → Sin asignación</button>
+          </div>
+
+          <div class="admin-panel" id="pesosScorePanel" style="display:none">
+            <div class="panel-header">
+              <div>
+                <h3>Ponderación del score de recomendación</h3>
+                <p>Solo administrador. Ajusta el peso de cada factor (deben sumar 100).</p>
+              </div>
+            </div>
+            <div class="growth-grid">
+              <label>Faltante <input type="number" id="pesoFaltante" value="25" min="0" max="100"/>%</label>
+              <label>Clasificación <input type="number" id="pesoClasificacion" value="25" min="0" max="100"/>%</label>
+              <label>Continuidad <input type="number" id="pesoContinuidad" value="25" min="0" max="100"/>%</label>
+              <label>Urgencia (días sin gestión) <input type="number" id="pesoUrgencia" value="25" min="0" max="100"/>%</label>
+            </div>
+            <div class="actions">
+              <button class="btn" id="aplicarPesosScoreBtn">Aplicar ponderación</button>
+              <span id="pesosScoreSumaWarn" style="color:#b45309;font-weight:700"></span>
+            </div>
+          </div>
+
+          <div class="table-scroll">
+            <table class="mgmt-table" id="recomendadasTable">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Asesor</th>
+                  <th>Clasificación</th>
+                  <th>Estado</th>
+                  <th>Faltante</th>
+                  <th>Días sin gestión</th>
+                  <th>Score</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="recomendadasBody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="recomendadasPagination"></div>
+        </section>
+      </section>
+
+      <section class="log-view hidden-view" id="logView">
+        <div class="dashboard-title"><div><h2>Log de cambios</h2><p>Registro de eventos relevantes del equipo comercial: accesos, cambios de datos, canales/zonas, transferencias, bloqueos y cargas de ventas.</p></div></div>
+        <div class="log-toolbar">
+          <label>Ver últimos
+            <select id="logRangeSelect">
+              <option value="3">3 días</option>
+              <option value="10" selected>10 días</option>
+              <option value="30">30 días</option>
+            </select>
+          </label>
+          <label>Tipo de evento
+            <select id="logTypeSelect">
+              <option value="todos">Todos</option>
+              <option value="acceso">Accesos de usuario</option>
+              <option value="dato">Cambios de datos de cliente</option>
+              <option value="canal">Canales / zonas</option>
+              <option value="transferencia">Transferencias de asesor</option>
+              <option value="bloqueo">Bloqueo / desbloqueo</option>
+              <option value="ventas">Cargas de ventas</option>
+            </select>
+          </label>
+          <button class="btn ghost" id="logRefreshBtn">Actualizar</button>
+          <button class="btn secondary" id="logExportBtn">Exportar a Excel</button>
+          <span id="logCount" style="margin-left:auto;color:var(--muted);font-weight:800"></span>
+        </div>
+        <div class="log-feed" id="logFeed"><p style="color:var(--muted)">Cargando eventos…</p></div>
+      </section>
+
+      <section class="glossary-view hidden-view" id="glossaryView">
+        <div class="dashboard-title"><div><h2>Glosario Comercial Radar</h2><p>Definiciones prácticas para leer correctamente la Hoja de Ruta y el Dashboard.</p></div></div>
+        <section class="glossary-grid">
+          <article><h3>Estados comerciales</h3><p><strong>Activo:</strong> facturó en el mes actual o mes anterior.</p><p><strong>Inactivo:</strong> lleva 2 meses sin facturar.</p><p><strong>PB / Posible Baja:</strong> lleva 3 meses sin facturar; requiere gestión especial.</p><p><strong>Baja:</strong> lleva 4 o más meses sin facturar; requiere recuperación.</p><p><strong>Reingreso:</strong> estaba en PB o Baja y volvió a facturar.</p><p><strong>Nuevo:</strong> compra por primera vez o tiene menos de 3 meses de historia.</p><p><strong>Bloqueado:</strong> no gestionable hasta que un administrador lo desbloquee.</p></article>
+          <article><h3>Clasificación A-B-C-E-N</h3><p><strong>A:</strong> alto valor + alta consecutividad.</p><p><strong>B:</strong> bajo valor + alta consecutividad.</p><p><strong>C:</strong> bajo valor + baja consecutividad.</p><p><strong>E:</strong> alto valor + baja consecutividad.</p><p><strong>N:</strong> cliente nuevo.</p></article>
+          <article><h3>Mediana y valor relativo</h3><p><strong>Mediana:</strong> valor central de la cartera ordenada por venta acumulada.</p><p><strong>Alto valor:</strong> venta acumulada superior a la mediana.</p><p><strong>Bajo valor:</strong> venta acumulada igual o inferior a la mediana.</p></article>
+          <article><h3>KPI principales</h3><p><strong>Cumplimiento:</strong> venta actual / meta.</p><p><strong>Ticket u orden promedio:</strong> venta / clientes con venta.</p><p><strong>Pareto:</strong> clientes que explican cerca del 80% de la venta.</p><p><strong>Meta S&amp;OP:</strong> objetivo oficial mensual definido en el proceso S&amp;OP para medir cumplimiento comercial por línea.</p><p><strong>Gap S&amp;OP:</strong> diferencia entre Meta S&amp;OP y venta real del mes.</p><p><strong>Consecutividad:</strong> meses que compra / meses posibles.</p></article>
+          <article><h3>Salud del Portafolio de Clientes</h3><p>Indicador comercial de actividad, recuperación, riesgo y sostenibilidad. No tiene relación con recaudo ni cartera financiera.</p><p><strong>Ventana móvil 12 meses:</strong> los estados y la Salud del Portafolio se calculan solo con clientes con actividad en los últimos 12 meses.</p><p><strong>Portafolio gestionable:</strong> clientes con actividad dentro de esa ventana móvil.</p><p><strong>Índice de actividad:</strong> Activos / (Activos + Nuevos + PB).</p><p><strong>Tasa de recuperación:</strong> recuperados / PB mes anterior.</p><p><strong>Tasa de pérdida:</strong> nuevas bajas / PB mes anterior.</p></article>
+          <article><h3>Leyenda práctica</h3><p><strong>Activos:</strong> más susceptibles de comprar en el corto plazo.</p><p><strong>PB:</strong> alerta temprana de pérdida comercial.</p><p><strong>Baja:</strong> recuperación más difícil.</p><p><strong>Nuevos:</strong> señal de crecimiento futuro.</p><p><strong>Reingresos:</strong> recuperación comercial lograda.</p></article>
+        </section>
+      </section>
+
+      <section class="clients-mgmt-view hidden-view" id="prospeccionView">
+        <div class="dashboard-title">
+          <div><h2>Prospección</h2><p>Registro y gestión de leads comerciales. Administrador ve todos los leads; cada asesor ve solo los suyos.</p></div>
+          <div class="dashboard-actions">
+            <button class="btn ghost" id="leadShareBtn">Compartir / QR</button>
+            <button class="btn" id="leadNuevoBtn">+ Nuevo lead</button>
+          </div>
+        </div>
+
+        <section class="mgmt-table-card hidden-view" id="qrProspeccionPanel">
+          <div class="table-header">
+            <h3>Compartir formulario de registro</h3>
+            <button class="modal-close" id="qrPanelCloseBtn" type="button">×</button>
+          </div>
+          <p class="field-help">Comparte este link o código QR en redes sociales, WhatsApp o correo. El interesado llena sus datos y entra automáticamente como lead nuevo en esta bandeja.</p>
+          <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;margin-top:12px">
+            <div id="qrProspeccionCanvas" style="flex:0 0 auto"></div>
+            <div style="flex:1;min-width:240px">
+              <label>Origen del link
+                <select id="qrOrigenSelect">
+                  <option value="WhatsApp">WhatsApp</option>
+                  <option value="Instagram">Instagram</option>
+                  <option value="Facebook">Facebook</option>
+                  <option value="Correo">Correo</option>
+                  <option value="Feria">Feria / evento</option>
+                  <option value="Web">Web / otro</option>
+                </select>
+              </label>
+              <label id="qrAsesorSelectWrap" style="display:none;margin-top:10px">Asesor (link individual)
+                <select id="qrAsesorSelect"></select>
+              </label>
+              <label style="margin-top:10px">Link para copiar y pegar
+                <input type="text" id="qrLinkOutput" readonly style="width:100%"/>
+              </label>
+              <div class="actions" style="margin-top:12px">
+                <button class="btn" id="qrCopiarBtn" type="button">Copiar link</button>
+                <button class="btn ghost" id="qrDescargarBtn" type="button">Descargar QR</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="mgmt-toolbar">
+          <input type="search" id="leadsSearch" placeholder="Buscar por nombre, empresa o contacto"/>
+          <select id="leadsEstadoFilter">
+            <option value="todos">Todos los estados</option>
+            <option value="Nuevo">Nuevo</option>
+            <option value="Contactado">Contactado</option>
+            <option value="Calificado">Calificado</option>
+            <option value="Convertido">Convertido</option>
+            <option value="Descartado">Descartado</option>
+          </select>
+          <label id="leadsAsesorFilterWrap" style="display:none">Asesor
+            <select id="leadsAsesorFilter"><option value="todos">Todos</option></select>
+          </label>
+        </section>
+
+        <section class="mgmt-table-card">
+          <div class="table-header"><h3>Leads</h3><span id="leadsCount">0 leads</span></div>
+          <div class="table-scroll">
+            <table class="mgmt-table">
+              <thead><tr><th>Nombre / Empresa</th><th>Contacto</th><th>Origen</th><th>Ciudad</th><th>Asesor</th><th>Valor potencial</th><th>Estado</th><th>Acción</th></tr></thead>
+              <tbody id="leadsBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <div class="modal-overlay" id="leadModal">
+        <div class="modal-card small-modal">
+          <div class="modal-header">
+            <div><h3 id="leadModalTitle">Nuevo lead</h3><p>Registro de prospecto comercial</p></div>
+            <button class="modal-close" id="leadModalCloseBtn">×</button>
+          </div>
+          <div class="modal-form">
+            <input type="hidden" id="leadIdInput"/>
+            <label>Nombre / Empresa <span style="color:#dc2626">*</span><input type="text" id="leadNombreInput" placeholder="Ej: Textiles del Valle S.A.S"/></label>
+            <label>Teléfono<input type="tel" id="leadTelefonoInput" placeholder="3001234567"/></label>
+            <label>Email<input type="email" id="leadEmailInput" placeholder="contacto@empresa.com"/></label>
+            <label>Asesor asignado <span style="color:#dc2626">*</span><select id="leadAsesorInput"></select></label>
+            <label>Origen
+              <select id="leadOrigenInput">
+                <option value="">Seleccionar</option>
+                <option>Referido</option>
+                <option>Feria</option>
+                <option>Web</option>
+                <option>Llamada fría</option>
+                <option>Redes sociales</option>
+                <option>Otro</option>
+              </select>
+            </label>
+            <label>Departamento<select id="leadDepartamentoInput"></select></label>
+            <label>Ciudad / municipio<select id="leadCiudadInput"></select></label>
+            <label>Valor potencial estimado ($ MM)<input type="number" id="leadValorInput" placeholder="0" min="0"/></label>
+            <label>Estado
+              <select id="leadEstadoInput">
+                <option>Nuevo</option>
+                <option>Contactado</option>
+                <option>Calificado</option>
+                <option>Convertido</option>
+                <option>Descartado</option>
+              </select>
+            </label>
+            <label>Comentario<textarea id="leadComentarioInput" rows="3" placeholder="Notas de la gestión"></textarea></label>
+            <div class="actions">
+              <button class="btn" id="leadGuardarBtn">Guardar lead</button>
+              <button class="btn ghost" id="leadEliminarBtn" style="display:none">Eliminar</button>
+              <button class="btn ghost" id="leadModalCancelBtn">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="clients-mgmt-view hidden-view" id="metasView">
+        <div class="dashboard-title">
+          <div><h2>Metas y presupuestos</h2><p>Ventas totales, por asesor y por mes: 2025 real, 2026 real y planeado, proyección del resto de 2026, y propuesta 2027. Solo Administrador.</p></div>
+          <div class="dashboard-actions">
+            <button class="btn ghost" id="metasExportBtn">Exportar CSV</button>
+          </div>
+        </div>
+
+        <section class="admin-panel" id="metasConfigPanel">
+          <div class="panel-header">
+            <div>
+              <h3>Parámetros de proyección</h3>
+              <p>La proyección del resto de 2026 usa el promedio real transcurrido ajustado por la estacionalidad de 2025. La propuesta 2027 aplica el % de crecimiento por clasificación definido en "Configuración comercial por clasificación" (Hoja de ruta).</p>
+            </div>
+          </div>
+          <div class="growth-grid">
+            <label>Meses transcurridos 2026<input type="text" id="metasMesesTranscurridos" disabled/></label>
+          </div>
+        </section>
+
+        <section class="chart-grid">
+          <article class="chart-card wide">
+            <div class="chart-header"><h3>Venta mensual comparada</h3><p>2025 real, 2026 (real hasta el mes actual + proyectado el resto) y 2027 proyectado, mes a mes. Total organización.</p></div>
+            <canvas id="metasMensualChart"></canvas>
+          </article>
+          <article class="chart-card wide">
+            <div class="chart-header"><h3>Venta anual comparada</h3><p>2025 real, 2026 real + proyectado, y propuesta 2027, por asesor.</p></div>
+            <canvas id="metasChart"></canvas>
+          </article>
+        </section>
+
+        <section class="mgmt-table-card">
+          <div class="table-header"><h3>Resumen por asesor</h3><span id="metasCount"></span></div>
+          <div class="table-scroll">
+            <table class="mgmt-table">
+              <thead><tr><th>Asesor</th><th>2025 real</th><th>2026 real</th><th>2026 planeado</th><th>2026 proyectado</th><th>Cumplimiento proyectado</th><th>2027 propuesto</th></tr></thead>
+              <tbody id="metasBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="clients-mgmt-view hidden-view" id="alarmasView">
+        <div class="dashboard-title">
+          <div>
+            <h2>Panel de alarmas — Motor EWS</h2>
+            <p>Alertas tempranas de ritmo, cartera, ticket, clientes activos, venta y concentración. Administrador: vista consolidada por asesor. Asesor: su propio panel.</p>
+          </div>
+          <div class="dashboard-actions">
+            <select id="alarmasAsesorSelect" style="display:none"></select>
+            <button class="btn ghost" id="alarmasRefreshBtn">Actualizar</button>
+          </div>
+        </div>
+
+        <section class="alerts-bar" id="alarmasResumenBar"></section>
+
+        <section class="mgmt-table-card" id="alarmasAdminTableWrap" style="display:none">
+          <div class="table-header"><h3>Alarmas por asesor</h3><span id="alarmasAdminCount"></span></div>
+          <div class="table-scroll">
+            <table class="mgmt-table">
+              <thead><tr><th>Asesor</th><th>Alarmas altas</th><th>Alarmas medias</th><th>Alarmas bajas</th><th>Total</th></tr></thead>
+              <tbody id="alarmasAdminBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="mgmt-table-card">
+          <div class="table-header"><h3 id="alarmasDetalleTitulo">Detalle de alarmas</h3><span id="alarmasDetalleCount"></span></div>
+          <div class="table-scroll">
+            <table class="mgmt-table">
+              <thead><tr><th>Severidad</th><th>Categoría</th><th>Detalle</th></tr></thead>
+              <tbody id="alarmasDetalleBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="mgmt-table-card">
+          <div class="table-header">
+            <h3>Probabilidad de cumplimiento de meta — Motor RTE</h3>
+            <span id="rteConfianzaBadge"></span>
+          </div>
+          <div class="table-scroll">
+            <table class="mgmt-table">
+              <thead><tr><th>Asesor</th><th>Probabilidad</th><th>Confianza</th><th>Clientes evaluados</th><th>Clientes excluidos</th></tr></thead>
+              <tbody id="rteBody"></tbody>
+            </table>
+          </div>
+          <p class="ews-nota" id="rteNota"></p>
+        </section>
+      </section>
+
+      <style>
+        .ews-badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600;color:#fff}
+        .ews-badge.alta{background:#B3261E}
+        .ews-badge.media{background:#C06A00}
+        .ews-badge.baja{background:#6B6B6B}
+        .ews-badge.ok{background:#1B7A43}
+        .ews-nota{font-size:13px;color:#6B6B6B;margin-top:8px;padding:0 4px}
+        .ews-resumen-item{display:flex;flex-direction:column;gap:2px;padding:10px 16px;border-radius:8px;background:#f5f5f7;min-width:140px}
+        .ews-resumen-item strong{font-size:20px}
+      </style>
+
+      <section class="clients-mgmt-view hidden-view" id="rankingView">
+        <div class="dashboard-title">
+          <div>
+            <h2>Ranking — Motor RAC</h2>
+            <p>Rendimiento · Actividad · Cumplimiento. Puntaje = 70% cumplimiento de meta + 30% actividad comercial. Ranking semanal (resetea cada lunes) y acumulado mensual.</p>
+          </div>
+          <div class="dashboard-actions" id="rankingCerrarSemanaWrap" style="display:none">
+            <button class="btn ghost" id="rankingCerrarSemanaBtn">Cerrar semana</button>
+            <button class="btn ghost" id="rankingRefreshBtn">Actualizar</button>
+          </div>
+        </div>
+
+        <section class="mgmt-table-card" id="rankingPerfilCard">
+          <label id="rankingAsesorSelectWrap" style="display:block;margin-bottom:10px">
+            <select id="rankingAsesorSelect" style="display:none"></select>
+          </label>
+          Cargando…
+        </section>
+
+        <section class="mgmt-table-card">
+          <div class="table-header"><h3>Ranking semanal</h3></div>
+          <div class="table-scroll">
+            <table class="mgmt-table">
+              <thead><tr><th>#</th><th>Asesor</th><th>Puntos</th><th>Cumplimiento</th><th>Actividad</th><th>Meta superada</th></tr></thead>
+              <tbody id="rankingSemanalBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="mgmt-table-card">
+          <div class="table-header"><h3>Ranking mensual acumulado</h3></div>
+          <div class="table-scroll">
+            <table class="mgmt-table">
+              <thead><tr><th>#</th><th>Asesor</th><th>Puntos</th><th>Cumplimiento</th><th>Actividad</th><th>Meta superada</th></tr></thead>
+              <tbody id="rankingMensualBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="clients-mgmt-view hidden-view" id="clientsManagementView">
+        <div class="dashboard-title">
+          <div><h2>Gestión de Clientes</h2><p>Asignación de asesor por cliente, historial de asesor y datos maestros. Solo Administrador y Super Administrador.</p></div>
+          <div class="dashboard-actions">
+            <button class="btn" id="mgmtDownloadAssignBtn">Descargar asignación actualizada</button>
+            <button class="btn ghost" id="mgmtDownloadLogBtn">Descargar historial de cambios</button>
+          </div>
+        </div>
+
+        <section class="alerts-bar" id="clientsAlertsBar"></section>
+
+        <section class="mgmt-toolbar">
+          <input type="search" id="clientsMgmtSearch" placeholder="Buscar por NIT, cliente o asesor"/>
+          <select id="clientsMgmtFilter">
+            <option value="todos">Todos los clientes</option>
+            <option value="sinAsignacion">Sin asignación</option>
+            <option value="duplicados">NIT duplicado</option>
+            <option value="sinNombre">Sin nombre / razón social</option>
+            <option value="transferidos">Transferidos (últimos 3 meses)</option>
+          </select>
+          <select id="clientsMgmtSort">
+            <option value="cliente">Ordenar: Cliente A-Z</option>
+            <option value="nit">Ordenar: NIT</option>
+            <option value="asesor">Ordenar: Asesor</option>
+          </select>
+          <button class="btn ghost" id="clientsMgmtUploadToggle">Cargar Excel de asignación</button>
+        </section>
+
+        <section class="upload-panel hidden-view" id="clientsUploadPanel">
+          <div class="panel-header"><div><h3>Carga masiva de asignación de clientes</h3><p>Columnas: NIT, Asesor (opcional: Cliente, Departamento, Municipio, Fecha de creación). Departamento y Municipio solo se pueden cambiar por esta vía. Primero valida, luego aplica.</p></div></div>
+          <div class="upload-grid">
+            <article><h4>Archivo Excel de asignación</h4><input type="file" id="clientsUploadFile" accept=".xlsx,.xls,.csv"/></article>
+          </div>
+          <div class="actions">
+            <button class="btn" id="clientsValidateBtn">Validar archivo</button>
+            <button class="btn secondary" id="clientsApplyBtn" disabled>Aplicar cambios</button>
+            <button class="btn ghost" id="clientsDownloadTemplateBtn">Descargar plantilla</button>
+          </div>
+          <div class="update-result" id="clientsUploadResult"><strong>Estado:</strong> pendiente de carga.</div>
+          <div class="table-scroll" id="clientsUploadPreviewWrap" style="display:none">
+            <table class="usage-table">
+              <thead><tr><th>NIT</th><th>Cliente actual</th><th>Asesor actual</th><th>Asesor nuevo</th><th>Depto. nuevo</th><th>Municipio nuevo</th><th>Estado</th></tr></thead>
+              <tbody id="clientsUploadPreviewBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="mgmt-table-card">
+          <div class="table-header"><h3>Clientes</h3><span id="clientsMgmtCount">0 clientes</span></div>
+          <div class="table-scroll">
+            <table class="mgmt-table">
+              <thead><tr><th>NIT</th><th>Cliente / Razón social</th><th>Asesor asignado</th><th>Canal</th><th>Zona (del asesor)</th><th>Mes pasado</th><th>Mismo mes año pasado</th><th>Fecha creación</th><th>Alertas</th><th>Acción</th></tr></thead>
+              <tbody id="clientsMgmtBody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="clientsMgmtPagination"></div>
+        </section>
+      </section>
+
+      <section class="advisors-mgmt-view hidden-view" id="advisorsManagementView">
+        <div class="dashboard-title">
+          <div><h2>Gestión de Asesores</h2><p>Datos de asesores comerciales y aprobación de asesores nuevos. Solo Administrador y Super Administrador.</p></div>
+          <div class="dashboard-actions">
+            <button class="btn" id="advisorAddBtn">Agregar asesor</button>
+            <button class="btn ghost" id="advisorsDownloadTemplateBtn">Descargar plantilla</button>
+          </div>
+        </div>
+
+        <section class="alerts-bar" id="advisorsPendingBar"></section>
+
+        <section class="mgmt-toolbar">
+          <input type="search" id="advisorsMgmtSearch" placeholder="Buscar asesor por nombre o correo"/>
+          <button class="btn ghost" id="advisorsMgmtUploadToggle">Cargar Excel de asesores</button>
+        </section>
+
+        <section class="upload-panel hidden-view" id="advisorsUploadPanel">
+          <div class="panel-header"><div><h3>Carga masiva de asesores</h3><p>Columnas: Nombre, Correo, Teléfono, Estado, Municipio, Canal, Zona. Usa "Descargar plantilla" para traer ya cargados los asesores actuales (para corregir o completar datos) y agrega filas nuevas al final para asesores nuevos. Primero valida, luego aplica.</p></div></div>
+          <div class="upload-grid">
+            <article><h4>Archivo Excel de asesores</h4><input type="file" id="advisorsUploadFile" accept=".xlsx,.xls,.csv"/></article>
+          </div>
+          <div class="actions">
+            <button class="btn" id="advisorsValidateBtn">Validar archivo</button>
+            <button class="btn secondary" id="advisorsApplyBtn" disabled>Aplicar cambios</button>
+          </div>
+          <div class="update-result" id="advisorsUploadResult"><strong>Estado:</strong> pendiente de carga.</div>
+          <div class="table-scroll" id="advisorsUploadPreviewWrap" style="display:none">
+            <table class="usage-table">
+              <thead><tr><th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Estado</th><th>Municipio</th><th>Canal</th><th>Zona</th><th>Situación</th></tr></thead>
+              <tbody id="advisorsUploadPreviewBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="mgmt-table-card">
+          <div class="table-header"><h3>Asesores</h3><span id="advisorsMgmtCount">0 asesores</span></div>
+          <div class="table-scroll">
+            <table class="mgmt-table">
+              <thead><tr><th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Estado</th><th>Municipio</th><th>Canal</th><th>Zona</th><th>Clientes</th><th>Acción</th></tr></thead>
+              <tbody id="advisorsMgmtBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="mgmt-table-card" id="canalCatalogPanel">
+          <div class="table-header"><h3>Canales y zonas</h3><span id="canalCatalogNote">Crear/renombrar/eliminar: solo Super Administrador</span></div>
+          <p class="field-help">Un canal agrupa asesores por tipo de cliente (ej. B2B, Industria); cada canal tiene sus propias zonas geográficas (ej. Zona Norte, KAM 1). Cualquier Administrador puede asignar a un asesor un canal y una zona existentes desde su ficha; solo Super Administrador puede crear canales/zonas nuevos o cambiarles el nombre.</p>
+          <div class="actions" id="addCanalRow">
+            <input type="text" id="newCanalNameInput" placeholder="Nombre del nuevo canal"/>
+            <button class="btn" id="addCanalBtn">Agregar canal</button>
+          </div>
+          <div id="canalCatalogBody" class="canal-catalog-grid"></div>
+        </section>
+      </section>
+
+    </main>
+  </div>
+
+  <footer class="app-footer">
+    <span>© <span id="footerYear"></span> Todos los derechos reservados. Sergio Velásquez.</span>
+  </footer>
+
+  <div class="modal-overlay" id="clientModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h3 id="modalClientName">Cliente</h3>
+          <p id="modalClientMeta">Detalle comercial</p>
+        </div>
+        <button class="modal-close" id="modalCloseBtn">×</button>
+      </div>
+
+      <div id="modalTransferBanner" style="display:none;background:#fff7e6;border:1px solid #f0c36d;border-radius:8px;padding:12px 16px;margin-bottom:16px;">
+        <strong>Cliente transferido a ti.</strong>
+        <span id="modalTransferText"></span>
+        <div style="margin-top:8px;">
+          <button class="btn" id="modalAcceptTransferBtn" type="button">Aceptar cliente</button>
+        </div>
+      </div>
+
+      <div class="modal-grid">
+        <article style="display:none"><span>Tipo cliente</span><strong id="modalTipo"></strong></article>
+        <article><span>Asesor</span><strong id="modalAsesor"></strong></article>
+        <article><span>Venta 2025</span><strong id="modalVenta2025"></strong></article>
+        <article><span>Venta actual</span><strong id="modalVentaActual"></strong></article>
+        <article><span>Meta</span><strong id="modalMeta"></strong></article>
+        <article><span>Cumplimiento</span><strong id="modalCumplimiento"></strong></article>
+        <article><span>Promedio 2025</span><strong id="modalProm2025"></strong></article>
+        <article><span>Promedio 2026</span><strong id="modalProm2026"></strong></article>
+        <article><span>Meses compra 2025</span><strong id="modalMeses2025"></strong></article>
+        <article><span>Meses compra 2026</span><strong id="modalMeses2026"></strong></article>
+        <article><span>Faltante mes</span><strong id="modalFaltante"></strong></article>
+        <article><span>Clasificación</span><strong id="modalClasificacion"></strong></article>
+        <article><span>Estado</span><strong id="modalEstado"></strong></article>
+      </div>
+
+            <div class="master-edit-box">
+        <h4>Datos del cliente</h4>
+        <div class="master-grid">
+          <label>Razón social / cliente<input type="text" id="modalClienteEdit" disabled/></label>
+          <label>NIT<input type="text" id="modalNitEdit" disabled/></label>
+          <label>Asesor asignado<select id="modalAsesorEdit" disabled></select></label>
+          <small id="modalAsesorZonaInfo" class="field-help"></small>
+          <label>Departamento<select id="modalDepartamentoEdit" disabled></select></label>
+          <label>Ciudad / municipio<select id="modalCiudadEdit" disabled></select></label>
+          <label>Dirección<input type="text" id="modalDireccionEdit" placeholder="Ej: Calle 10 # 20-30, Bodega 5" disabled/></label>
+          <label>Canal (asignado por el asesor a cargo)
+            <input type="text" id="modalCanalView" disabled/>
+          </label>
+        </div>
+        <div id="modalDireccionAcciones" class="address-actions" hidden>
+          <a id="modalDireccionMaps" target="_blank" rel="noopener" class="btn ghost small-btn">📍 Abrir en Maps</a>
+          <a id="modalDireccionWaze" target="_blank" rel="noopener" class="btn ghost small-btn">🚗 Abrir en Waze</a>
+        </div>
+
+        <h4 style="margin-top:18px">Contactos del cliente</h4>
+        <div id="modalContactosList" class="contacts-list"></div>
+        <button type="button" class="btn ghost small-btn" id="modalAddContactoBtn">+ Agregar contacto</button>
+        <small class="field-help">Hasta 5 contactos. Los agregas o editas aquí; borrarlos solo lo puede hacer un administrador desde Gestión de clientes.</small>
+        <div class="block-box" id="blockBox">
+          <h4>Bloqueo del cliente</h4>
+          <div class="switch-row">
+            <label class="switch"><input type="checkbox" id="modalBloqueoSwitch"/><span class="switch-slider"></span></label>
+            <span class="block-status-pill" id="blockStatusPill">Activo</span>
+          </div>
+          <p class="block-explainer">Un cliente <strong>bloqueado</strong> sigue siendo visible en la Hoja de Ruta, tanto para el asesor como para los administradores, pero <strong>no se incluye</strong> en las cuentas de venta, meta ni cumplimiento.</p>
+          <label id="motivoBloqueoLabel">Motivo de bloqueo (obligatorio para bloquear)
+            <select id="modalMotivoBloqueoEdit">
+              <option value="">Selecciona un motivo</option>
+              <option>No pertenece al canal</option>
+              <option>Cliente cerrado</option>
+              <option>Cambio de razón social / NIT</option>
+              <option>Información insuficiente</option>
+              <option>Duplicado</option>
+              <option>Cartera / condición especial</option>
+              <option>Otro</option>
+            </select>
+          </label>
+          <small id="blockHelp">Cualquier usuario puede bloquear un cliente indicando el motivo. Solo un administrador puede desbloquearlo.</small>
+        </div>
+        <small id="masterEditHelp">Estos datos son de solo lectura aquí y se editan desde la pestaña "Gestión de clientes" (administrador). Excepciones para tu propio cliente: si no tiene razón social, departamento, ciudad o dirección, los puedes completar tú una sola vez; y los contactos los puedes agregar o editar cuando quieras (hasta 5).</small>
+      </div>
+
+      <div class="modal-form">
+        <label>Meta personal del mes</label>
+        <input type="number" id="modalMetaInput" placeholder="Meta del asesor para este cliente"/>
+
+        <label>Próxima acción</label>
+        <select id="modalAccion">
+          <option value="">Seleccionar</option>
+          <option>Llamada</option>
+          <option>Visita</option>
+          <option>Cotización</option>
+          <option>Reactivación</option>
+          <option>Cartera</option>
+          <option>Capacitación</option>
+          <option>Exhibición</option>
+          <option>Cierre</option>
+        </select>
+
+        <label>Fecha de seguimiento</label>
+        <input type="date" id="modalFecha"/>
+
+        <label>Comentario de visita / seguimiento</label>
+        <textarea id="modalComentario" rows="4" placeholder="Escribe aquí el avance, compromiso o comentario del cliente"></textarea>
+
+        <button class="btn" id="modalSaveBtn">Guardar seguimiento</button>
       </div>
     </div>
-    <div class="card" style="margin-bottom:0">
-      <h2 style="margin:0 0 8px;color:var(--brand)">Activa tu acceso</h2>
-      <p style="margin:0 0 14px;color:var(--muted);line-height:1.4">Regístrate una sola vez para usar la herramienta de distribuidores.</p>
-      <div class="reg-grid">
-        <div><label>Nombre completo</label><input id="regName" autocomplete="name" required></div>
-        <div><label>Celular / WhatsApp</label><input id="regPhone" autocomplete="tel" inputmode="tel" placeholder="Ej: 3001234567" required></div>
-        <div><label>Correo electrónico</label><input id="regEmail" type="email" autocomplete="email" placeholder="nombre@empresa.com" required></div>
-        <div><label>Distribuidor / Empresa</label><input id="regCompany" required></div>
-        <div><label>Ciudad</label><input id="regCity" required></div>
-        <div><label>Punto de venta</label><input id="regStore"></div>
-        <div><label>Cargo</label><select id="regRole"><option value="">Seleccionar</option><option>Vendedor</option><option>Dependiente</option><option>Administrador</option><option>Propietario</option></select></div>
+  </div>
+
+  <div class="modal-overlay" id="reassignConfirmModal">
+    <div class="modal-card small-modal">
+      <div class="modal-header">
+        <div><h3>Editar cliente</h3><p id="reassignModalMeta">Cliente</p></div>
+        <button class="modal-close" id="reassignModalCloseBtn">×</button>
       </div>
-      <div class="consent">
-        <label><input id="regConsent" type="checkbox"> <span id="consentText">Autorizo a ConAccion BPS para recolectar, almacenar y tratar mis datos personales con fines comerciales, promocionales, formativos y de relacionamiento, conforme a la política de tratamiento de datos personales vigente.</span></label>
+      <div class="modal-form">
+        <p id="reassignModalDetail"></p>
+        <label>Razón social / cliente</label>
+        <input type="text" id="editClienteNombreInput"/>
+        <label>Nuevo asesor</label>
+        <select id="reassignNewAdvisorSelect"></select>
+        <small style="color:#6b7280;">¿El asesor no aparece en la lista? Créalo primero en "Gestión de asesores".</small>
+
+        <label>Departamento</label>
+        <select id="editDepartamentoSelect"></select>
+        <label>Ciudad / municipio</label>
+        <select id="editCiudadSelect"></select>
+        <label>Dirección</label>
+        <input type="text" id="editDireccionInput" placeholder="Ej: Calle 10 # 20-30, Bodega 5"/>
+
+        <h4 style="margin-top:18px">Contactos del cliente</h4>
+        <div id="editContactosList" class="contacts-list"></div>
+        <button type="button" class="btn ghost small-btn" id="editAddContactoBtn">+ Agregar contacto</button>
+        <small class="field-help">Hasta 5 contactos. Como administrador puedes editar y eliminar.</small>
+
+        <div class="block-box" id="editBlockBox">
+          <h4>Bloqueo del cliente</h4>
+          <div class="switch-row">
+            <label class="switch"><input type="checkbox" id="editBloqueoSwitch"/><span class="switch-slider"></span></label>
+            <span class="block-status-pill" id="editBlockStatusPill">Activo</span>
+          </div>
+          <p class="block-explainer">Un cliente <strong>bloqueado</strong> sigue siendo visible en la Hoja de Ruta, tanto para el asesor como para los administradores, pero <strong>no se incluye</strong> en las cuentas de venta, meta ni cumplimiento.</p>
+          <label id="editMotivoBloqueoLabel">Motivo de bloqueo (obligatorio para bloquear)
+            <select id="editMotivoBloqueoSelect">
+              <option value="">Selecciona un motivo</option>
+              <option>No pertenece al canal</option>
+              <option>Cliente cerrado</option>
+              <option>Cambio de razón social / NIT</option>
+              <option>Información insuficiente</option>
+              <option>Duplicado</option>
+              <option>Cartera / condición especial</option>
+              <option>Otro</option>
+            </select>
+          </label>
+        </div>
+        <div class="actions">
+          <button class="btn" id="reassignConfirmBtn">Guardar cambios</button>
+          <button class="btn ghost" id="reassignCancelBtn">Cancelar</button>
+        </div>
       </div>
-      <div class="actions"><button class="p" id="activateAccess">Activar mi acceso</button></div>
-      <div id="regMsg" style="color:var(--danger);font-size:.86rem;margin-top:8px"></div>
     </div>
   </div>
-</div>
-<div id="appScreen" class='wrap hidden'>
-<div class="userbar"><div>Acceso activo: <b id="activeUser">-</b> · <span id="activeCompany">-</span></div><button class="linkbtn" id="changeUser">Cambiar usuario</button></div>
-<div class='hero'>
-<div id="logoWrap" class="logo-wrap hidden"><img id="companyLogo" alt="Logo empresa"></div>
-<h1 id='appName'>ListaLoop B2B</h1>
-<details id='heroDetails'>
-<summary>Ver información de la plataforma</summary>
-<p id='introText' style="margin-top:10px">Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.</p>
-<p id="empresaLine" class="hidden" style="margin-top:8px;font-weight:700"></p>
-<p style='margin-top:10px;opacity:.9;font-size:.9rem'>Base de precios integrada: <span id="baseName">-</span> | Precios vigentes desde: <span id="devDate">-</span> | Referencias activas cargadas: <span id="statRefs">-</span></p>
-<small id='waNote'></small>
-</details>
-<div style="margin-top:10px"><span class="version-badge" id="versionBadge">Verificando lista de precios vigente…</span></div>
-</div>
-<div class='main-tabs' id='mainTabs'>
-  <button class='p mini main-tab-btn' id='navConsultar'>🔍 Consultar</button>
-  <button class='s mini main-tab-btn' id='navCotizacion'>🧾 Cotización<span class='tab-badge hidden' id='cartBadge'>0</span></button>
-  <button class='s mini main-tab-btn' id='navDestacados'>⭐ Destacados</button>
-</div>
-<div id='viewConsultar'>
-<div class='card'><div class='grid'>
-<div><label>Referencia o nombre</label><input id='ref' autocomplete='off' placeholder='Ej: CSMPC0102 o parte del nombre'><div id='box' class='box'></div><div style='font-size:.84rem;color:#667085;margin-top:8px'>Solo se muestran productos activos.</div></div>
-<div><label>Descuento en Sala (%)</label><input id='sala' type='number' value='0' step='0.1'><label style='margin-top:10px'>Cantidad</label><input id='cantidad' type='number' value='1' min='1' step='1'></div>
-</div><div class='actions'><button class='p' id='calc'>Consultar precio</button><button class='g' id='copy' disabled>Copiar resultado</button><button class='g' id='quote' disabled>Copiar cotización WhatsApp</button><button class='p' id='addToQuote' disabled>🛒 Agregar a cotización</button><button class='s' id='clear'>Limpiar</button></div></div>
-<div class='card' id='r'><div class='empty'>Cargando base de productos…</div></div>
-<div class='card hidden' id='stockCard'><h3 style="margin:0 0 10px;color:var(--brand);font-size:1rem">📦 Disponibilidad</h3><div id='stockContent'></div></div>
-<div class='card hidden' id='suggestedCard'><h3 style="margin:0 0 10px;color:var(--brand);font-size:1rem">🎯 Productos Sugeridos</h3><div class='dest-grid' id='suggestedGrid'></div></div>
-<div class='card hidden' id='relatedCard'><h3 style="margin:0 0 10px;color:var(--brand);font-size:1rem">🤝 Productos comprados en conjunto normalmente</h3><div class='dest-grid' id='relatedGrid'></div></div>
-<div class='card hidden' id='mediaCard'><details id='mediaDetails'><summary style="cursor:pointer;font-weight:700;color:var(--brand);font-size:1rem">📎 Información técnica (imágenes, planos, manuales)</summary><div id='mediaContent' style="margin-top:10px"></div></details></div>
-<div class='card'>
-  <h3 style="margin:0 0 10px;color:var(--brand);font-size:1rem">🔎 Explorar catálogo</h3>
-  <div class='explore-filters'>
-    <div><label>Mostrar</label><select id='exploreVista'>
-      <option value='todos'>Todos los productos</option>
-      <option value='sugeridos'>Solo Productos Sugeridos</option>
-      <option value='comprados_conjunto'>Solo Comprados en conjunto</option>
-    </select></div>
-    <div><label>Gama</label><select id='exploreGama'><option value=''>Todas las gamas</option></select></div>
-    <div><label>Producto</label><select id='exploreProducto'><option value=''>Todos los productos</option></select></div>
-    <div><label>Ordenar por</label><select id='exploreSort'>
-      <option value='nombre_asc'>Nombre A-Z</option>
-      <option value='nombre_desc'>Nombre Z-A</option>
-      <option value='consultado_desc'>Más consultados</option>
-      <option value='precio_asc'>Precio: menor a mayor</option>
-      <option value='precio_desc'>Precio: mayor a menor</option>
-    </select></div>
-  </div>
-  <div id='exploreTableWrap'><div class='empty'>Cargando catálogo…</div></div>
-  <div class='explore-pager'>
-    <button class='s mini' id='explorePrev'>‹ Anterior</button>
-    <span id='explorePageInfo'></span>
-    <button class='s mini' id='exploreNext'>Siguiente ›</button>
-  </div>
-</div>
-</div>
-<div id='viewCotizacion' class='hidden'>
-<div class='card' id='quoteCartCard'>
-  <h3 style="margin:0 0 10px;color:var(--brand);font-size:1rem">🧾 Cotización múltiple</h3>
-  <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Se pierde al recargar la página — cópiala o envíala antes de salir.</p>
-  <div id='quoteCartTable'></div>
-  <div class='summary-row' id='quoteCartTotals'></div>
-  <div class='actions' style='margin-top:10px'>
-    <button class='p mini' id='btnCopyMultiQuote'>Copiar cotización múltiple</button>
-    <button class='s mini' id='btnClearQuoteCart'>Vaciar cotización</button>
-  </div>
-</div>
-</div>
-<div id='viewDestacados' class='hidden'>
-  <div class='card'>
-    <h3 class='dest-section-title'>🎯 <span id='focoBadgeLabel'>Foco</span></h3>
-    <div class='carousel' id='focoCarousel'><div class='dest-empty'>Cargando…</div></div>
-  </div>
-  <div class='card'>
-    <h3 class='dest-section-title'>🔥 <span id='bsBadgeLabel'>Best Sellers</span></h3>
-    <div class='dest-grid' id='bsGrid'><div class='dest-empty'>Cargando…</div></div>
-  </div>
-  <div class='card'>
-    <h3 class='dest-section-title'>🏷️ <span id='ofBadgeLabel'>Ofertas</span></h3>
-    <div class='dest-grid' id='ofGrid'><div class='dest-empty'>Cargando…</div></div>
-  </div>
-</div>
-<div id='destOverlay' class='overlay-backdrop hidden'>
-  <div class='overlay-panel'>
-    <div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:10px'>
-      <h3 style='margin:0;color:var(--brand)'>Detalle del producto</h3>
-      <button class='s mini' id='btnCloseOverlay'>✕ Cerrar</button>
+
+  <div class="modal-overlay" id="advisorEditModal">
+    <div class="modal-card small-modal">
+      <div class="modal-header">
+        <div><h3 id="advisorModalTitle">Editar asesor</h3><p>Datos del asesor comercial</p></div>
+        <button class="modal-close" id="advisorModalCloseBtn">×</button>
+      </div>
+      <div class="modal-form">
+        <input type="hidden" id="advisorOriginalName"/>
+        <label>Nombre<input type="text" id="advisorNameInput"/></label>
+        <label>Correo<input type="email" id="advisorEmailInput"/></label>
+        <label>Teléfono<input type="tel" id="advisorPhoneInput"/></label>
+        <label>Estado
+          <select id="advisorStatusInput"><option>Activo</option><option>Inactivo</option><option>Pendiente</option></select>
+        </label>
+        <label>Municipio base<input type="text" id="advisorMunicipioInput" list="municipiosDatalist" placeholder="Municipio donde opera el asesor"/></label>
+        <datalist id="municipiosDatalist"></datalist>
+        <label>Canal<select id="advisorCanalInput"><option value="">Sin canal</option></select></label>
+        <label>Zona<select id="advisorZonaInput"><option value="">Sin zona</option></select></label>
+        <small class="field-help">La asignación de canal y zona la define cualquier Administrador. Solo Super Administrador puede crear o renombrar canales y zonas (panel "Canales y zonas" más abajo).</small>
+        <div class="actions">
+          <button class="btn" id="advisorSaveBtn">Guardar asesor</button>
+          <button class="btn ghost" id="advisorModalCancelBtn">Cancelar</button>
+        </div>
+      </div>
     </div>
-    <div id='overlayContent'></div>
-  </div>
-</div>
-<div class="admin-tabs hidden" id="adminTabs">
-  <button class="p mini" id="tabPrices">💲 Precios</button>
-  <button class="s mini" id="tabSettings">⚙️ Ajustes Generales</button>
-  <button class="s mini" id="tabDestacados">⭐ Destacados</button>
-</div>
-<div class='card admin-panel hidden' id='adminPricePanel'>
-  <h3>🔧 Panel de administración de precios</h3>
-  <p style="margin:0;color:var(--muted);font-size:.86rem">Visible solo para el administrador autenticado. Los cambios aquí afectan a todos los usuarios de inmediato.</p>
-
-  <div class="admin-sub">
-    <h4>Actualizar un precio individual</h4>
-    <div class="inline-form">
-      <div><label>Referencia</label><input id="editRef" placeholder="Ej: PROAP20"></div>
-      <div><label>Nuevo precio C01 (PVP con IVA)</label><input id="editPrice" type="number" step="1" placeholder="Ej: 518000"></div>
-      <div><button class="p mini" id="btnUpdateSingle" style="padding:12px 16px">Actualizar precio</button></div>
-    </div>
-    <div id="editCurrentPrice" style="font-size:.84rem;color:var(--muted);margin-top:8px"></div>
-    <div class="mini-status" id="singleStatus"></div>
   </div>
 
-  <div class="admin-sub">
-    <h4>Carga masiva de lista de precios (CSV)</h4>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Columnas requeridas: <code>referencia, descripcion, gama, producto, c01</code>. Opcional: <code>activo</code> (si se omite, se asume activo). ⚠️ Los productos que NO estén en el archivo quedarán marcados como inactivos (no se borran).</p>
-    <div class="inline-form">
-      <div><label>Nombre de esta lista (trazabilidad)</label><input id="uploadOrigen" placeholder="Ej: C01 22 julio 2026"></div>
-      <div><label>Archivo CSV</label><input id="csvFile" type="file" accept=".csv"></div>
-      <div><button class="s mini" id="btnAnalyzeCSV" style="padding:12px 16px">Analizar archivo</button></div>
-    </div>
-    <div id="csvPreview"></div>
-    <div class="mini-status" id="bulkStatus"></div>
-  </div>
-
-  <div class="admin-sub">
-    <h4>📎 Información técnica del producto (imagen, plano, manual, video)</h4>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Imágenes y PDF se suben directo aquí. Para video, pega el enlace de YouTube/Vimeo (no se sube el archivo).</p>
-    <div class="inline-form">
-      <div><label>Referencia del producto</label><input id="mediaRef" placeholder="Ej: CCAPA6001"></div>
-      <div><label>Tipo</label><select id="mediaTipo"><option value="imagen">Imagen</option><option value="plano">Plano (PDF)</option><option value="manual">Manual / Ficha técnica (PDF)</option><option value="video">Video (enlace)</option></select></div>
-    </div>
-    <div class="inline-form" style="margin-top:8px">
-      <div id="mediaFileWrap"><label>Archivo (imagen o PDF)</label><input id="mediaFile" type="file" accept="image/*,.pdf"></div>
-      <div id="mediaUrlWrap" class="hidden"><label>Enlace del video</label><input id="mediaUrl" placeholder="https://youtube.com/..."></div>
-      <div><button class="p mini" id="btnUploadMedia" style="padding:12px 16px">Asociar al producto</button></div>
-    </div>
-    <div class="mini-status" id="mediaStatus"></div>
-  </div>
-
-  <div class="admin-sub">
-    <h4>📦 Disponibilidad MTS / MTO — actualizar una referencia</h4>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">MTS (Make to Stock): se muestran unidades disponibles y próximas a llegar. MTO (Make to Order): se muestran días de entrega aproximados.</p>
-    <div class="inline-form">
-      <div><label>Referencia</label><input id="stockRef" placeholder="Ej: CCAPA6001"></div>
-      <div><label>Tipo de abastecimiento</label><select id="stockTipo"><option value="MTS">MTS (Make to Stock)</option><option value="MTO">MTO (Make to Order)</option></select></div>
-    </div>
-    <div class="inline-form" style="margin-top:8px" id="stockMtsFields">
-      <div><label>Unidades disponibles</label><input id="stockUnidadesDisponibles" type="number" min="0" step="1"></div>
-      <div><label>Unidades próximas a llegar</label><input id="stockUnidadesProximas" type="number" min="0" step="1"></div>
-      <div><label>Fecha estimada de llegada</label><input id="stockFechaLlegada" type="date"></div>
-    </div>
-    <div class="inline-form hidden" style="margin-top:8px" id="stockMtoFields">
-      <div><label>Días de entrega aproximados</label><input id="stockDiasEntrega" type="number" min="0" step="1"></div>
-    </div>
-    <div class="actions" style="margin-top:8px"><button class="p mini" id="btnUpdateStock" style="padding:12px 16px">Actualizar disponibilidad</button></div>
-    <div class="mini-status" id="stockStatus"></div>
-  </div>
-
-  <div class="admin-sub">
-    <h4>📦 Disponibilidad MTS / MTO — carga masiva (CSV)</h4>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Columnas requeridas: <span class="mono">referencia, tipo_abastecimiento, unidades_disponibles, unidades_proximas_llegar, fecha_estimada_llegada, dias_entrega_aprox</span>. fecha_estimada_llegada en formato AAAA-MM-DD. Deja vacías las columnas que no apliquen según el tipo.</p>
-    <div class="inline-form">
-      <div><label>Archivo CSV</label><input id="stockCsvFile" type="file" accept=".csv"></div>
-      <div><button class="s mini" id="btnAnalyzeStockCSV" style="padding:12px 16px">Analizar archivo</button></div>
-    </div>
-    <div id="stockCsvPreview"></div>
-    <div class="mini-status" id="stockBulkStatus"></div>
-  </div>
-</div>
-<div class='card admin-panel hidden' id='adminSettingsPanel'>
-  <h3>⚙️ Ajustes Generales</h3>
-  <p style="margin:0;color:var(--muted);font-size:.86rem">Visible solo para el administrador autenticado. Los cambios aquí afectan a todos los usuarios de inmediato.</p>
-
-  <div class="admin-sub">
-    <h4>Empresa contratante</h4>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Se muestra como "Distribuidores autorizados por [EMPRESA]" y reemplaza el encabezado de las cotizaciones de WhatsApp. Se guarda siempre en MAYÚSCULAS.</p>
-    <div class="inline-form">
-      <div><label>Nombre de la empresa</label><input id="settingsCompany" placeholder="Ej: COMODISIMOS"></div>
-      <div><button class="p mini" id="btnSaveCompany" style="padding:12px 16px">Guardar</button></div>
-    </div>
-    <div class="mini-status" id="companyStatus"></div>
-  </div>
-
-  <div class="admin-sub">
-    <h4>Logo de la empresa</h4>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Formato recomendado: PNG o SVG con fondo transparente, máx. 1MB. Aparece en el encabezado de la app y en la pantalla de registro.</p>
-    <div class="inline-form">
-      <div><label>Archivo de logo</label><input id="logoFile" type="file" accept="image/png,image/svg+xml,image/jpeg"></div>
-      <div><button class="p mini" id="btnUploadLogo" style="padding:12px 16px">Subir logo</button></div>
-      <div><button class="g mini" id="btnRemoveLogo" style="padding:12px 16px">Quitar logo</button></div>
-    </div>
-    <div id="logoPreview" style="margin-top:10px"></div>
-    <div class="mini-status" id="logoStatus"></div>
-  </div>
-
-  <div class="admin-sub">
-    <h4>Tema visual de la aplicación</h4>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Aplica para todos los usuarios en todos los dispositivos.</p>
-    <div class="actions">
-      <button class="s mini theme-btn" data-theme="original">Claro</button>
-      <button class="s mini theme-btn" data-theme="dark">Oscuro</button>
-      <button class="s mini theme-btn" data-theme="pastel">Pastel</button>
-    </div>
-    <div class="mini-status" id="themeStatus"></div>
-  </div>
-</div>
-<div class='card admin-panel hidden' id='adminDestacadosPanel'>
-  <h3>⭐ Catálogo comercial — Destacados</h3>
-  <p style="margin:0;color:var(--muted);font-size:.86rem">Visible solo para el administrador autenticado. Define qué ven los asesores en la pestaña "⭐ Destacados" y cómo se etiqueta cada bloque.</p>
-
-  <div class="admin-sub">
-    <h4>Etiquetas y formato por bloque</h4>
-    <div class="inline-form">
-      <div><label>Aviso bloque Foco</label><input id="badgeFoco" placeholder="Ej: Nuevo, Lanzamiento, New"></div>
-      <div><label>Aviso bloque Best Sellers</label><input id="badgeBestseller" placeholder="Ej: BestSeller, Mejor Vendido"></div>
-    </div>
-    <div class="inline-form" style="margin-top:8px">
-      <div><label>Aviso bloque Ofertas</label><input id="badgeOferta" placeholder="Ej: En Oferta, OFF"></div>
-      <div><label>Formato del descuento en Ofertas</label><select id="ofertaFormato"><option value="porcentaje">Porcentaje (%)</option><option value="absoluto">Valor absoluto ($)</option></select></div>
-      <div><button class="p mini" id="btnSaveBadges" style="padding:12px 16px">Guardar etiquetas</button></div>
-    </div>
-    <div class="mini-status" id="badgesStatus"></div>
-  </div>
-
-  <div class="admin-sub">
-    <h4>Productos en Foco <span id="focoCount" style="color:var(--muted);font-weight:400;font-size:.85rem"></span></h4>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Máximo 10 productos. Se muestran como carrusel con imagen en la pestaña Destacados.</p>
-    <div class="inline-form">
-      <div style="position:relative"><label>Referencia</label><input id="focoRef" autocomplete="off" placeholder="Ej: CSMPC0102 o parte del nombre"><div id="focoRefBox" class="box admin-suggest-box"></div></div>
-      <div><label>Orden</label><input id="focoOrden" type="number" value="0" step="1"></div>
-      <div><button class="p mini" id="btnAddFoco" style="padding:12px 16px">Agregar a Foco</button></div>
-    </div>
-    <div id="focoList"></div>
-    <div class="mini-status" id="focoStatus"></div>
-  </div>
-
-  <div class="admin-sub">
-    <h4>Productos en Best Sellers</h4>
-    <div class="inline-form">
-      <div style="position:relative"><label>Referencia</label><input id="bsRef" autocomplete="off" placeholder="Ej: CSMPC0102 o parte del nombre"><div id="bsRefBox" class="box admin-suggest-box"></div></div>
-      <div><label>Orden</label><input id="bsOrden" type="number" value="0" step="1"></div>
-      <div><button class="p mini" id="btnAddBs" style="padding:12px 16px">Agregar a Best Sellers</button></div>
-    </div>
-    <div id="bsList"></div>
-    <div class="mini-status" id="bsStatus"></div>
-  </div>
-
-  <div class="admin-sub">
-    <h4>Productos en oferta</h4>
-    <div class="inline-form">
-      <div style="position:relative"><label>Referencia</label><input id="ofRef" autocomplete="off" placeholder="Ej: CSMPC0102 o parte del nombre"><div id="ofRefBox" class="box admin-suggest-box"></div></div>
-      <div><label>Orden</label><input id="ofOrden" type="number" value="0" step="1"></div>
-      <div><label>Descuento</label><input id="ofDescuento" type="number" step="0.01" placeholder="Ej: 10 (%) o 15000 ($)"></div>
-      <div><button class="p mini" id="btnAddOf" style="padding:12px 16px">Agregar a Ofertas</button></div>
-    </div>
-    <div id="ofList"></div>
-    <div class="mini-status" id="ofStatus"></div>
-  </div>
-
-  <div class="admin-sub">
-    <h4>Productos Sugeridos (venta cruzada)</h4>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Define qué producto sugerir cuando un asesor consulta otro. Se muestra en la pestaña Consultar como "Productos Sugeridos".</p>
-    <div class="inline-form">
-      <div style="position:relative"><label>Si consultan (referencia disparadora)</label><input id="vcDisparadoraRef" autocomplete="off" placeholder="Ej: CSMPC0102"><div id="vcDisparadoraRefBox" class="box admin-suggest-box"></div></div>
-      <div style="position:relative"><label>Sugerir</label><input id="vcSugeridaRef" autocomplete="off" placeholder="Ej: CCAPA6001"><div id="vcSugeridaRefBox" class="box admin-suggest-box"></div></div>
-      <div><label>Orden</label><input id="vcOrden" type="number" value="0" step="1"></div>
-      <div><button class="p mini" id="btnAddVentaCruzada" style="padding:12px 16px">Agregar sugerencia</button></div>
-    </div>
-    <div id="vcList"></div>
-    <div class="mini-status" id="vcStatus"></div>
-  </div>
-</div>
-<div class='footer'><span id="footerDistribText">Herramienta para distribuidores autorizados.</span> Información de referencia comercial. Derechos reservados.<div class='admin-gate hidden' id='adminGate'><button class='s mini' id='adminLogin'>🔒 Acceso administrador</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Visible solo para correos administradores autorizados.</span></div><div class='admin-tools hidden' id='adminTools'><button class='s mini' id='exportUsers'>Exportar registros CSV</button><button class='s mini' id='exportLogs'>Exportar uso CSV</button><button class='s mini' id='adminLogout'>Bloquear descargas</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Descargas habilitadas para administrador validado.</span></div><div style="margin-top:10px;font-size:.74rem;color:#a9b4c2">© ListaLoop B2B. Todos los derechos reservados — Sergio Velásquez.<span style="float:right;opacity:.45">23:1</span></div></div>
-</div><div id='toast'>Copiado</div>
-<script>
-const CONFIG_FILE="cmx30_app_config.json";
-const USER_KEY='cmx_partner_user_v1', USERS_KEY='cmx_partner_users_v1', LOGS_KEY='cmx_partner_logs_v1';
-// Correos autorizados para ver el botón de acceso administrador.
-// El control de seguridad real vive en Supabase (Auth + Row Level Security), esto es solo la UI.
-const ADMIN_EMAILS=['sergiovelasquez@me.com'];
-const ADMIN_UNLOCK_KEY='cmx_partner_admin_unlocked_v13';
-// --- Conexión Supabase (proyecto "Calc Precios") ---
-const SUPABASE_URL='https://hixsuoiwdptzyrbgexli.supabase.co';
-const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhpeHN1b2l3ZHB0enlyYmdleGxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMDA5NjcsImV4cCI6MjA5NjY3Njk2N30.L1DNuTyquRVhggBzJl61OP_NPaj3JIZep94imdredBE';
-const sb=window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-let CURRENT_USER=null;
-const qs=id=>document.getElementById(id);
-function readJSON(k,fallback){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(fallback));}catch(e){return fallback;}}
-function writeJSON(k,v){localStorage.setItem(k,JSON.stringify(v));}
-function csvEscape(v){return '"'+String(v??'').replaceAll('"','""')+'"';}
-function normalizeEmail(v){return String(v||'').trim().toLowerCase();}
-function isValidEmail(v){return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(normalizeEmail(v));}
-function normalizeColombiaPhone(v){let d=String(v||'').replace(/\D/g,'');if(d.startsWith('57')&&d.length===12)d=d.slice(2);return d;}
-function isValidColombiaMobile(v){const d=normalizeColombiaPhone(v);return /^3\d{9}$/.test(d);}
-function isAdmin(user=CURRENT_USER){return !!user&&ADMIN_EMAILS.includes(normalizeEmail(user.email));}
-// Visibilidad de margen/PVD/ganancia por perfil declarado en el registro (no confundir con isAdmin, que controla el panel de administración).
-function canSeeMargin(user=CURRENT_USER){const role=String(user?.role||'').trim().toLowerCase();return role==='administrador'||role==='propietario';}
-async function isAdminUnlocked(){const{data}=await sb.auth.getSession();return !!data?.session;}
-async function lockAdmin(){await sb.auth.signOut();await updateAdminTools();}
-function showAdminTab(tab){const pricePanel=qs('adminPricePanel'),settingsPanel=qs('adminSettingsPanel'),destPanel=qs('adminDestacadosPanel'),tp=qs('tabPrices'),ts=qs('tabSettings'),td=qs('tabDestacados');if(!pricePanel||!settingsPanel)return;pricePanel.classList.toggle('hidden',tab!=='prices');settingsPanel.classList.toggle('hidden',tab!=='settings');if(destPanel)destPanel.classList.toggle('hidden',tab!=='destacados');if(tp)tp.className=(tab==='prices'?'p mini':'s mini');if(ts)ts.className=(tab==='settings'?'p mini':'s mini');if(td)td.className=(tab==='destacados'?'p mini':'s mini');if(tab==='settings'&&qs('settingsCompany'))qs('settingsCompany').value=SETTINGS.company_name||'';if(tab==='destacados')fillBadgeInputs();}
-async function updateAdminTools(){const gate=qs('adminGate'),tools=qs('adminTools'),tabs=qs('adminTabs'),pricePanel=qs('adminPricePanel'),settingsPanel=qs('adminSettingsPanel');if(!gate||!tools)return;const allowed=isAdmin();const unlocked=await isAdminUnlocked();gate.classList.toggle('hidden',!allowed||unlocked);tools.classList.toggle('hidden',!allowed||!unlocked);if(tabs)tabs.classList.toggle('hidden',!allowed||!unlocked);if(allowed&&unlocked){showAdminTab('prices');}else{if(pricePanel)pricePanel.classList.add('hidden');if(settingsPanel)settingsPanel.classList.add('hidden');}}
-async function unlockAdmin(){if(!isAdmin()){showToast('Acceso solo para administrador');return;}const pass=prompt('Ingresa tu contraseña de administrador (Supabase)');if(pass===null)return;const{error}=await sb.auth.signInWithPassword({email:CURRENT_USER.email,password:pass});if(error){showToast('Clave incorrecta o usuario no autorizado');return;}await updateAdminTools();showToast('Descargas habilitadas');}
-function downloadCSV(filename, rows){if(!isAdmin()||!isAdminUnlocked()){showToast('Acceso solo para administrador validado');return;}if(!rows.length){showToast('No hay datos para exportar');return;}const headers=Object.keys(rows[0]);const csv=[headers.join(','),...rows.map(r=>headers.map(h=>csvEscape(r[h])).join(','))].join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();URL.revokeObjectURL(a.href);}
-function showMainTab(tab){
-  const views={consultar:qs('viewConsultar'),cotizacion:qs('viewCotizacion'),destacados:qs('viewDestacados')};
-  const navs={consultar:qs('navConsultar'),cotizacion:qs('navCotizacion'),destacados:qs('navDestacados')};
-  if(!views.consultar||!views.cotizacion)return;
-  Object.keys(views).forEach(k=>{if(views[k])views[k].classList.toggle('hidden',k!==tab);if(navs[k])navs[k].className=(k===tab?'p mini main-tab-btn':'s mini main-tab-btn');});
-  if(tab==='destacados')renderDestacados();
-}
-function showApp(user){CURRENT_USER=user;qs('registerScreen').classList.add('hidden');qs('appScreen').classList.remove('hidden');qs('activeUser').textContent=user.name||'-';qs('activeCompany').textContent=user.company||'-';showMainTab('consultar');renderQuoteCart();updateAdminTools();}
-function showRegister(){CURRENT_USER=null;lockAdmin();qs('appScreen').classList.add('hidden');qs('registerScreen').classList.remove('hidden');}
-function activate(){const user={name:qs('regName').value.trim(),phone:normalizeColombiaPhone(qs('regPhone').value),email:normalizeEmail(qs('regEmail').value),company:qs('regCompany').value.trim(),city:qs('regCity').value.trim(),store:qs('regStore').value.trim(),role:qs('regRole').value,consent:qs('regConsent').checked,registeredAt:new Date().toISOString(),lastAccess:new Date().toISOString()};
-const required=['name','phone','email','company','city','role'];const missing=required.some(k=>!user[k]);if(missing||!user.consent){qs('regMsg').textContent='Completa todos los campos obligatorios y acepta la autorización de tratamiento de datos.';return;}if(!isValidEmail(user.email)){qs('regMsg').textContent='Ingresa un correo electrónico válido. Ejemplo: nombre@empresa.com';qs('regEmail').focus();return;}if(!isValidColombiaMobile(user.phone)){qs('regMsg').textContent='Ingresa un celular colombiano válido de 10 dígitos. Ejemplo: 3001234567';qs('regPhone').focus();return;}const users=readJSON(USERS_KEY,[]);const idx=users.findIndex(u=>(u.email||'').toLowerCase()===user.email.toLowerCase()||(u.phone&&normalizeColombiaPhone(u.phone)===user.phone));if(idx>=0){user.registeredAt=users[idx].registeredAt;users[idx]={...users[idx],...user};}else users.push(user);writeJSON(USERS_KEY,users);writeJSON(USER_KEY,user);showApp(user);showToast('Acceso activado');}
-function logUsage(item){if(!CURRENT_USER||!item)return;const logs=readJSON(LOGS_KEY,[]);logs.push({date:new Date().toLocaleDateString('es-CO'),time:new Date().toLocaleTimeString('es-CO'),iso:new Date().toISOString(),name:CURRENT_USER.name,email:CURRENT_USER.email,phone:CURRENT_USER.phone,company:CURRENT_USER.company,city:CURRENT_USER.city,store:CURRENT_USER.store,role:CURRENT_USER.role,reference:item.referencia,description:item.descripcion,gama:item.gama,product:item.producto});writeJSON(LOGS_KEY,logs);CURRENT_USER.lastAccess=new Date().toISOString();writeJSON(USER_KEY,CURRENT_USER);
-// Fase 3: registro agregado/anónimo (sin datos de usuario) para alimentar "más consultados" y venta cruzada.
-sb.from('consultas_log').insert({referencia:item.referencia}).then(({error})=>{if(error)console.warn('No se pudo registrar consulta agregada:',error.message);});
-}
-let PRODUCTS=[],RULES=[],CONFIG={},DATA=[],byRef=new Map(),lastCopy="",lastQuote="",lastItem=null,QUOTE_ITEMS=[],CATALOGO_ITEMS=[],MEDIA_IMAGES=new Map(),QUOTE_SESSION_ID=null,RANKING_MAP=new Map(),EXPLORE_PAGE=1,DISPONIBILIDAD_MAP=new Map(),SUGGESTED_FOR_LAST=[],RELATED_FOR_LAST=new Map();
-const EXPLORE_PAGE_SIZE=20;
-let SETTINGS={company_name:'',logo_url:'',theme:'original',catalogo_foco_badge:'Nuevo',catalogo_bestseller_badge:'Best Seller',catalogo_oferta_badge:'Oferta',catalogo_oferta_formato:'porcentaje'};
-const ref=document.getElementById('ref'),sala=document.getElementById('sala'),cant=document.getElementById('cantidad'),r=document.getElementById('r'),box=document.getElementById('box'),copy=document.getElementById('copy'),quote=document.getElementById('quote'),addBtn=document.getElementById('addToQuote'),toast=document.getElementById('toast');
-const money=v=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(Math.round(v));
-const pct=v=>Math.max(0,Math.min(100,Number(v)||0))/100; const now=()=>new Intl.DateTimeFormat('es-CO',{dateStyle:'medium',timeStyle:'short'}).format(new Date());
-const normalize=s=>String(s||'').trim().toUpperCase();
-const resolveMargin=g=>{g=normalize(g);for(const rule of RULES){const k=normalize(rule.match_value);if((rule.type||'prefix')==='prefix'&&g.startsWith(k))return Number(rule.margen||0);if(rule.type==='exact'&&g===k)return Number(rule.margen||0);}return 0;};
-const find=q=>{q=normalize(q);if(!q)return null;if(byRef.has(q))return byRef.get(q);return DATA.find(x=>x.search.includes(q));};
-const sugg=q=>{q=normalize(q);if(!q)return[];return DATA.filter(x=>x.search.includes(q)).slice(0,8);};
-function showToast(msg){toast.textContent=msg;toast.style.display='block';setTimeout(()=>toast.style.display='none',1500);}
-function showS(){const items=sugg(ref.value);if(!ref.value||!items.length){box.style.display='none';box.innerHTML='';return;}box.innerHTML=items.map(x=>`<div class='it' data-r='${x.referencia}'><b>${x.referencia}</b> — ${x.descripcion}</div>`).join('');box.style.display='block';[...box.querySelectorAll('.it')].forEach(el=>el.onclick=()=>{ref.value=el.dataset.r;box.style.display='none';calc();});}
-function badge(ds){if(ds>.35)return["badge danger","Descuento en sala muy alto: revisar política comercial"];if(ds>.30)return["badge warn","Descuento en sala alto: revisar política comercial"];return["badge ok","Consulta válida"];}
-function mTag(m){if(m>=.20)return"<span class='tag-good'>Margen alto</span>";if(m>=.15)return"<span class='tag-mid'>Margen medio</span>";return"<span class='tag-low'>Sin margen</span>";}
-function isRestricted(gama){const arr=Array.isArray(CONFIG.restricted_gamas)?CONFIG.restricted_gamas:[];return arr.map(normalize).includes(normalize(gama));}
-function applyCompanyName(){const company=(SETTINGS.company_name||'').trim().toUpperCase();const line=qs('empresaLine');if(line){if(company){line.textContent=`Distribuidores autorizados por ${company}`;line.classList.remove('hidden');}else{line.textContent='';line.classList.add('hidden');}}
-const footerText=qs('footerDistribText');if(footerText)footerText.textContent=company?`Herramienta para distribuidores autorizados por ${company}.`:'Herramienta para distribuidores autorizados.';
-const consent=qs('consentText');if(consent)consent.textContent=company?`Autorizo a ConAccion y a ${company} para recolectar, almacenar y tratar mis datos personales con fines comerciales, promocionales, formativos y de relacionamiento, conforme a la política de tratamiento de datos personales vigente.`:'Autorizo a ConAccion BPS para recolectar, almacenar y tratar mis datos personales con fines comerciales, promocionales, formativos y de relacionamiento, conforme a la política de tratamiento de datos personales vigente.';}
-function applyLogo(){const url=(SETTINGS.logo_url||'').trim();['logoWrap','logoWrapReg'].forEach(id=>{const w=qs(id);if(w)w.classList.toggle('hidden',!url);});['companyLogo','companyLogoReg'].forEach(id=>{const img=qs(id);if(img)img.src=url;});const preview=qs('logoPreview');if(preview)preview.innerHTML=url?`<img src="${url}" alt="Logo actual" style="max-height:60px;max-width:200px;border:1px solid var(--line);border-radius:8px;padding:6px;background:#fff">`:'<span style="color:var(--muted);font-size:.84rem">Sin logo cargado.</span>';}
-function applyTheme(theme){document.documentElement.setAttribute('data-theme',theme==='dark'||theme==='pastel'?theme:'');document.querySelectorAll('.theme-btn').forEach(b=>{b.className=(b.dataset.theme===theme?'p mini theme-btn':'s mini theme-btn');});}
-async function renderProductMedia(referencia){
-  const card=qs('mediaCard'),content=qs('mediaContent'),details=qs('mediaDetails');
-  if(!card||!content)return;
-  if(details)details.open=false;
-  const{data,error}=await sb.from('producto_media').select('*').eq('referencia',referencia).eq('activo',true).order('orden');
-  if(error||!data||!data.length){card.classList.add('hidden');content.innerHTML='';return;}
-  const imgs=data.filter(x=>x.tipo==='imagen');
-  const docs=data.filter(x=>x.tipo==='plano'||x.tipo==='manual');
-  const vids=data.filter(x=>x.tipo==='video');
-  let html='';
-  if(imgs.length)html+=`<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">${imgs.map(x=>`<a href="${x.url}" target="_blank"><img src="${x.url}" alt="${x.nombre_archivo||'imagen'}" style="width:110px;height:110px;object-fit:cover;border-radius:10px;border:1px solid var(--line)"></a>`).join('')}</div>`;
-  if(docs.length)html+=`<div style="margin-bottom:10px">${docs.map(x=>`<a href="${x.url}" target="_blank" class="badge ok" style="display:inline-block;margin:0 6px 6px 0;text-decoration:none">${x.tipo==='plano'?'📐 Plano':'📄 Manual'}: ${x.nombre_archivo||'ver documento'}</a>`).join('')}</div>`;
-  if(vids.length)html+=`<div>${vids.map(x=>`<a href="${x.url}" target="_blank" class="badge warn" style="display:inline-block;margin:0 6px 6px 0;text-decoration:none">🎥 ${x.nombre_archivo||'Ver video'}</a>`).join('')}</div>`;
-  content.innerHTML=html;card.classList.remove('hidden');
-}
-function calc(){const item=find(ref.value);if(!item){r.innerHTML="<div class='badge warn'>Referencia no encontrada</div><div class='empty'>Revisa el código o selecciona una sugerencia.</div>";copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;qs('mediaCard').classList.add('hidden');qs('suggestedCard').classList.add('hidden');qs('relatedCard').classList.add('hidden');qs('stockCard').classList.add('hidden');SUGGESTED_FOR_LAST=[];RELATED_FOR_LAST=new Map();renderExplore();return;}
-logUsage(item);
-if(isRestricted(item.gama)){copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;qs('mediaCard').classList.add('hidden');qs('suggestedCard').classList.add('hidden');qs('relatedCard').classList.add('hidden');qs('stockCard').classList.add('hidden');SUGGESTED_FOR_LAST=[];RELATED_FOR_LAST=new Map();renderExplore();r.innerHTML=`<div class='badge warn'>No disponible</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='empty'>${CONFIG.restricted_message||'Producto no disponible para cotización en este canal.'}</div>`;return;}
-lastItem=item;
-renderPriceCard();
-}
-function renderPriceCard(){
-  const item=lastItem;if(!item)return;
-  const ds=pct(sala.value),qty=Math.max(1,parseInt(cant?.value||'1',10)||1);
-  const canMargin=canSeeMargin();
-  const m=resolveMargin(item.gama),pvpI=Number(item.c01||0),pvp=pvpI/1.19,pvpSI=pvpI*(1-ds),pvpS=pvpSI/1.19,pvdI=pvpSI*(1-m),pvd=pvdI/1.19,gain=pvpS-pvd,dt=now(),[bc,bt]=badge(ds);
-  lastCopy=`Referencia: ${item.referencia}
-Descripción: ${item.descripcion}
-Gama: ${item.gama}
-Descuento en Sala: ${Number(sala.value||0).toFixed(1)}%
-Cantidad: ${qty}
-PVP con IVA (unitario): ${money(pvpI)}
-PVP sin IVA (unitario): ${money(pvp)}
-PVP con IVA dto SALA (unitario): ${money(pvpSI)} · Total: ${money(pvpSI*qty)}
-PVP sin IVA dto SALA (unitario): ${money(pvpS)}${canMargin?`
-Margen Distribuidor: ${(m*100).toFixed(0)}%
-PVD con IVA (unitario): ${money(pvdI)}
-PVD sin IVA (unitario): ${money(pvd)}
-Esto es lo que se puede ganar el distribuidor (unitario): ${money(gain)} · Total: ${money(gain*qty)}`:''}
-Fecha cálculo: ${dt}`;
-  const empresaQuote=(SETTINGS.company_name||'').trim().toUpperCase();
-  const quoteHeader=empresaQuote?`Cotización ${empresaQuote}`:'Cotización';
-  lastQuote=`${quoteHeader}
-
-Referencia: ${item.referencia}
-Producto: ${item.descripcion}
-Gama: ${item.gama}
-Cantidad: ${qty}
-
-PVP con IVA (unitario): ${money(pvpI)}
-PVP con IVA dto SALA (unitario): ${money(pvpSI)} · Total: ${money(pvpSI*qty)}${canMargin?`
-PVD con IVA (unitario): ${money(pvdI)}
-
-Ganancia estimada distribuidor (unitaria): ${money(gain)} · Total: ${money(gain*qty)}`:''}
-Fecha cálculo: ${dt}`;
-  copy.disabled=false;quote.disabled=false;addBtn.disabled=false;
-  const priceBox=(label,val,extraCls)=>`<div class='price${extraCls?(' '+extraCls):''}'><div class='t'>${label} <span style="font-weight:400;font-size:.7rem">(unitario)</span></div><div class='v'>${money(val)}</div><div class='qty-total'>Cant. ${qty} · Total: ${money(val*qty)}</div></div>`;
-  const pvdBlocks=canMargin?priceBox('PVD con IVA',pvdI,'hl')+priceBox('PVD sin IVA',pvd,'hl')+priceBox('Esto es lo que se puede ganar el distribuidor',gain,'gain'):'';
-  const margenRow=canMargin?`<div class='row'><div class='k'>Margen Distribuidor</div><div>${(m*100).toFixed(0)}% ${mTag(m)}</div></div>`:'';
-  r.innerHTML=`<div class='${bc}'>${bt}</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='row'><div class='k'>Producto</div><div>${item.producto}</div></div><div class='row'><div class='k'>Activo</div><div>${item.activo?'Sí':'No'}</div></div><div class='row'><div class='k'>Descuento en Sala</div><div>${Number(sala.value||0).toFixed(1)}%</div></div><div class='row'><div class='k'>Cantidad</div><div>${qty}</div></div>${margenRow}<div class='row'><div class='k'>Fecha y hora del cálculo</div><div>${dt}</div></div><p class='unit-note'>Los valores de cada casilla son por unidad; el total considera la cantidad indicada arriba.</p><div class='prices'>${priceBox('PVP con IVA',pvpI)}${priceBox('PVP sin IVA',pvp)}${priceBox('PVP con IVA dto SALA',pvpSI)}${priceBox('PVP sin IVA dto SALA',pvpS)}${pvdBlocks}</div>`;renderProductMedia(item.referencia);renderSuggestedProducts(item.referencia);renderRelatedProducts(item.referencia);renderStockInfo(item.referencia);
-}
-function ensureQuoteSession(){if(!QUOTE_SESSION_ID)QUOTE_SESSION_ID=crypto.randomUUID();return QUOTE_SESSION_ID;}
-function logQuoteItem(referencia,cantidad){
-  const sessionId=ensureQuoteSession();
-  sb.from('cotizacion_items_log').insert({cotizacion_session_id:sessionId,referencia,cantidad}).then(({error})=>{if(error)console.warn('No se pudo registrar línea de cotización agregada:',error.message);});
-}
-function pushToQuote(referencia,cantidad,descuento){
-  const qty=Math.max(1,parseInt(cantidad,10)||1);
-  const ds=Number(descuento||0);
-  const idx=QUOTE_ITEMS.findIndex(x=>x.referencia===referencia&&x.descuento===ds);
-  if(idx>=0){QUOTE_ITEMS[idx].cantidad+=qty;}
-  else{QUOTE_ITEMS.push({referencia,cantidad:qty,descuento:ds});}
-  logQuoteItem(referencia,qty);
-  const warn=stockWarningFor(referencia);
-  if(warn)showToast(`⚠️ ${referencia}: ${warn}`);
-  renderQuoteCart();
-}
-function addToQuote(){
-  if(!lastItem){showToast('Primero consulta un producto');return;}
-  pushToQuote(lastItem.referencia,cant?.value||'1',sala.value||0);
-  showToast('Agregado a la cotización');
-}
-function quoteLineCalc(line){
-  const item=byRef.get(normalize(line.referencia));
-  if(!item)return null;
-  const ds=pct(line.descuento);
-  const m=resolveMargin(item.gama),pvpI=Number(item.c01||0),pvpSI=pvpI*(1-ds),pvdI=pvpSI*(1-m);
-  const subtotalPvp=pvpSI*line.cantidad,subtotalPvd=pvdI*line.cantidad,gainLine=subtotalPvp-subtotalPvd;
-  return{item,ds,m,pvpI,pvpSI,pvdI,subtotalPvp,subtotalPvd,gainLine};
-}
-function renderQuoteCart(){
-  const table=qs('quoteCartTable'),totals=qs('quoteCartTotals'),badge=qs('cartBadge');
-  if(!table)return;
-  if(badge){badge.textContent=String(QUOTE_ITEMS.length);badge.classList.toggle('hidden',QUOTE_ITEMS.length===0);}
-  if(!QUOTE_ITEMS.length){table.innerHTML="<div class='empty'>Aún no has agregado productos. Ve a la pestaña Consultar, busca una referencia y usa 'Agregar a cotización'.</div>";totals.innerHTML='';return;}
-  const canMargin=canSeeMargin();
-  let totalPvp=0,totalPvd=0;
-  const rows=QUOTE_ITEMS.map((line,i)=>{
-    const c=quoteLineCalc(line);
-    if(!c)return'';
-    totalPvp+=c.subtotalPvp;totalPvd+=c.subtotalPvd;
-    const warn=stockWarningFor(line.referencia);
-    return`<tr>
-      <td class='mono'>${c.item.referencia}</td>
-      <td>${c.item.descripcion}${warn?`<div style="color:var(--danger);font-size:.76rem;margin-top:2px">⚠️ ${warn}</div>`:''}</td>
-      <td><input class='qty-input' type='number' min='1' step='1' value='${line.cantidad}' data-i='${i}' data-f='cantidad'></td>
-      <td><input class='qty-input' type='number' min='0' step='0.1' value='${line.descuento}' data-i='${i}' data-f='descuento'></td>
-      <td>${money(c.pvpSI)}</td>
-      <td>${money(c.subtotalPvp)}</td>
-      ${canMargin?`<td>${money(c.subtotalPvd)}</td><td>${money(c.gainLine)}</td>`:''}
-      <td><button class='rm-btn' data-i='${i}'>✕</button></td>
-    </tr>`;
-  }).join('');
-  table.innerHTML=`<div class='cart-scroll-hint'>← Desliza para ver todos los datos →</div><table class='preview-table'><tr><th>Ref</th><th>Descripción</th><th>Cant.</th><th>Dto %</th><th>PVP unit c/IVA dto</th><th>Subtotal PVP</th>${canMargin?`<th>Subtotal PVD</th><th>Ganancia</th>`:''}<th></th></tr>${rows}</table>`;
-  totals.innerHTML=`<div class='summary-chip'><b>${money(totalPvp)}</b>Total PVP</div>${canMargin?`<div class='summary-chip'><b>${money(totalPvd)}</b>Total PVD</div><div class='summary-chip'><b>${money(totalPvp-totalPvd)}</b>Ganancia total estimada</div>`:''}`;
-  table.querySelectorAll('input.qty-input').forEach(inp=>{
-    inp.onchange=()=>{const i=Number(inp.dataset.i),f=inp.dataset.f;let v=Number(inp.value);if(f==='cantidad')v=Math.max(1,Math.round(v)||1);else v=Math.max(0,v||0);QUOTE_ITEMS[i][f]=v;renderQuoteCart();};
-  });
-  table.querySelectorAll('button.rm-btn').forEach(btn=>{
-    btn.onclick=()=>{QUOTE_ITEMS.splice(Number(btn.dataset.i),1);renderQuoteCart();};
-  });
-}
-function buildMultiQuoteText(){
-  const canMargin=canSeeMargin();
-  const empresaQuote=(SETTINGS.company_name||'').trim().toUpperCase();
-  const header=empresaQuote?`Cotización ${empresaQuote}`:'Cotización';
-  let totalPvp=0,totalPvd=0;
-  const lines=QUOTE_ITEMS.map(line=>{
-    const c=quoteLineCalc(line);if(!c)return'';
-    totalPvp+=c.subtotalPvp;totalPvd+=c.subtotalPvd;
-    return`${c.item.referencia} — ${c.item.descripcion}
-Cantidad: ${line.cantidad}${line.descuento?` · Descuento: ${Number(line.descuento).toFixed(1)}%`:''}
-PVP con IVA dto SALA (unit): ${money(c.pvpSI)}
-Subtotal: ${money(c.subtotalPvp)}${canMargin?`
-PVD con IVA (unit): ${money(c.pvdI)}
-Subtotal PVD: ${money(c.subtotalPvd)}`:''}`;
-  }).join('\n\n');
-  const totalsTxt=`TOTAL GENERAL PVP: ${money(totalPvp)}${canMargin?`
-TOTAL GENERAL PVD: ${money(totalPvd)}
-Ganancia total estimada distribuidor: ${money(totalPvp-totalPvd)}`:''}`;
-  return`${header}
-
-${lines}
-
-${totalsTxt}
-Fecha cotización: ${now()}`;
-}
-function copyMultiQuote(){
-  if(!QUOTE_ITEMS.length){showToast('La cotización está vacía');return;}
-  navigator.clipboard.writeText(buildMultiQuoteText()).then(()=>showToast('Cotización múltiple copiada')).catch(()=>{});
-}
-function clearQuoteCart(){QUOTE_ITEMS=[];QUOTE_SESSION_ID=null;renderQuoteCart();}
-function wireRefAutocomplete(inputId,boxId){
-  const inp=qs(inputId),box=qs(boxId);
-  if(!inp||!box)return;
-  inp.addEventListener('input',()=>{
-    const items=sugg(inp.value);
-    if(!inp.value||!items.length){box.style.display='none';box.innerHTML='';return;}
-    box.innerHTML=items.map(x=>`<div class='it' data-r='${x.referencia}'><b>${x.referencia}</b> — ${x.descripcion}</div>`).join('');
-    box.style.display='block';
-    [...box.querySelectorAll('.it')].forEach(el=>el.onclick=()=>{inp.value=el.dataset.r;box.style.display='none';});
-  });
-  document.addEventListener('click',e=>{if(!box.contains(e.target)&&e.target!==inp)box.style.display='none';});
-}
-function uniqueSortedValues(field){const set=new Set();DATA.forEach(x=>{const v=(x[field]||'').trim();if(v)set.add(v);});return[...set].sort((a,b)=>a.localeCompare(b,'es'));}
-function populateExploreFilters(){
-  const gamaSel=qs('exploreGama'),prodSel=qs('exploreProducto');
-  if(!gamaSel||!prodSel)return;
-  const gamaPrev=gamaSel.value,prodPrev=prodSel.value;
-  gamaSel.innerHTML=`<option value=''>Todas las gamas</option>`+uniqueSortedValues('gama').map(g=>`<option value='${g}'>${g}</option>`).join('');
-  prodSel.innerHTML=`<option value=''>Todos los productos</option>`+uniqueSortedValues('producto').map(p=>`<option value='${p}'>${p}</option>`).join('');
-  gamaSel.value=gamaPrev;prodSel.value=prodPrev;
-}
-function getExploreList(){
-  const gamaF=qs('exploreGama')?.value||'',prodF=qs('exploreProducto')?.value||'',sortBy=qs('exploreSort')?.value||'nombre_asc';
-  const vista=qs('exploreVista')?.value||'todos';
-  let list=DATA.filter(x=>(!gamaF||x.gama===gamaF)&&(!prodF||x.producto===prodF));
-  if(vista==='sugeridos'){
-    list=list.filter(x=>SUGGESTED_FOR_LAST.includes(normalize(x.referencia)));
-    list.sort((a,b)=>SUGGESTED_FOR_LAST.indexOf(normalize(a.referencia))-SUGGESTED_FOR_LAST.indexOf(normalize(b.referencia)));
-    return list;
-  }
-  if(vista==='comprados_conjunto'){
-    list=list.filter(x=>RELATED_FOR_LAST.has(normalize(x.referencia)));
-    list.sort((a,b)=>(RELATED_FOR_LAST.get(normalize(b.referencia))||0)-(RELATED_FOR_LAST.get(normalize(a.referencia))||0));
-    return list;
-  }
-  const ranking=r=>RANKING_MAP.get(normalize(r.referencia))||0;
-  switch(sortBy){
-    case'nombre_desc':list.sort((a,b)=>b.descripcion.localeCompare(a.descripcion,'es'));break;
-    case'consultado_desc':list.sort((a,b)=>ranking(b)-ranking(a)||a.descripcion.localeCompare(b.descripcion,'es'));break;
-    case'precio_asc':list.sort((a,b)=>Number(a.c01||0)-Number(b.c01||0));break;
-    case'precio_desc':list.sort((a,b)=>Number(b.c01||0)-Number(a.c01||0));break;
-    default:list.sort((a,b)=>a.descripcion.localeCompare(b.descripcion,'es'));
-  }
-  return list;
-}
-function renderExplore(){
-  const wrap=qs('exploreTableWrap'),pageInfo=qs('explorePageInfo'),prevBtn=qs('explorePrev'),nextBtn=qs('exploreNext'),sortSel=qs('exploreSort');
-  if(!wrap)return;
-  const vista=qs('exploreVista')?.value||'todos';
-  if(sortSel)sortSel.disabled=(vista!=='todos');
-  if(vista!=='todos'){
-    if(!lastItem){
-      wrap.innerHTML="<div class='empty'>Consulta un producto en la ficha de precio para usar este filtro.</div>";
-      if(pageInfo)pageInfo.textContent='';if(prevBtn)prevBtn.disabled=true;if(nextBtn)nextBtn.disabled=true;
-      return;
-    }
-    const sinDatos=vista==='sugeridos'?!SUGGESTED_FOR_LAST.length:!RELATED_FOR_LAST.size;
-    if(sinDatos){
-      const msg=vista==='sugeridos'?`No hay productos sugeridos definidos para ${lastItem.referencia}.`:`Todavía no hay información de compra en conjunto para ${lastItem.referencia}.`;
-      wrap.innerHTML=`<div class='empty'>${msg}</div>`;
-      if(pageInfo)pageInfo.textContent='';if(prevBtn)prevBtn.disabled=true;if(nextBtn)nextBtn.disabled=true;
-      return;
-    }
-  }
-  const list=getExploreList();
-  const totalPages=Math.max(1,Math.ceil(list.length/EXPLORE_PAGE_SIZE));
-  if(EXPLORE_PAGE>totalPages)EXPLORE_PAGE=totalPages;
-  if(EXPLORE_PAGE<1)EXPLORE_PAGE=1;
-  const start=(EXPLORE_PAGE-1)*EXPLORE_PAGE_SIZE;
-  const pageItems=list.slice(start,start+EXPLORE_PAGE_SIZE);
-  if(!pageItems.length){wrap.innerHTML="<div class='empty'>No hay productos que coincidan con los filtros seleccionados.</div>";}
-  else{
-    wrap.innerHTML=`<table class='explore-table'><tr><th>Referencia</th><th>Descripción</th><th>Gama</th><th>PVP con IVA</th></tr>${pageItems.map(x=>`<tr class='explore-row' data-ref='${x.referencia}'><td class='mono'>${x.referencia}</td><td>${x.descripcion}</td><td>${x.gama}</td><td>${money(Number(x.c01||0))}</td></tr>`).join('')}</table>`;
-    wrap.querySelectorAll('.explore-row').forEach(row=>{row.onclick=()=>{ref.value=row.dataset.ref;box.style.display='none';calc();wrap.scrollIntoView({behavior:'smooth',block:'nearest'});r.scrollIntoView({behavior:'smooth',block:'start'});};});
-  }
-  if(pageInfo)pageInfo.textContent=`Página ${EXPLORE_PAGE} de ${totalPages} · ${list.length} producto${list.length===1?'':'s'}`;
-  if(prevBtn)prevBtn.disabled=EXPLORE_PAGE<=1;
-  if(nextBtn)nextBtn.disabled=EXPLORE_PAGE>=totalPages;
-}
-function focoActiveCount(){return CATALOGO_ITEMS.filter(x=>x.bloque==='foco'&&x.activo!==false).length;}
-function fillBadgeInputs(){
-  if(qs('badgeFoco'))qs('badgeFoco').value=SETTINGS.catalogo_foco_badge||'';
-  if(qs('badgeBestseller'))qs('badgeBestseller').value=SETTINGS.catalogo_bestseller_badge||'';
-  if(qs('badgeOferta'))qs('badgeOferta').value=SETTINGS.catalogo_oferta_badge||'';
-  if(qs('ofertaFormato'))qs('ofertaFormato').value=SETTINGS.catalogo_oferta_formato||'porcentaje';
-  renderDestacadosAdmin();renderVentaCruzadaAdmin();
-}
-async function saveBadgeSettings(){
-  const foco=(qs('badgeFoco').value||'').trim()||'Nuevo';
-  const bs=(qs('badgeBestseller').value||'').trim()||'Best Seller';
-  const of=(qs('badgeOferta').value||'').trim()||'Oferta';
-  const fmt=qs('ofertaFormato').value==='absoluto'?'absoluto':'porcentaje';
-  setStatus('badgesStatus','Guardando…','info');
-  const{error}=await sb.from('app_settings').update({catalogo_foco_badge:foco,catalogo_bestseller_badge:bs,catalogo_oferta_badge:of,catalogo_oferta_formato:fmt,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);
-  if(error){setStatus('badgesStatus','Error al guardar: '+error.message+'. ¿Ya corriste el script setup_catalogo_destacados_supabase.sql en Supabase?','err');return;}
-  SETTINGS.catalogo_foco_badge=foco;SETTINGS.catalogo_bestseller_badge=bs;SETTINGS.catalogo_oferta_badge=of;SETTINGS.catalogo_oferta_formato=fmt;
-  setStatus('badgesStatus','✅ Etiquetas guardadas para todos los usuarios.','ok');
-}
-function renderDestacadosAdmin(){
-  const blocks=[{bloque:'foco',listId:'focoList'},{bloque:'bestseller',listId:'bsList'},{bloque:'oferta',listId:'ofList'}];
-  blocks.forEach(({bloque,listId})=>{
-    const el=qs(listId);if(!el)return;
-    const items=CATALOGO_ITEMS.filter(x=>x.bloque===bloque).sort((a,b)=>(a.orden||0)-(b.orden||0));
-    if(!items.length){el.innerHTML="<div class='empty' style='padding:10px'>Sin productos en este bloque.</div>";return;}
-    el.innerHTML=`<table class='preview-table'><tr><th>Ref</th><th>Producto</th><th>Orden</th>${bloque==='oferta'?'<th>Descuento</th>':''}<th></th></tr>${items.map(it=>{
-      const prod=byRef.get(normalize(it.referencia));
-      return`<tr><td class='mono'>${it.referencia}</td><td>${prod?prod.descripcion:'<span style="color:var(--danger)">referencia no encontrada/inactiva</span>'}</td><td>${it.orden}</td>${bloque==='oferta'?`<td>${it.descuento_valor??'-'}</td>`:''}<td><button class='rm-btn' data-id='${it.id}'>✕</button></td></tr>`;
-    }).join('')}</table>`;
-    el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeDestacado(Number(btn.dataset.id));});
-  });
-  const focoCountEl=qs('focoCount');if(focoCountEl)focoCountEl.textContent=`(${focoActiveCount()}/10)`;
-}
-async function addDestacado(bloque){
-  const refInputId=bloque==='foco'?'focoRef':bloque==='bestseller'?'bsRef':'ofRef';
-  const ordenInputId=bloque==='foco'?'focoOrden':bloque==='bestseller'?'bsOrden':'ofOrden';
-  const statusId=bloque==='foco'?'focoStatus':bloque==='bestseller'?'bsStatus':'ofStatus';
-  const refv=normalize(qs(refInputId).value);
-  if(!refv){setStatus(statusId,'Ingresa una referencia.','err');return;}
-  if(!byRef.has(refv)){setStatus(statusId,`No existe la referencia "${refv}" en el catálogo activo.`,'err');return;}
-  if(bloque==='foco'&&focoActiveCount()>=10&&!CATALOGO_ITEMS.some(x=>x.bloque==='foco'&&normalize(x.referencia)===refv)){setStatus(statusId,'El bloque Foco ya tiene 10 productos (máximo permitido). Quita uno antes de agregar otro.','err');return;}
-  const orden=Number(qs(ordenInputId).value||0);
-  const payload={referencia:refv,bloque,orden,activo:true,updated_by:CURRENT_USER?.email||'admin'};
-  if(bloque==='oferta'){const dv=qs('ofDescuento').value;payload.descuento_valor=dv===''?null:Number(dv);}
-  setStatus(statusId,'Guardando…','info');
-  const{error}=await sb.from('catalogo_destacados').upsert(payload,{onConflict:'referencia,bloque'});
-  if(error){setStatus(statusId,'Error al guardar: '+error.message+'. ¿Ya corriste el script setup_catalogo_destacados_supabase.sql en Supabase?','err');return;}
-  setStatus(statusId,'✅ Agregado.','ok');
-  qs(refInputId).value='';
-  await reloadCatalogoDestacados();
-}
-function renderVentaCruzadaAdmin(){
-  const el=qs('vcList');if(!el)return;
-  const items=CATALOGO_ITEMS.filter(x=>x.bloque==='venta_cruzada').sort((a,b)=>(normalize(a.referencia_disparadora).localeCompare(normalize(b.referencia_disparadora)))||((a.orden||0)-(b.orden||0)));
-  if(!items.length){el.innerHTML="<div class='empty' style='padding:10px'>Sin sugerencias definidas todavía.</div>";return;}
-  el.innerHTML=`<table class='preview-table'><tr><th>Si consultan</th><th>Sugerir</th><th>Orden</th><th></th></tr>${items.map(it=>{
-    const disp=byRef.get(normalize(it.referencia_disparadora)),sug=byRef.get(normalize(it.referencia));
-    return`<tr><td class='mono'>${it.referencia_disparadora}${disp?` — ${disp.descripcion}`:' <span style="color:var(--danger)">no encontrada</span>'}</td><td class='mono'>${it.referencia}${sug?` — ${sug.descripcion}`:' <span style="color:var(--danger)">no encontrada</span>'}</td><td>${it.orden}</td><td><button class='rm-btn' data-id='${it.id}'>✕</button></td></tr>`;
-  }).join('')}</table>`;
-  el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeDestacado(Number(btn.dataset.id));});
-}
-async function addVentaCruzada(){
-  const dispv=normalize(qs('vcDisparadoraRef').value),sugv=normalize(qs('vcSugeridaRef').value);
-  if(!dispv||!sugv){setStatus('vcStatus','Ingresa ambas referencias.','err');return;}
-  if(dispv===sugv){setStatus('vcStatus','La referencia disparadora y la sugerida no pueden ser la misma.','err');return;}
-  if(!byRef.has(dispv)){setStatus('vcStatus',`No existe la referencia disparadora "${dispv}" en el catálogo activo.`,'err');return;}
-  if(!byRef.has(sugv)){setStatus('vcStatus',`No existe la referencia sugerida "${sugv}" en el catálogo activo.`,'err');return;}
-  const orden=Number(qs('vcOrden').value||0);
-  const payload={referencia_disparadora:dispv,referencia:sugv,bloque:'venta_cruzada',orden,activo:true,updated_by:CURRENT_USER?.email||'admin'};
-  setStatus('vcStatus','Guardando…','info');
-  const{error}=await sb.from('catalogo_destacados').upsert(payload,{onConflict:'referencia_disparadora,referencia'});
-  if(error){setStatus('vcStatus','Error al guardar: '+error.message+'. ¿Ya corriste el script fase2_consultas_venta_cruzada.sql en Supabase?','err');return;}
-  setStatus('vcStatus','✅ Sugerencia agregada.','ok');
-  qs('vcDisparadoraRef').value='';qs('vcSugeridaRef').value='';
-  await reloadCatalogoDestacados();
-}
-async function removeDestacado(id){
-  const{error}=await sb.from('catalogo_destacados').delete().eq('id',id);
-  if(error){showToast('Error al quitar: '+error.message);return;}
-  await reloadCatalogoDestacados();showToast('Producto quitado del bloque');
-}
-async function reloadCatalogoDestacados(){
-  const{data,error}=await sb.from('catalogo_destacados').select('*').order('bloque').order('orden');
-  if(error){console.warn('No se pudo recargar catalogo_destacados:',error.message);return;}
-  CATALOGO_ITEMS=data||[];renderDestacadosAdmin();renderVentaCruzadaAdmin();
-  if(qs('viewDestacados')&&!qs('viewDestacados').classList.contains('hidden'))renderDestacados();
-  if(lastItem)renderSuggestedProducts(lastItem.referencia);
-}
-function destBadgeHtml(text,cls){return text?`<span class='dest-badge ${cls||''}'>${text}</span>`:'';}
-function stockBadgeClass(unidades){if(unidades===null||unidades===undefined)return'';if(unidades<=0)return'badge danger';if(unidades<10)return'badge warn';return'badge ok';}
-function formatFechaCorta(f){if(!f)return'';try{return new Intl.DateTimeFormat('es-CO',{dateStyle:'medium'}).format(new Date(f+'T00:00:00'));}catch(e){return f;}}
-function renderStockInfo(referencia){
-  const card=qs('stockCard'),content=qs('stockContent');
-  if(!card||!content)return;
-  const data=DISPONIBILIDAD_MAP.get(normalize(referencia));
-  if(!data){card.classList.add('hidden');content.innerHTML='';return;}
-  let html='';
-  if(data.tipo_abastecimiento==='MTS'){
-    const u=data.unidades_disponibles,p=data.unidades_proximas_llegar,f=data.fecha_estimada_llegada;
-    if(u!==null&&u!==undefined){
-      const txt=u<=0?'Agotado':(u<10?`Últimas unidades: ${u}`:`Disponible: ${u} unidades`);
-      html+=`<div class='${stockBadgeClass(u)}'>${txt}</div>`;
-    }
-    if(p!==null&&p!==undefined&&p>0){
-      html+=`<div class='row' style='margin-top:8px'><div class='k'>Próximas a llegar</div><div>${p} unidades${f?` — estimado ${formatFechaCorta(f)}`:''}</div></div>`;
-    }
-  }else if(data.tipo_abastecimiento==='MTO'){
-    const d=data.dias_entrega_aprox;
-    html+=`<div class='badge warn'>Producto sobre pedido</div><div class='row' style='margin-top:8px'><div class='k'>Entrega aproximada</div><div>${d!==null&&d!==undefined?`${d} días hábiles`:'No definida todavía'}</div></div>`;
-  }
-  if(!html){card.classList.add('hidden');content.innerHTML='';return;}
-  content.innerHTML=html;card.classList.remove('hidden');
-}
-async function reloadDisponibilidad(){
-  const{data,error}=await sb.from('producto_disponibilidad').select('*');
-  if(error){console.warn('No se pudo recargar disponibilidad:',error.message);return;}
-  DISPONIBILIDAD_MAP=new Map((data||[]).map(x=>[normalize(x.referencia),x]));
-  if(lastItem)renderStockInfo(lastItem.referencia);
-  renderQuoteCart();
-}
-function toggleStockFields(){const tipo=qs('stockTipo').value;qs('stockMtsFields').classList.toggle('hidden',tipo!=='MTS');qs('stockMtoFields').classList.toggle('hidden',tipo!=='MTO');}
-async function updateStockManual(){
-  const refv=normalize(qs('stockRef').value);const tipo=qs('stockTipo').value;
-  if(!refv){setStatus('stockStatus','Ingresa una referencia.','err');return;}
-  if(!byRef.has(refv)){setStatus('stockStatus',`No existe la referencia "${refv}" en el catálogo activo.`,'err');return;}
-  const payload={referencia:refv,tipo_abastecimiento:tipo,updated_by:CURRENT_USER?.email||'admin'};
-  if(tipo==='MTS'){
-    const ud=qs('stockUnidadesDisponibles').value,up=qs('stockUnidadesProximas').value,fl=qs('stockFechaLlegada').value;
-    payload.unidades_disponibles=ud===''?null:Number(ud);payload.unidades_proximas_llegar=up===''?null:Number(up);payload.fecha_estimada_llegada=fl||null;payload.dias_entrega_aprox=null;
-  }else{
-    const de=qs('stockDiasEntrega').value;
-    payload.dias_entrega_aprox=de===''?null:Number(de);payload.unidades_disponibles=null;payload.unidades_proximas_llegar=null;payload.fecha_estimada_llegada=null;
-  }
-  setStatus('stockStatus','Guardando…','info');
-  const{error}=await sb.from('producto_disponibilidad').upsert(payload,{onConflict:'referencia'});
-  if(error){setStatus('stockStatus','Error al guardar: '+error.message+'. ¿Ya corriste el script disponibilidad_mts_mto.sql en Supabase?','err');return;}
-  setStatus('stockStatus','✅ Disponibilidad actualizada.','ok');
-  qs('stockRef').value='';qs('stockUnidadesDisponibles').value='';qs('stockUnidadesProximas').value='';qs('stockFechaLlegada').value='';qs('stockDiasEntrega').value='';
-  await reloadDisponibilidad();
-}
-let PENDING_STOCK_ROWS=null;
-function validateStockRow(row){
-  const errs=[];const ref=(row.referencia||'').trim();const tipo=(row.tipo_abastecimiento||'').trim().toUpperCase();
-  if(!ref)errs.push('referencia vacía');
-  if(ref&&!byRef.has(normalize(ref)))errs.push('referencia no existe en el catálogo activo');
-  if(tipo!=='MTS'&&tipo!=='MTO')errs.push('tipo_abastecimiento debe ser MTS o MTO');
-  let ud=row.unidades_disponibles,up=row.unidades_proximas_llegar;const fl=(row.fecha_estimada_llegada||'').trim();let de=row.dias_entrega_aprox;
-  ud=(ud===undefined||ud===null||ud==='')?null:Number(ud);up=(up===undefined||up===null||up==='')?null:Number(up);de=(de===undefined||de===null||de==='')?null:Number(de);
-  if(ud!==null&&isNaN(ud))errs.push('unidades_disponibles inválido');
-  if(up!==null&&isNaN(up))errs.push('unidades_proximas_llegar inválido');
-  if(de!==null&&isNaN(de))errs.push('dias_entrega_aprox inválido');
-  return{ok:errs.length===0,errs,referencia:ref,tipo_abastecimiento:tipo,unidades_disponibles:tipo==='MTS'?ud:null,unidades_proximas_llegar:tipo==='MTS'?up:null,fecha_estimada_llegada:tipo==='MTS'?(fl||null):null,dias_entrega_aprox:tipo==='MTO'?de:null};
-}
-function analyzeStockCSV(){
-  const file=qs('stockCsvFile').files[0];
-  if(!file){setStatus('stockBulkStatus','Selecciona un archivo CSV primero.','err');return;}
-  setStatus('stockBulkStatus','Leyendo archivo…','info');
-  Papa.parse(file,{header:true,skipEmptyLines:true,complete:function(results){
-    const rawRows=results.data;const seen=new Set();const valid=[];const invalid=[];
-    rawRows.forEach((row,i)=>{
-      const v=validateStockRow(row);const refKey=normalize(v.referencia);
-      if(!v.ok){invalid.push({row:i+2,errs:v.errs.join(', ')});return;}
-      if(seen.has(refKey)){invalid.push({row:i+2,errs:'referencia duplicada en el archivo'});return;}
-      seen.add(refKey);
-      valid.push({referencia:refKey,tipo_abastecimiento:v.tipo_abastecimiento,unidades_disponibles:v.unidades_disponibles,unidades_proximas_llegar:v.unidades_proximas_llegar,fecha_estimada_llegada:v.fecha_estimada_llegada,dias_entrega_aprox:v.dias_entrega_aprox,updated_by:CURRENT_USER?.email||'admin'});
-    });
-    PENDING_STOCK_ROWS=valid.length?valid:null;
-    const preview=qs('stockCsvPreview');
-    preview.innerHTML=`<div class='mini-status ${invalid.length?'err':'ok'}'>${valid.length} fila(s) válidas${invalid.length?`, ${invalid.length} con error`:''}.</div>${valid.length?`<div class='actions' style='margin-top:8px'><button class='p mini' id='btnApplyStockCSV' style='padding:12px 16px'>Aplicar ${valid.length} actualizaciones</button></div>`:''}${invalid.length?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--danger);font-size:.84rem">Ver filas con error</summary><table class="preview-table"><tr><th>Fila</th><th>Problema</th></tr>${invalid.slice(0,30).map(x=>`<tr><td>${x.row}</td><td>${x.errs}</td></tr>`).join('')}</table>${invalid.length>30?`<div style="font-size:.8rem;color:var(--muted);margin-top:4px">Mostrando 30 de ${invalid.length}</div>`:''}</details>`:''}`;
-    if(valid.length)qs('btnApplyStockCSV').onclick=applyStockCSV;
-  }});
-}
-async function applyStockCSV(){
-  if(!PENDING_STOCK_ROWS||!PENDING_STOCK_ROWS.length)return;
-  const confirmMsg=`Vas a actualizar la disponibilidad de ${PENDING_STOCK_ROWS.length} referencias.\n\nEsto no afecta precios ni el resto del catálogo, solo la información de disponibilidad de esas referencias.\n\n¿Confirmas?`;
-  if(!confirm(confirmMsg))return;
-  setStatus('stockBulkStatus','Aplicando actualizaciones…','info');
-  const{error}=await sb.from('producto_disponibilidad').upsert(PENDING_STOCK_ROWS,{onConflict:'referencia'});
-  if(error){setStatus('stockBulkStatus','Error al guardar: '+error.message,'err');return;}
-  setStatus('stockBulkStatus','✅ Disponibilidad actualizada correctamente.','ok');
-  PENDING_STOCK_ROWS=null;qs('stockCsvPreview').innerHTML='';qs('stockCsvFile').value='';
-  await reloadDisponibilidad();
-}
-function totalQtyForRef(referencia){return QUOTE_ITEMS.filter(x=>x.referencia===referencia).reduce((s,x)=>s+x.cantidad,0);}
-function stockWarningFor(referencia){
-  const data=DISPONIBILIDAD_MAP.get(normalize(referencia));
-  if(!data||data.tipo_abastecimiento!=='MTS'||data.unidades_disponibles===null||data.unidades_disponibles===undefined)return null;
-  const total=totalQtyForRef(referencia);
-  if(total>data.unidades_disponibles)return`Pides ${total}, disponibles: ${data.unidades_disponibles}`;
-  return null;
-}
-function renderSuggestedCard(refCode){
-  const prod=byRef.get(normalize(refCode));
-  if(!prod)return'';
-  const img=MEDIA_IMAGES.get(normalize(refCode));
-  return`<div class='dest-card' data-ref='${prod.referencia}'>${img?`<img src='${img}' alt='${prod.referencia}'>`:`<div class='ph'>📦</div>`}<div class='dest-name'>${prod.descripcion}</div><div class='dest-ref'>${prod.referencia}</div></div>`;
-}
-function renderSuggestedProducts(referencia){
-  const card=qs('suggestedCard'),grid=qs('suggestedGrid');
-  if(!card||!grid)return;
-  const items=CATALOGO_ITEMS.filter(x=>x.bloque==='venta_cruzada'&&x.activo!==false&&normalize(x.referencia_disparadora)===normalize(referencia)).sort((a,b)=>(a.orden||0)-(b.orden||0));
-  SUGGESTED_FOR_LAST=items.map(it=>normalize(it.referencia));
-  if(!items.length){card.classList.add('hidden');grid.innerHTML='';renderExplore();return;}
-  grid.innerHTML=items.map(it=>renderSuggestedCard(it.referencia)).join('');
-  grid.querySelectorAll('.dest-card').forEach(c=>{c.onclick=()=>openDestOverlay(c.dataset.ref,'venta_cruzada');});
-  card.classList.remove('hidden');
-  renderExplore();
-}
-async function renderRelatedProducts(referencia){
-  const card=qs('relatedCard'),grid=qs('relatedGrid');
-  if(!card||!grid)return;
-  card.classList.add('hidden');grid.innerHTML='';RELATED_FOR_LAST=new Map();
-  const{data,error}=await sb.rpc('productos_relacionados',{p_referencia:referencia,p_limite:6});
-  if(error){console.warn('No se pudo cargar "comprados en conjunto" (¿corriste fase5_parte2_coocurrencia.sql?):',error.message);renderExplore();return;}
-  const items=(data||[]).filter(x=>byRef.has(normalize(x.referencia)));
-  RELATED_FOR_LAST=new Map(items.map(x=>[normalize(x.referencia),Number(x.veces||0)]));
-  if(!items.length){renderExplore();return;}
-  grid.innerHTML=items.map(x=>renderSuggestedCard(x.referencia)).join('');
-  grid.querySelectorAll('.dest-card').forEach(c=>{c.onclick=()=>openDestOverlay(c.dataset.ref,'venta_cruzada');});
-  card.classList.remove('hidden');
-  renderExplore();
-}
-function renderDestCard(it,bloque){
-  const prod=byRef.get(normalize(it.referencia));
-  if(!prod)return'';
-  const img=MEDIA_IMAGES.get(normalize(it.referencia));
-  const badgeText=bloque==='foco'?SETTINGS.catalogo_foco_badge:bloque==='bestseller'?SETTINGS.catalogo_bestseller_badge:SETTINGS.catalogo_oferta_badge;
-  const badgeCls=bloque==='oferta'?'oferta':'';
-  let discountHtml='';
-  if(bloque==='oferta'&&it.descuento_valor){
-    discountHtml=SETTINGS.catalogo_oferta_formato==='absoluto'?`<div class='dest-discount'>-${money(it.descuento_valor)}</div>`:`<div class='dest-discount'>-${Number(it.descuento_valor).toFixed(0)}%</div>`;
-  }
-  return`<div class='dest-card' data-ref='${prod.referencia}' data-bloque='${bloque}'>${destBadgeHtml(badgeText,badgeCls)}${img?`<img src='${img}' alt='${prod.referencia}'>`:`<div class='ph'>📦</div>`}<div class='dest-name'>${prod.descripcion}</div><div class='dest-ref'>${prod.referencia}</div>${discountHtml}</div>`;
-}
-function renderDestacados(){
-  if(qs('focoBadgeLabel'))qs('focoBadgeLabel').textContent=SETTINGS.catalogo_foco_badge||'Foco';
-  if(qs('bsBadgeLabel'))qs('bsBadgeLabel').textContent=SETTINGS.catalogo_bestseller_badge||'Best Sellers';
-  if(qs('ofBadgeLabel'))qs('ofBadgeLabel').textContent=SETTINGS.catalogo_oferta_badge||'Ofertas';
-  const foco=CATALOGO_ITEMS.filter(x=>x.bloque==='foco'&&x.activo!==false).sort((a,b)=>(a.orden||0)-(b.orden||0)).slice(0,10);
-  const bs=CATALOGO_ITEMS.filter(x=>x.bloque==='bestseller'&&x.activo!==false).sort((a,b)=>(a.orden||0)-(b.orden||0));
-  const of=CATALOGO_ITEMS.filter(x=>x.bloque==='oferta'&&x.activo!==false).sort((a,b)=>(a.orden||0)-(b.orden||0));
-  const focoEl=qs('focoCarousel'),bsEl=qs('bsGrid'),ofEl=qs('ofGrid');
-  if(focoEl)focoEl.innerHTML=foco.length?foco.map(x=>renderDestCard(x,'foco')).join(''):"<div class='dest-empty'>Sin productos en Foco por ahora.</div>";
-  if(bsEl)bsEl.innerHTML=bs.length?bs.map(x=>renderDestCard(x,'bestseller')).join(''):"<div class='dest-empty'>Sin Best Sellers por ahora.</div>";
-  if(ofEl)ofEl.innerHTML=of.length?of.map(x=>renderDestCard(x,'oferta')).join(''):"<div class='dest-empty'>Sin ofertas activas por ahora.</div>";
-  [focoEl,bsEl,ofEl].forEach(el=>{if(!el)return;el.querySelectorAll('.dest-card').forEach(card=>{card.onclick=()=>openDestOverlay(card.dataset.ref,card.dataset.bloque);});});
-}
-function closeDestOverlay(){qs('destOverlay').classList.add('hidden');}
-function openDestOverlay(referencia,bloque){
-  const item=byRef.get(normalize(referencia));
-  const content=qs('overlayContent');
-  const overlay=qs('destOverlay');
-  if(!item){content.innerHTML="<div class='empty'>Este producto ya no está activo en el catálogo.</div>";overlay.classList.remove('hidden');return;}
-  const catItem=CATALOGO_ITEMS.find(x=>x.bloque===bloque&&normalize(x.referencia)===normalize(referencia));
-  const pvpI=Number(item.c01||0),pvp=pvpI/1.19;
-  let ofertaHtml='';
-  let prefillDescuento=0;
-  if(bloque==='oferta'&&catItem&&catItem.descuento_valor){
-    const dv=Number(catItem.descuento_valor);
-    // El descuento de Oferta ES el Descuento en Sala que se aplica al PVP al cotizar
-    // (si el admin lo definió en valor absoluto, se convierte a su % equivalente sobre el PVP).
-    prefillDescuento=SETTINGS.catalogo_oferta_formato==='absoluto'?Math.min(100,Math.max(0,(dv/pvpI)*100)):Math.min(100,Math.max(0,dv));
-    const precioOferta=pvpI*(1-prefillDescuento/100);
-    ofertaHtml=`<div class='price gain' style='margin-top:10px'><div class='t'>${SETTINGS.catalogo_oferta_badge||'Oferta'}</div><div class='v'>${money(precioOferta)} <span style='text-decoration:line-through;color:var(--muted);font-size:.85rem;font-weight:400'>${money(pvpI)}</span></div><div class='qty-total'>Descuento en Sala aplicado: ${prefillDescuento.toFixed(1)}% (editable abajo)</div></div>`;
-  }
-  content.innerHTML=`<div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><p class='unit-note'>Precios por unidad.</p><div class='prices'><div class='price'><div class='t'>PVP con IVA</div><div class='v'>${money(pvpI)}</div></div><div class='price'><div class='t'>PVP sin IVA</div><div class='v'>${money(pvp)}</div></div></div>${ofertaHtml}<div class='inline-form' style='margin-top:14px'><div><label>Cantidad</label><input id='ovCantidad' type='number' value='1' min='1' step='1'></div><div><label>Descuento en Sala (%)</label><input id='ovDescuento' type='number' value='${prefillDescuento.toFixed(1)}' step='0.1'></div><div><button class='p mini' id='btnAddFromOverlay' style='padding:12px 16px'>🛒 Agregar a cotización</button></div></div>`;
-  qs('btnAddFromOverlay').onclick=()=>{pushToQuote(item.referencia,qs('ovCantidad').value,qs('ovDescuento').value);showToast('Agregado a la cotización');};
-  overlay.classList.remove('hidden');
-}
-function setStatus(id,msg,type){const el=qs(id);if(!el)return;el.className='mini-status '+type;el.textContent=msg;}
-qs('mediaTipo').addEventListener('change',()=>{const isVideo=qs('mediaTipo').value==='video';qs('mediaFileWrap').classList.toggle('hidden',isVideo);qs('mediaUrlWrap').classList.toggle('hidden',!isVideo);});
-
-async function uploadMedia(){
-  const ref=normalize(qs('mediaRef').value);const tipo=qs('mediaTipo').value;
-  if(!ref){setStatus('mediaStatus','Ingresa la referencia del producto.','err');return;}
-  const{data:prod}=await sb.from('productos').select('referencia').eq('referencia',ref).maybeSingle();
-  if(!prod){setStatus('mediaStatus',`No existe la referencia "${ref}" en el catálogo.`,'err');return;}
-  let url='',nombreArchivo='';
-  if(tipo==='video'){
-    url=qs('mediaUrl').value.trim();
-    if(!url){setStatus('mediaStatus','Pega el enlace del video.','err');return;}
-    nombreArchivo='Video asociado';
-  }else{
-    const file=qs('mediaFile').files[0];
-    if(!file){setStatus('mediaStatus','Selecciona un archivo.','err');return;}
-    setStatus('mediaStatus','Subiendo archivo…','info');
-    const path=`${ref}/${Date.now()}_${file.name}`;
-    const{error:upErr}=await sb.storage.from('producto-media').upload(path,file);
-    if(upErr){setStatus('mediaStatus','Error al subir archivo: '+upErr.message,'err');return;}
-    const{data:pub}=sb.storage.from('producto-media').getPublicUrl(path);
-    url=pub.publicUrl;nombreArchivo=file.name;
-  }
-  setStatus('mediaStatus','Guardando…','info');
-  const{error:insErr}=await sb.from('producto_media').insert({referencia:ref,tipo,url,nombre_archivo:nombreArchivo,updated_by:CURRENT_USER?.email||'admin'});
-  if(insErr){setStatus('mediaStatus','Error al guardar: '+insErr.message,'err');return;}
-  setStatus('mediaStatus',`✅ ${tipo} asociado a ${ref} correctamente.`,'ok');
-  qs('mediaFile').value='';qs('mediaUrl').value='';
-}
-function updateCurrentPriceDisplay(){const el=qs('editCurrentPrice');if(!el)return;const refv=normalize(qs('editRef').value);const item=byRef.get(refv);if(!item){el.textContent='';return;}const current=Number(item.c01||0);let txt=`Precio actual: ${money(current)}`;const newRaw=qs('editPrice').value;if(newRaw!==''){const newPrice=Number(newRaw);if(!isNaN(newPrice)&&current>0){const delta=((newPrice-current)/current)*100;const sign=delta>=0?'+':'';txt+=` · Cambio: ${sign}${delta.toFixed(1)}%`;if(Math.abs(delta)>20)txt+=' ⚠️ Supera el 20%, pedirá confirmación';}}el.textContent=txt;}
-async function updateSinglePrice(){const ref=normalize(qs('editRef').value);const priceRaw=qs('editPrice').value;const price=Number(priceRaw);if(!ref){setStatus('singleStatus','Ingresa una referencia.','err');return;}if(!priceRaw||isNaN(price)||price<=0){setStatus('singleStatus','Ingresa un precio numérico válido mayor a 0.','err');return;}
-const currentItem=byRef.get(ref);
-if(currentItem){const current=Number(currentItem.c01||0);if(current>0){const delta=((price-current)/current)*100;if(Math.abs(delta)>20){const tipo=delta>=0?'incremento':'decremento';const ok=confirm(`Este cambio representa un ${tipo} de ${Math.abs(delta).toFixed(1)}% sobre el precio actual (${money(current)} → ${money(price)}).\n\nEsto supera el límite normal de 20%. ¿Confirmas que quieres aplicar este cambio?`);if(!ok){setStatus('singleStatus','Cambio cancelado: el incremento/decremento superaba el 20% y no fue confirmado.','err');return;}}}}
-setStatus('singleStatus','Actualizando…','info');
-const{data,error}=await sb.from('productos').update({c01:price,updated_by:CURRENT_USER?.email||'admin'}).eq('referencia',ref).select();
-if(error){setStatus('singleStatus','Error al actualizar: '+error.message,'err');return;}
-if(!data||!data.length){setStatus('singleStatus',`No existe ninguna referencia "${ref}". Revisa el código o usa la carga masiva para crear productos nuevos.`,'err');return;}
-setStatus('singleStatus',`Precio actualizado: ${ref} → ${money(price)}. Recargando base…`,'ok');
-await init();qs('editRef').value='';qs('editPrice').value='';showToast('Precio actualizado');}
-
-let PENDING_BULK_ROWS=null;
-function validateBulkRow(row,idx){const errs=[];const ref=(row.referencia||'').trim();const desc=(row.descripcion||'').trim();const gama=(row.gama||'').trim();const prod=(row.producto||'').trim();const c01=Number(row.c01);
-if(!ref)errs.push('referencia vacía');if(!desc)errs.push('descripcion vacía');if(!gama)errs.push('gama vacía');if(!prod)errs.push('producto vacío');if(!row.c01||isNaN(c01)||c01<=0)errs.push('c01 inválido');
-return{ok:errs.length===0,errs,ref,desc,gama,prod,c01};}
-
-function analyzeCSV(){const file=qs('csvFile').files[0];if(!file){setStatus('bulkStatus','Selecciona un archivo CSV primero.','err');return;}
-const origen=qs('uploadOrigen').value.trim();if(!origen){setStatus('bulkStatus','Ingresa un nombre para esta lista (ej. "C01 22 julio 2026") antes de analizar.','err');return;}
-setStatus('bulkStatus','Leyendo archivo…','info');
-Papa.parse(file,{header:true,skipEmptyLines:true,complete:function(results){
-  const rawRows=results.data;const seen=new Set();const valid=[];const invalid=[];const dupes=[];
-  rawRows.forEach((row,i)=>{const v=validateBulkRow(row,i);const refKey=normalize(v.ref);
-    if(!v.ok){invalid.push({row:i+2,errs:v.errs.join(', ')});return;}
-    if(seen.has(refKey)){dupes.push({row:i+2,ref:v.ref});return;}
-    seen.add(refKey);
-    valid.push({referencia:v.ref,descripcion:v.desc,gama:v.gama,producto:v.prod,c01:v.c01,activo:(row.activo===undefined||row.activo===''||String(row.activo).toLowerCase()==='true'||String(row.activo)==='1'),origen:origen,updated_by:CURRENT_USER?.email||'admin'});
-  });
-  PENDING_BULK_ROWS=valid;
-  const currentActiveCount=DATA.length;
-  const previewHtml=`<div class="summary-row">
-    <div class="summary-chip"><b>${valid.length}</b>Productos válidos a cargar</div>
-    <div class="summary-chip"><b>${invalid.length}</b>Filas con error (se ignoran)</div>
-    <div class="summary-chip"><b>${dupes.length}</b>Referencias duplicadas en el archivo (se ignoran, se usa la primera)</div>
-    <div class="summary-chip"><b>${currentActiveCount}</b>Productos activos hoy (referencia)</div>
-  </div>
-  ${invalid.length?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--danger);font-size:.84rem">Ver filas con error</summary><table class="preview-table"><tr><th>Fila</th><th>Problema</th></tr>${invalid.slice(0,30).map(x=>`<tr><td>${x.row}</td><td>${x.errs}</td></tr>`).join('')}</table>${invalid.length>30?`<div style="font-size:.8rem;color:var(--muted);margin-top:4px">Mostrando 30 de ${invalid.length}</div>`:''}</details>`:''}
-  <div class="mini-status info" style="display:block;margin-top:10px">⚠️ Al confirmar: los <b>${valid.length}</b> productos del archivo quedarán activos y con el precio de este archivo. Todos los demás productos que existan hoy en la base y NO estén en este archivo quedarán marcados <b>inactivos</b> (no se borran).</div>
-  <div class="actions" style="margin-top:10px"><button class="p mini" id="btnApplyBulk">Confirmar y aplicar carga masiva</button></div>`;
-  qs('csvPreview').innerHTML=previewHtml;
-  setStatus('bulkStatus','','info');qs('bulkStatus').className='mini-status';
-  qs('btnApplyBulk').onclick=applyBulkUpload;
-}});}
-
-async function applyBulkUpload(){if(!PENDING_BULK_ROWS||!PENDING_BULK_ROWS.length){setStatus('bulkStatus','No hay datos analizados para aplicar.','err');return;}
-const confirmMsg=`Vas a reemplazar la lista de precios activa:\n\n- ${PENDING_BULK_ROWS.length} productos quedarán activos con precios de este archivo\n- Todo lo demás quedará INACTIVO (no se borra, solo deja de aparecer en el buscador)\n\n¿Confirmas que quieres aplicar este cambio para TODOS los usuarios ahora?`;
-if(!confirm(confirmMsg))return;
-setStatus('bulkStatus','Paso 1/2: desactivando lista anterior…','info');
-const{error:deErr}=await sb.from('productos').update({activo:false,updated_by:CURRENT_USER?.email||'admin'}).not('referencia','is',null);
-if(deErr){setStatus('bulkStatus','Error al desactivar lista anterior: '+deErr.message,'err');return;}
-setStatus('bulkStatus','Paso 2/2: cargando '+PENDING_BULK_ROWS.length+' productos…','info');
-const{error:upErr}=await sb.from('productos').upsert(PENDING_BULK_ROWS,{onConflict:'referencia'});
-if(upErr){setStatus('bulkStatus','Error al cargar productos nuevos: '+upErr.message+'. La lista anterior quedó desactivada — avisa para revisar antes de que los usuarios consulten precios.','err');return;}
-setStatus('bulkStatus','✅ Lista de precios actualizada correctamente. Recargando base…','ok');
-PENDING_BULK_ROWS=null;qs('csvPreview').innerHTML='';qs('csvFile').value='';
-await init();showToast('Lista de precios actualizada');}
-
-function renderVersionBadge(fecha){const el=qs('versionBadge');if(!el)return;if(!fecha){el.textContent='No fue posible verificar la fecha de la lista de precios';el.classList.add('stale');return;}const dt=new Intl.DateTimeFormat('es-CO',{dateStyle:'medium',timeStyle:'short'}).format(new Date(fecha));el.textContent=`Lista de precios vigente actualizada: ${dt}`;const hoursSince=(Date.now()-new Date(fecha).getTime())/36e5;el.classList.toggle('stale',hoursSince>24*30);}
-async function init(){try{const cRes=await fetch(CONFIG_FILE);CONFIG=await cRes.json();
-const[{data:productsData,error:pErr},{data:rulesData,error:rErr},{data:verData},{data:settingsData,error:sErr},{data:catalogoData,error:catErr},{data:mediaData,error:medErr},{data:rankingData,error:rankErr},{data:stockData,error:stockErr}]=await Promise.all([
-  sb.from('productos').select('*'),
-  sb.from('margin_rules').select('*'),
-  sb.from('ultima_actualizacion').select('*').maybeSingle(),
-  sb.from('app_settings').select('*').eq('id',1).maybeSingle(),
-  sb.from('catalogo_destacados').select('*').order('bloque').order('orden'),
-  sb.from('producto_media').select('referencia,url,orden').eq('tipo','imagen').eq('activo',true).order('orden'),
-  sb.from('vw_consultas_ranking').select('*'),
-  sb.from('producto_disponibilidad').select('*')
-]);
-if(pErr||rErr)throw(pErr||rErr);
-if(sErr)console.warn('Ajustes generales (app_settings) no disponibles todavía:',sErr.message);
-if(catErr)console.warn('Catálogo de destacados no disponible todavía (¿corriste setup_catalogo_destacados_supabase.sql?):',catErr.message);
-if(medErr)console.warn('Imágenes de producto no disponibles:',medErr.message);
-if(rankErr)console.warn('Ranking de más consultados no disponible todavía (¿corriste fase4_vista_ranking.sql?):',rankErr.message);
-if(stockErr)console.warn('Disponibilidad MTS/MTO no disponible todavía (¿corriste disponibilidad_mts_mto.sql?):',stockErr.message);
-RANKING_MAP=new Map((rankingData||[]).map(x=>[normalize(x.referencia),Number(x.veces_consultado||0)]));
-DISPONIBILIDAD_MAP=new Map((stockData||[]).map(x=>[normalize(x.referencia),x]));
-CATALOGO_ITEMS=catalogoData||[];
-const mediaMap=new Map();(mediaData||[]).forEach(mm=>{const k=normalize(mm.referencia);if(!mediaMap.has(k))mediaMap.set(k,mm.url);});MEDIA_IMAGES=mediaMap;
-if(settingsData)SETTINGS={company_name:settingsData.company_name||'',logo_url:settingsData.logo_url||'',theme:settingsData.theme||'original',catalogo_foco_badge:settingsData.catalogo_foco_badge||'Nuevo',catalogo_bestseller_badge:settingsData.catalogo_bestseller_badge||'Best Seller',catalogo_oferta_badge:settingsData.catalogo_oferta_badge||'Oferta',catalogo_oferta_formato:settingsData.catalogo_oferta_formato||'porcentaje'};
-PRODUCTS=productsData||[];RULES=rulesData||[];
-renderVersionBadge(verData?.fecha_actualizacion);
-DATA=PRODUCTS.filter(x=>x.activo).map(x=>({...x,search:(`${x.referencia} ${x.descripcion} ${x.gama} ${x.producto}`).toUpperCase()}));byRef=new Map(DATA.map(x=>[normalize(x.referencia),x]));document.getElementById('appName').textContent=CONFIG.app_name||'ListaLoop B2B';document.title=CONFIG.app_name||'ListaLoop B2B';const amwt=document.querySelector('meta[name="apple-mobile-web-app-title"]'),anm=document.querySelector('meta[name="application-name"]');if(amwt)amwt.setAttribute('content',CONFIG.app_name||'ListaLoop B2B');if(anm)anm.setAttribute('content',CONFIG.app_name||'ListaLoop B2B');document.getElementById('introText').textContent=CONFIG.intro_text||'Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.';document.getElementById('baseName').textContent=CONFIG.base_name||'-';document.getElementById('devDate').textContent=CONFIG.development_date||'-';document.getElementById('waNote').textContent=CONFIG.whatsapp_note||'';document.getElementById('statRefs').textContent=DATA.length.toLocaleString('es-CO');
-applyCompanyName();applyLogo();applyTheme(SETTINGS.theme||'original');if(qs('settingsCompany'))qs('settingsCompany').value=SETTINGS.company_name||'';
-renderDestacadosAdmin();renderVentaCruzadaAdmin();renderDestacados();
-populateExploreFilters();EXPLORE_PAGE=1;renderExplore();
-r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";}catch(err){console.error(err);r.innerHTML="<div class='badge danger'>Error de carga</div><div class='empty'>No fue posible conectar con la base de precios (Supabase). Intenta recargar la página; si el error persiste, contacta a soporte.</div>";renderVersionBadge(null);}}
-document.getElementById('calc').onclick=calc;document.getElementById('clear').onclick=()=>{ref.value='';sala.value='0';if(cant)cant.value='1';box.style.display='none';copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";qs('mediaCard').classList.add('hidden');qs('suggestedCard').classList.add('hidden');qs('relatedCard').classList.add('hidden');qs('stockCard').classList.add('hidden');SUGGESTED_FOR_LAST=[];RELATED_FOR_LAST=new Map();renderExplore();ref.focus();};
-ref.addEventListener('input',showS);ref.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});sala.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});document.addEventListener('click',e=>{if(!box.contains(e.target)&&e.target!==ref)box.style.display='none';});
-if(cant)cant.addEventListener('input',()=>{if(lastItem)renderPriceCard();});
-copy.onclick=async()=>{if(!lastCopy)return;try{await navigator.clipboard.writeText(lastCopy);showToast('Resultado copiado');}catch(e){}};quote.onclick=async()=>{if(!lastQuote)return;try{await navigator.clipboard.writeText(lastQuote);showToast('Cotización copiada');}catch(e){}};
-qs('activateAccess').onclick=activate;qs('changeUser').onclick=()=>{localStorage.removeItem(USER_KEY);showRegister();};qs('adminLogin').onclick=unlockAdmin;qs('adminLogout').onclick=lockAdmin;qs('exportUsers').onclick=()=>downloadCSV('comercial_partner_registros.csv',readJSON(USERS_KEY,[]));qs('exportLogs').onclick=()=>downloadCSV('comercial_partner_uso.csv',readJSON(LOGS_KEY,[]));
-qs('btnUpdateSingle').onclick=updateSinglePrice;qs('btnAnalyzeCSV').onclick=analyzeCSV;qs('btnUploadMedia').onclick=uploadMedia;
-qs('stockTipo').addEventListener('change',toggleStockFields);toggleStockFields();
-qs('btnUpdateStock').onclick=updateStockManual;
-qs('btnAnalyzeStockCSV').onclick=analyzeStockCSV;
-qs('addToQuote').onclick=addToQuote;qs('btnCopyMultiQuote').onclick=copyMultiQuote;qs('btnClearQuoteCart').onclick=clearQuoteCart;
-qs('navConsultar').onclick=()=>showMainTab('consultar');qs('navCotizacion').onclick=()=>showMainTab('cotizacion');qs('navDestacados').onclick=()=>showMainTab('destacados');
-qs('exploreVista').addEventListener('change',()=>{EXPLORE_PAGE=1;renderExplore();});
-qs('exploreGama').addEventListener('change',()=>{EXPLORE_PAGE=1;renderExplore();});
-qs('exploreProducto').addEventListener('change',()=>{EXPLORE_PAGE=1;renderExplore();});
-qs('exploreSort').addEventListener('change',()=>{EXPLORE_PAGE=1;renderExplore();});
-qs('explorePrev').onclick=()=>{EXPLORE_PAGE--;renderExplore();};
-qs('exploreNext').onclick=()=>{EXPLORE_PAGE++;renderExplore();};
-qs('btnCloseOverlay').onclick=closeDestOverlay;qs('destOverlay').addEventListener('click',e=>{if(e.target.id==='destOverlay')closeDestOverlay();});
-qs('editRef').addEventListener('input',updateCurrentPriceDisplay);qs('editPrice').addEventListener('input',updateCurrentPriceDisplay);
-qs('tabPrices').onclick=()=>showAdminTab('prices');qs('tabSettings').onclick=()=>showAdminTab('settings');qs('tabDestacados').onclick=()=>showAdminTab('destacados');
-qs('btnSaveBadges').onclick=saveBadgeSettings;qs('btnAddFoco').onclick=()=>addDestacado('foco');qs('btnAddBs').onclick=()=>addDestacado('bestseller');qs('btnAddOf').onclick=()=>addDestacado('oferta');
-wireRefAutocomplete('focoRef','focoRefBox');wireRefAutocomplete('bsRef','bsRefBox');wireRefAutocomplete('ofRef','ofRefBox');
-wireRefAutocomplete('vcDisparadoraRef','vcDisparadoraRefBox');wireRefAutocomplete('vcSugeridaRef','vcSugeridaRefBox');
-qs('btnAddVentaCruzada').onclick=addVentaCruzada;
-qs('btnSaveCompany').onclick=async()=>{const raw=qs('settingsCompany').value.trim();if(!raw){setStatus('companyStatus','Ingresa un nombre de empresa.','err');return;}const company=raw.toUpperCase();setStatus('companyStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({company_name:company,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('companyStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.company_name=company;qs('settingsCompany').value=company;applyCompanyName();setStatus('companyStatus','✅ Empresa contratante actualizada para todos los usuarios.','ok');};
-qs('btnUploadLogo').onclick=async()=>{const file=qs('logoFile').files[0];if(!file){setStatus('logoStatus','Selecciona un archivo de imagen.','err');return;}if(file.size>1024*1024){setStatus('logoStatus','El archivo supera 1MB. Usa una imagen más liviana.','err');return;}setStatus('logoStatus','Subiendo…','info');const path=`logo_${Date.now()}_${file.name}`;const{error:upErr}=await sb.storage.from('app-assets').upload(path,file,{upsert:true});if(upErr){setStatus('logoStatus','Error al subir: '+upErr.message,'err');return;}const{data:pub}=sb.storage.from('app-assets').getPublicUrl(path);const{error}=await sb.from('app_settings').update({logo_url:pub.publicUrl,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('logoStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.logo_url=pub.publicUrl;applyLogo();setStatus('logoStatus','✅ Logo actualizado para todos los usuarios.','ok');qs('logoFile').value='';};
-qs('btnRemoveLogo').onclick=async()=>{setStatus('logoStatus','Quitando…','info');const{error}=await sb.from('app_settings').update({logo_url:'',updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('logoStatus','Error: '+error.message,'err');return;}SETTINGS.logo_url='';applyLogo();setStatus('logoStatus','Logo quitado.','ok');};
-document.querySelectorAll('.theme-btn').forEach(b=>{b.onclick=async()=>{const theme=b.dataset.theme;applyTheme(theme);setStatus('themeStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({theme,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('themeStatus','Error al guardar tema: '+error.message,'err');return;}SETTINGS.theme=theme;setStatus('themeStatus','✅ Tema aplicado para todos los usuarios.','ok');};});
-const savedUser=readJSON(USER_KEY,null);if(savedUser&&savedUser.consent)showApp(savedUser);else showRegister();
-init();
-</script></body></html>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+  <script src="supabase-sync.js"></script>
+  <script src="mejoras-v1.js"></script>
+  <script src="modulo_01_calendario.js"></script>
+  <script src="modulo_02_motor_RED.js"></script>
+  <script src="modulo_03_motor_EWS.js"></script>
+  <script src="modulo_04_motor_RTE.js"></script>
+  <script src="modulo_05_ui_motores.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="modulo_06_motor_RAC.js"></script>
+  <script src="modulo_07_qr_prospeccion.js"></script>
+  <script src="modulo_08_ui_ranking.js"></script>
+  <script>
+    var fy = document.getElementById("footerYear");
+    if (fy) fy.textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
