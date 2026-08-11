@@ -449,7 +449,7 @@ const SUPABASE_URL='https://hixsuoiwdptzyrbgexli.supabase.co';
 const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhpeHN1b2l3ZHB0enlyYmdleGxpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMDA5NjcsImV4cCI6MjA5NjY3Njk2N30.L1DNuTyquRVhggBzJl61OP_NPaj3JIZep94imdredBE';
 const sb=window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 sb.auth.onAuthStateChange((event)=>{
-  if(event==='SIGNED_IN'){updateAdminTools();showToast('Acceso de administrador habilitado');}
+  if(event==='SIGNED_IN'){updateAdminTools();}
   if(event==='SIGNED_OUT'){updateAdminTools();}
 });
 let CURRENT_USER=null;
@@ -500,9 +500,11 @@ function showAdminTab(tab){const pricePanel=qs('adminPricePanel'),settingsPanel=
 async function updateAdminTools(){const gate=qs('adminGate'),tools=qs('adminTools'),tabs=qs('adminTabs'),pricePanel=qs('adminPricePanel'),settingsPanel=qs('adminSettingsPanel');if(!gate||!tools)return;const allowed=isAdmin();const unlocked=await isAdminUnlocked();gate.classList.toggle('hidden',!allowed||unlocked);tools.classList.toggle('hidden',!allowed||!unlocked);if(tabs)tabs.classList.toggle('hidden',!allowed||!unlocked);if(allowed&&unlocked){showAdminTab('prices');}else{if(pricePanel)pricePanel.classList.add('hidden');if(settingsPanel)settingsPanel.classList.add('hidden');}}
 async function unlockAdmin(){
   if(!isAdmin()){showToast('Acceso solo para administrador');return;}
-  const{error:otpErr}=await sb.auth.signInWithOtp({email:CURRENT_USER.email,options:{shouldCreateUser:false}});
-  if(otpErr){showToast('No se pudo enviar el enlace: '+otpErr.message);return;}
-  showToast('Revisa tu correo y haz clic en el enlace de acceso');
+  const pass=prompt('Ingresa tu contraseña de administrador (Supabase)');
+  if(pass===null)return;
+  const{error}=await sb.auth.signInWithPassword({email:CURRENT_USER.email,password:pass});
+  if(error){showToast('Clave incorrecta o usuario no autorizado');return;}
+  await updateAdminTools();showToast('Acceso de administrador habilitado');
 }
 function downloadCSV(filename, rows){if(!isAdmin()||!isAdminUnlocked()){showToast('Acceso solo para administrador validado');return;}if(!rows.length){showToast('No hay datos para exportar');return;}const headers=Object.keys(rows[0]);const csv=[headers.join(','),...rows.map(r=>headers.map(h=>csvEscape(r[h])).join(','))].join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();URL.revokeObjectURL(a.href);}
 function showMainTab(tab){
