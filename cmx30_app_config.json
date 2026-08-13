@@ -5,10 +5,5 @@
   "development_date": "23 abr 2026",
   "intro_text": "Lista de precios y catálogo para distribuidores autorizados. Cotiza rápido, vende con seguridad y fortalece la rentabilidad del canal.",
   "whatsapp_note": "NOTA: La cotización para WhatsApp copia solo PVP con IVA, PVP con IVA dto SALA y PVD con IVA.",
-  "restricted_gamas": [
-    "LINEA CLASICA",
-    "LINEA HOSPITALARIA",
-    "LINEA HOTELERA"
-  ],
-  "restricted_message": "Producto no disponible para cotización en este canal. Esta línea corresponde a un segmento comercial especial. Por favor consultar con Dirección Comercial."
+  "restricted_message": "Producto no disponible para cotización en este canal."
 }

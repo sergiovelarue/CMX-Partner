@@ -252,14 +252,14 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   <button class="s mini" id="tabDestacados">⭐ Destacados</button>
 </div>
 <div class='card admin-panel hidden' id='adminPricePanel'>
-  <h3>🔧 Panel de administración de precios</h3>
-  <p style="margin:0;color:var(--muted);font-size:.86rem">Visible solo para el administrador autenticado. Los cambios aquí afectan a todos los usuarios de inmediato.</p>
+  <h3>🔧 Lista de precios 1 — Administración</h3>
+  <p style="margin:0;color:var(--muted);font-size:.86rem">Visible solo para el administrador autenticado. Esta es la Lista de precios 1 (base): el PVP con IVA de cada producto, la referencia de partida para todos los Niveles de descuento. Los cambios aquí afectan a todos los usuarios de inmediato.</p>
 
   <div class="admin-sub">
     <h4>Actualizar un precio individual</h4>
     <div class="inline-form">
       <div><label>Referencia</label><input id="editRef" placeholder="Ej: PROAP20"></div>
-      <div><label>Nuevo precio C01 (PVP con IVA)</label><input id="editPrice" type="number" step="1" placeholder="Ej: 518000"></div>
+      <div><label>Nuevo PVP con IVA (Lista 1)</label><input id="editPrice" type="number" step="1" placeholder="Ej: 518000"></div>
       <div><button class="p mini" id="btnUpdateSingle" style="padding:12px 16px">Actualizar precio</button></div>
     </div>
     <div id="editCurrentPrice" style="font-size:.84rem;color:var(--muted);margin-top:8px"></div>
@@ -267,7 +267,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   </div>
 
   <div class="admin-sub">
-    <h4>Carga masiva de lista de precios (CSV)</h4>
+    <h4>Carga masiva de Lista de precios 1 (CSV)</h4>
     <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Columnas requeridas: <code>referencia, descripcion, gama, producto, c01</code>. Opcional: <code>activo</code> (si se omite, se asume activo). ⚠️ Los productos que NO estén en el archivo quedarán marcados como inactivos (no se borran).</p>
     <div class="inline-form">
       <div><label>Nombre de esta lista (trazabilidad)</label><input id="uploadOrigen" placeholder="Ej: C01 22 julio 2026"></div>
@@ -395,31 +395,40 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 
     <h5 style="margin:14px 0 6px;font-size:.88rem">Niveles de descuento <span style="font-weight:400;color:var(--muted);font-size:.78rem">(edita nombre/descripción/activo directo en la tabla; los cambios se guardan solos)</span></h5>
     <div class="inline-form">
+      <div><label>Tipo de nivel</label><select id="newNivelTipo">
+        <option value="base">Base (reglas propias por gama)</option>
+        <option value="ajuste">Ajuste sobre otro nivel (+/- puntos)</option>
+        <option value="copia">Copia editable de otro nivel</option>
+      </select></div>
       <div><label>Nombre del nivel</label><input id="newNivelNombre" placeholder="Ej: Nivel 2"></div>
       <div><label>Descripción (opcional)</label><input id="newNivelDescripcion" placeholder="Ej: Distribuidores premium"></div>
-      <div><button class="p mini" id="btnAddNivel" style="padding:12px 16px">Crear nivel</button></div>
     </div>
+    <div class="inline-form hidden" id="newNivelBaseWrap" style="margin-top:8px">
+      <div><label id="newNivelBaseLabel">Nivel de referencia</label><select id="newNivelBaseSelect"></select></div>
+    </div>
+    <p id="newNivelAyuda" style="margin:8px 0 0;color:var(--muted);font-size:.78rem"></p>
+    <div class="actions" style="margin-top:8px"><button class="p mini" id="btnAddNivel" style="padding:12px 16px">Crear nivel</button></div>
     <div id="nivelesList" style="margin-top:10px"></div>
     <div class="mini-status" id="nivelesStatus"></div>
 
     <h5 style="margin:18px 0 6px;font-size:.88rem">Reglas de margen por nivel</h5>
+    <p id="reglasAyuda" style="margin:0 0 8px;color:var(--muted);font-size:.78rem"></p>
     <div class="inline-form">
       <div><label>Nivel</label><select id="reglaNivelSelect"></select></div>
       <div><label>Gama / prefijo</label><input id="reglaMatch" placeholder="Ej: LINEA PREMIUM"></div>
       <div><label>Tipo</label><select id="reglaTipo"><option value="prefix">Prefijo</option><option value="exact">Exacto</option></select></div>
-      <div><label>Margen %</label><input id="reglaMargen" type="number" step="0.01" placeholder="Ej: 20"></div>
+      <div><label id="reglaMargenLabel">Margen %</label><input id="reglaMargen" type="number" step="0.01" placeholder="Ej: 20"></div>
       <div><button class="p mini" id="btnAddRegla" style="padding:12px 16px">Agregar regla</button></div>
     </div>
     <div id="reglasList" style="margin-top:10px"></div>
     <div class="mini-status" id="reglasStatus"></div>
 
     <h5 style="margin:18px 0 6px;font-size:.88rem">Distribuidores</h5>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">El código de distribuidor se entrega manualmente al Propietario/Administrador PDV para que sus dependientes se auto-registren. Usa un código no obvio (no el nombre comercial).</p>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Todo distribuidor nace sobre la Lista de precios 1 y con Nivel 1 asignado — sin excepción en la creación. El código se entrega manualmente al Propietario/Administrador PDV para que sus dependientes se auto-registren; usa un código no obvio (no el nombre comercial). Después de creado, puedes reasignarle otro Nivel directo en la tabla de abajo.</p>
     <div class="inline-form">
       <div><label>Nombre del distribuidor</label><input id="newDistNombre" placeholder="Ej: El Palacio Del Mueble"></div>
       <div><label>Código de distribuidor</label><input id="newDistCodigo" placeholder="Ej: PDM-7X2K"></div>
-      <div><label>Nivel de descuento</label><select id="newDistNivel"></select></div>
-      <div><button class="p mini" id="btnAddDist" style="padding:12px 16px">Crear distribuidor</button></div>
+      <div><button class="p mini" id="btnAddDist" style="padding:12px 16px">Crear distribuidor (Nivel 1)</button></div>
     </div>
     <div id="distribuidoresList" style="margin-top:10px"></div>
     <div class="mini-status" id="distribuidoresStatus"></div>
@@ -597,14 +606,20 @@ async function renderAdminPdvList(){
   el.innerHTML=`<table class='preview-table'><tr><th>Correo</th><th>Distribuidor</th><th>Punto de venta</th></tr>${admins.map(a=>`<tr><td class='mono'>${a.email}</td><td>${a.distribuidores?.nombre||'-'}</td><td>${a.punto_venta||'-'}</td></tr>`).join('')}</table>`;
 }
 // ---- Reglas de negocio: Niveles de descuento ----
+let NIVELES_CACHE=[];
 async function renderNivelesList(){
   const el=qs('nivelesList');if(!el)return;
   const{data,error}=await sb.from('niveles_descuento').select('*').order('nombre');
   if(error){el.innerHTML="<div class='empty' style='padding:8px 0'>No se pudo cargar la lista de niveles.</div>";return;}
   const niveles=data||[];
+  NIVELES_CACHE=niveles;
+  const tipoLabel={base:'Base',ajuste:'Ajuste',copia:'Copia'};
+  const nivelNombre=id=>niveles.find(n=>n.id===id)?.nombre||'-';
   if(!niveles.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin niveles de descuento creados.</div>";}
-  else{el.innerHTML=`<table class='preview-table'><tr><th>Nivel</th><th>Descripción</th><th>Activo</th><th></th></tr>${niveles.map(n=>`<tr>
-    <td><input class='nivel-edit-nombre' data-id='${n.id}' data-field='nombre' value='${(n.nombre||'').replace(/'/g,"&#39;")}' style='padding:6px 8px;border:1px solid #cfd8e3;border-radius:10px;width:120px'></td>
+  else{el.innerHTML=`<table class='preview-table'><tr><th>Nivel</th><th>Tipo</th><th>Referencia</th><th>Descripción</th><th>Activo</th><th></th></tr>${niveles.map(n=>`<tr>
+    <td><input class='nivel-edit-nombre' data-id='${n.id}' data-field='nombre' value='${(n.nombre||'').replace(/'/g,"&#39;")}' style='padding:6px 8px;border:1px solid #cfd8e3;border-radius:10px;width:110px'></td>
+    <td class='mono'>${tipoLabel[n.tipo]||n.tipo}</td>
+    <td>${n.nivel_base_id?nivelNombre(n.nivel_base_id):'-'}</td>
     <td><input class='nivel-edit-desc' data-id='${n.id}' data-field='descripcion' value='${(n.descripcion||'').replace(/'/g,"&#39;")}' style='padding:6px 8px;border:1px solid #cfd8e3;border-radius:10px;width:100%'></td>
     <td><input type='checkbox' class='nivel-edit-activo' data-id='${n.id}' ${n.activo?'checked':''}></td>
     <td><button class='rm-btn' data-id='${n.id}'>✕</button></td>
@@ -622,47 +637,82 @@ async function updateNivelCampo(id,campo,valor){
   if(campo==='nombre')await renderNivelesList();
 }
 function fillNivelSelects(niveles){
-  const selReglas=qs('reglaNivelSelect'),selDist=qs('newDistNivel');
+  const selReglas=qs('reglaNivelSelect'),selBase=qs('newNivelBaseSelect');
   const opts=niveles.map(n=>`<option value='${n.id}'>${n.nombre}</option>`).join('');
-  if(selReglas){const prev=selReglas.value;selReglas.innerHTML=opts;if(prev)selReglas.value=prev;selReglas.onchange=renderReglasList;}
-  if(selDist){const prev=selDist.value;selDist.innerHTML=opts;if(prev)selDist.value=prev;}
-  if(selReglas&&selReglas.value)renderReglasList();
+  if(selReglas){const prev=selReglas.value;selReglas.innerHTML=opts;if(prev)selReglas.value=prev;selReglas.onchange=onReglaNivelChange;}
+  if(selBase){const prev=selBase.value;selBase.innerHTML=opts;if(prev)selBase.value=prev;}
+  if(selReglas&&selReglas.value)onReglaNivelChange();
+}
+function onNivelTipoChange(){
+  const tipo=qs('newNivelTipo').value;
+  const wrap=qs('newNivelBaseWrap'),label=qs('newNivelBaseLabel'),ayuda=qs('newNivelAyuda'),btn=qs('btnAddNivel');
+  if(tipo==='base'){wrap.classList.add('hidden');ayuda.textContent='Nivel independiente: defines cada gama y su margen desde cero, como Nivel 1.';btn.textContent='Crear nivel';}
+  else if(tipo==='ajuste'){wrap.classList.remove('hidden');label.textContent='Nivel de referencia (sobre el que se calcula)';ayuda.textContent='No defines % absolutos: defines cuántos puntos sumar o restar sobre el margen del nivel de referencia, gama por gama. Si el nivel de referencia cambia, este nivel cambia con él automáticamente.';btn.textContent='Crear nivel';}
+  else{wrap.classList.remove('hidden');label.textContent='Nivel a copiar';ayuda.textContent='Se duplican todas las reglas del nivel elegido tal como están hoy. Desde ahí puedes editarlas libremente sin afectar al nivel original, ni verse afectado si el original cambia después.';btn.textContent='Crear nivel (duplicar reglas)';}
 }
 async function addNivel(){
+  const tipo=qs('newNivelTipo').value;
   const nombre=qs('newNivelNombre').value.trim();
   const descripcion=qs('newNivelDescripcion').value.trim();
+  const nivelBaseId=qs('newNivelBaseSelect').value;
   if(!nombre){setStatus('nivelesStatus','Ingresa un nombre de nivel (ej: Nivel 2).','err');return;}
+  if(tipo!=='base'&&!nivelBaseId){setStatus('nivelesStatus','Selecciona el nivel de referencia.','err');return;}
   setStatus('nivelesStatus','Guardando…','info');
-  const{error}=await sb.from('niveles_descuento').insert({nombre,descripcion,created_by:CURRENT_USER?.email||'admin',updated_by:CURRENT_USER?.email||'admin'});
-  if(error){setStatus('nivelesStatus','Error al guardar: '+error.message,'err');return;}
-  setStatus('nivelesStatus','✅ Nivel creado.','ok');
+  if(tipo==='copia'){
+    const{error}=await sb.rpc('crear_nivel_copia',{p_nombre:nombre,p_descripcion:descripcion,p_nivel_origen_id:nivelBaseId});
+    if(error){setStatus('nivelesStatus','Error al guardar: '+error.message,'err');return;}
+    setStatus('nivelesStatus','✅ Nivel creado con las reglas copiadas. Ya puedes editarlas abajo en "Reglas de margen por nivel".','ok');
+  }else{
+    const payload={nombre,descripcion,tipo,nivel_base_id:tipo==='ajuste'?nivelBaseId:null,created_by:CURRENT_USER?.email||'admin',updated_by:CURRENT_USER?.email||'admin'};
+    const{error}=await sb.from('niveles_descuento').insert(payload);
+    if(error){setStatus('nivelesStatus','Error al guardar: '+error.message,'err');return;}
+    setStatus('nivelesStatus',tipo==='ajuste'?'✅ Nivel creado. Agrega los ajustes por gama abajo en "Reglas de margen por nivel".':'✅ Nivel creado.','ok');
+  }
   qs('newNivelNombre').value='';qs('newNivelDescripcion').value='';
   await renderNivelesList();
 }
 async function removeNivel(id){
-  if(!confirm('¿Eliminar este nivel de descuento? También se eliminarán sus reglas de margen.'))return;
+  if(!confirm('¿Eliminar este nivel de descuento? También se eliminarán sus reglas/ajustes. Si otro nivel tipo Ajuste depende de este, quedará sin poder calcular.'))return;
   const{error}=await sb.from('niveles_descuento').delete().eq('id',id);
   if(error){showToast('Error al quitar: '+error.message);return;}
   await renderNivelesList();showToast('Nivel eliminado');
 }
 // ---- Reglas de negocio: Reglas de margen por nivel ----
+function nivelSeleccionadoEsAjuste(){
+  const nivelId=qs('reglaNivelSelect')?.value;
+  const nivel=NIVELES_CACHE.find(n=>n.id===nivelId);
+  return nivel?.tipo==='ajuste';
+}
+function onReglaNivelChange(){
+  const esAjuste=nivelSeleccionadoEsAjuste();
+  const label=qs('reglaMargenLabel'),ayuda=qs('reglasAyuda'),input=qs('reglaMargen');
+  if(label)label.textContent=esAjuste?'Ajuste (puntos +/-)':'Margen %';
+  if(input)input.placeholder=esAjuste?'Ej: 5 o -3':'Ej: 20';
+  if(ayuda)ayuda.textContent=esAjuste?'Este nivel es tipo Ajuste: ingresa cuántos puntos sumar (o resta con negativo) sobre el margen que ya tiene esa gama en su nivel de referencia. Si no agregas una gama aquí, hereda el margen del nivel de referencia sin cambio.':'Este nivel es tipo Base o Copia: ingresa el % de margen absoluto para esa gama.';
+  renderReglasList();
+}
 async function renderReglasList(){
   const el=qs('reglasList'),nivelId=qs('reglaNivelSelect')?.value;if(!el)return;
   if(!nivelId){el.innerHTML="<div class='empty' style='padding:8px 0'>Crea primero un nivel de descuento.</div>";return;}
+  const esAjuste=nivelSeleccionadoEsAjuste();
   const{data,error}=await sb.from('niveles_descuento_reglas').select('*').eq('nivel_id',nivelId).order('match');
   if(error){el.innerHTML="<div class='empty' style='padding:8px 0'>No se pudo cargar las reglas.</div>";return;}
   const reglas=data||[];
   if(!reglas.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin reglas para este nivel.</div>";return;}
-  el.innerHTML=`<table class='preview-table'><tr><th>Gama</th><th>Tipo</th><th>Margen %</th><th></th></tr>${reglas.map(r=>`<tr>
+  const colLabel=esAjuste?'Ajuste':'Margen %';
+  el.innerHTML=`<table class='preview-table'><tr><th>Gama</th><th>Tipo</th><th>${colLabel}</th><th></th></tr>${reglas.map(r=>{
+    const valor=esAjuste?Number(r.ajuste_pct||0)*100:Number(r.margen||0)*100;
+    return `<tr>
     <td><input class='regla-edit-match' data-id='${r.id}' data-field='match' value='${(r.match||'').replace(/'/g,"&#39;")}' style='padding:6px 8px;border:1px solid #cfd8e3;border-radius:10px;width:160px'></td>
     <td><select class='regla-edit-tipo' data-id='${r.id}' style='padding:6px 8px;border:1px solid #cfd8e3;border-radius:10px'><option value='prefix' ${r.type==='prefix'?'selected':''}>Prefijo</option><option value='exact' ${r.type==='exact'?'selected':''}>Exacto</option></select></td>
-    <td><input class='regla-edit-margen' type='number' step='0.01' data-id='${r.id}' value='${(Number(r.margen)*100).toFixed(2)}' style='padding:6px 8px;border:1px solid #cfd8e3;border-radius:10px;width:80px'></td>
+    <td><input class='regla-edit-margen' type='number' step='0.01' data-id='${r.id}' data-ajuste='${esAjuste?'1':'0'}' value='${valor.toFixed(2)}' style='padding:6px 8px;border:1px solid #cfd8e3;border-radius:10px;width:80px'></td>
     <td><button class='rm-btn' data-id='${r.id}'>✕</button></td>
-  </tr>`).join('')}</table>`;
+  </tr>`;
+  }).join('')}</table>`;
   el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeRegla(btn.dataset.id);});
   el.querySelectorAll('input.regla-edit-match').forEach(inp=>{inp.onblur=()=>updateReglaCampo(inp.dataset.id,'match',inp.value.trim().toUpperCase());});
   el.querySelectorAll('select.regla-edit-tipo').forEach(sel=>{sel.onchange=()=>updateReglaCampo(sel.dataset.id,'type',sel.value);});
-  el.querySelectorAll('input.regla-edit-margen').forEach(inp=>{inp.onblur=()=>{const v=Number(inp.value);if(isNaN(v)){setStatus('reglasStatus','Margen no válido.','err');return;}updateReglaCampo(inp.dataset.id,'margen',v/100);};});
+  el.querySelectorAll('input.regla-edit-margen').forEach(inp=>{inp.onblur=()=>{const v=Number(inp.value);if(isNaN(v)){setStatus('reglasStatus','Valor no válido.','err');return;}const campo=inp.dataset.ajuste==='1'?'ajuste_pct':'margen';updateReglaCampo(inp.dataset.id,campo,v/100);};});
 }
 async function updateReglaCampo(id,campo,valor){
   const{error}=await sb.from('niveles_descuento_reglas').update({[campo]:valor,updated_at:new Date().toISOString()}).eq('id',id);
@@ -673,11 +723,21 @@ async function addRegla(){
   const nivelId=qs('reglaNivelSelect').value;
   const match=qs('reglaMatch').value.trim().toUpperCase();
   const type=qs('reglaTipo').value;
-  const margenPct=Number(qs('reglaMargen').value);
+  const valorPct=Number(qs('reglaMargen').value);
+  const esAjuste=nivelSeleccionadoEsAjuste();
   if(!nivelId){setStatus('reglasStatus','Crea primero un nivel de descuento.','err');return;}
   if(!match){setStatus('reglasStatus','Ingresa la gama o prefijo.','err');return;}
-  if(isNaN(margenPct)){setStatus('reglasStatus','Ingresa un margen válido (ej: 20 para 20%).','err');return;}
+  if(isNaN(valorPct)){setStatus('reglasStatus','Ingresa un valor válido (ej: 20 para 20%, o -5 para un ajuste negativo).','err');return;}
   setStatus('reglasStatus','Guardando…','info');
+  if(esAjuste){
+    const{error}=await sb.from('niveles_descuento_reglas').insert({nivel_id:nivelId,match,type,ajuste_pct:valorPct/100});
+    if(error){setStatus('reglasStatus','Error al guardar: '+error.message,'err');return;}
+    setStatus('reglasStatus','✅ Ajuste agregado.','ok');
+    qs('reglaMatch').value='';qs('reglaMargen').value='';
+    await renderReglasList();
+    return;
+  }
+  const margenPct=valorPct;
   const{error}=await sb.from('niveles_descuento_reglas').insert({nivel_id:nivelId,match,type,margen:margenPct/100});
   if(error){setStatus('reglasStatus','Error al guardar: '+error.message,'err');return;}
   setStatus('reglasStatus','✅ Regla agregada.','ok');
@@ -723,12 +783,13 @@ async function updateDistribuidorCampo(id,campo,valor){
 async function addDistribuidor(){
   const nombre=qs('newDistNombre').value.trim();
   const codigo=qs('newDistCodigo').value.trim().toUpperCase();
-  const nivelId=qs('newDistNivel').value;
   if(!nombre||!codigo){setStatus('distribuidoresStatus','Completa nombre y código de distribuidor.','err');return;}
   setStatus('distribuidoresStatus','Guardando…','info');
-  const{error}=await sb.from('distribuidores').insert({nombre,codigo_distribuidor:codigo,nivel_descuento_id:nivelId||null,created_by:CURRENT_USER?.email||'admin',updated_by:CURRENT_USER?.email||'admin'});
+  const nivel1=NIVELES_CACHE.find(n=>n.nombre==='Nivel 1');
+  if(!nivel1){setStatus('distribuidoresStatus','No se encontró Nivel 1. Verifica en la sección de arriba que exista un nivel llamado exactamente "Nivel 1".','err');return;}
+  const{error}=await sb.from('distribuidores').insert({nombre,codigo_distribuidor:codigo,nivel_descuento_id:nivel1.id,created_by:CURRENT_USER?.email||'admin',updated_by:CURRENT_USER?.email||'admin'});
   if(error){setStatus('distribuidoresStatus','Error al guardar: '+error.message,'err');return;}
-  setStatus('distribuidoresStatus','✅ Distribuidor creado.','ok');
+  setStatus('distribuidoresStatus','✅ Distribuidor creado en Nivel 1. Puedes reasignarle otro Nivel en la tabla de abajo si lo necesitas.','ok');
   qs('newDistNombre').value='';qs('newDistCodigo').value='';
   await renderDistribuidoresList();
 }
@@ -784,18 +845,46 @@ const ref=document.getElementById('ref'),sala=document.getElementById('sala'),ca
 const money=v=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(Math.round(v));
 const pct=v=>Math.max(0,Math.min(100,Number(v)||0))/100; const now=()=>new Intl.DateTimeFormat('es-CO',{dateStyle:'medium',timeStyle:'short'}).format(new Date());
 const normalize=s=>String(s||'').trim().toUpperCase();
-const resolveMargin=g=>{g=normalize(g);for(const rule of RULES){const k=normalize(rule.match_value);if((rule.type||'prefix')==='prefix'&&g.startsWith(k))return Number(rule.margen||0);if(rule.type==='exact'&&g===k)return Number(rule.margen||0);}return 0;};
-// Carga las reglas de margen del Nivel de descuento asignado al distribuidor
-// del usuario actual. Si no hay distribuidor/perfil o el nivel no tiene
-// reglas propias, conserva RULES tal como quedó cargado desde margin_rules
-// (comportamiento actual, sin romper nada para usuarios sin distribuidor).
+const resolveMarginLocal=g=>{g=normalize(g);for(const rule of RULES){const k=normalize(rule.match_value);if((rule.type||'prefix')==='prefix'&&g.startsWith(k))return Number(rule.margen||0);if(rule.type==='exact'&&g===k)return Number(rule.margen||0);}return 0;};
+// NIVEL_ACTUAL_ID: nivel de descuento resuelto para el usuario en sesión.
+// null = sin distribuidor asignado, usa el comportamiento por defecto
+// (RULES cargado de margin_rules, igual que siempre). Con distribuidor,
+// resolveMargin consulta resolver_margen_nivel() en Supabase (misma
+// función usada y verificada en el motor SQL), que soporta niveles tipo
+// base, ajuste (recursivo sobre el nivel de referencia) y copia.
+let NIVEL_ACTUAL_ID=null;
+let MARGEN_CACHE=new Map(); // evita repetir la consulta para la misma gama en la misma sesión
+function resolveMargin(g){
+  if(!NIVEL_ACTUAL_ID)return resolveMarginLocal(g);
+  const key=normalize(g);
+  if(MARGEN_CACHE.has(key))return MARGEN_CACHE.get(key);
+  MARGEN_CACHE.set(key,0); // valor provisional mientras resuelve async, evita 'undefined' en el primer render
+  sb.rpc('resolver_margen_nivel',{p_nivel_id:NIVEL_ACTUAL_ID,p_gama:g}).then(({data,error})=>{
+    if(!error&&data!=null)MARGEN_CACHE.set(key,Number(data));
+  });
+  return MARGEN_CACHE.get(key);
+}
+// Precarga el margen de una gama de forma async y lo deja listo en caché
+// antes de que la UI necesite mostrarlo (usado antes de calc()/renderExplore
+// para que el primer cálculo ya tenga el valor correcto, no el provisional).
+async function precargarMargen(gama){
+  if(!NIVEL_ACTUAL_ID)return resolveMarginLocal(gama);
+  const key=normalize(gama);
+  if(MARGEN_CACHE.has(key)&&MARGEN_CACHE.get(key)!==0)return MARGEN_CACHE.get(key);
+  const{data,error}=await sb.rpc('resolver_margen_nivel',{p_nivel_id:NIVEL_ACTUAL_ID,p_gama:gama});
+  const val=(!error&&data!=null)?Number(data):0;
+  MARGEN_CACHE.set(key,val);
+  return val;
+}
+// Carga el Nivel de descuento asignado al distribuidor del usuario actual.
+// Si no hay distribuidor/perfil, conserva el comportamiento por defecto
+// (RULES cargado de margin_rules vía Nivel 1, sin romper nada).
 async function loadRulesForUser(user=CURRENT_USER){
-  if(!user?.distribuidorId)return; // sin distribuidor asignado: usa margin_rules por defecto
+  NIVEL_ACTUAL_ID=null;MARGEN_CACHE=new Map();
+  if(!user?.distribuidorId)return;
   const{data:dist,error:distErr}=await sb.from('distribuidores').select('nivel_descuento_id').eq('id',user.distribuidorId).maybeSingle();
-  if(distErr||!dist?.nivel_descuento_id){console.warn('No se pudo resolver el nivel de descuento del distribuidor, se usa margin_rules por defecto.');return;}
-  const{data:reglas,error:reglasErr}=await sb.from('niveles_descuento_reglas').select('match_value:match,type,margen').eq('nivel_id',dist.nivel_descuento_id);
-  if(reglasErr){console.warn('No se pudo cargar niveles_descuento_reglas, se usa margin_rules por defecto:',reglasErr.message);return;}
-  if(reglas&&reglas.length)RULES=reglas;
+  if(distErr||!dist?.nivel_descuento_id){console.warn('No se pudo resolver el nivel de descuento del distribuidor, se usa Nivel 1 por defecto.');return;}
+  NIVEL_ACTUAL_ID=dist.nivel_descuento_id;
 }
 const find=q=>{q=normalize(q);if(!q)return null;if(byRef.has(q))return byRef.get(q);return DATA.find(x=>x.search.includes(q));};
 const sugg=q=>{q=normalize(q);if(!q)return[];return DATA.filter(x=>x.search.includes(q)).slice(0,8);};
@@ -803,7 +892,14 @@ function showToast(msg){toast.textContent=msg;toast.style.display='block';setTim
 function showS(){const items=sugg(ref.value);if(!ref.value||!items.length){box.style.display='none';box.innerHTML='';return;}box.innerHTML=items.map(x=>`<div class='it' data-r='${x.referencia}'><b>${x.referencia}</b> — ${x.descripcion}</div>`).join('');box.style.display='block';[...box.querySelectorAll('.it')].forEach(el=>el.onclick=()=>{ref.value=el.dataset.r;box.style.display='none';calc();});}
 function badge(ds){if(ds>.35)return["badge danger","Descuento en sala muy alto: revisar política comercial"];if(ds>.30)return["badge warn","Descuento en sala alto: revisar política comercial"];return["badge ok","Consulta válida"];}
 function mTag(m){if(m>=.20)return"<span class='tag-good'>Margen alto</span>";if(m>=.15)return"<span class='tag-mid'>Margen medio</span>";return"<span class='tag-low'>Sin margen</span>";}
-function isRestricted(gama){const arr=Array.isArray(CONFIG.restricted_gamas)?CONFIG.restricted_gamas:[];return arr.map(normalize).includes(normalize(gama));}
+// Restringido cuando el margen resuelto para esa gama en el Nivel del
+// usuario es <= 0 (0% de margen = no disponible para ese distribuidor).
+// Se eliminó el mecanismo anterior de restricted_gamas fijo en config
+// (era un caso particular heredado, ya cubierto de forma genérica por esta regla).
+async function isRestricted(gama){
+  const m=await precargarMargen(gama);
+  return m<=0;
+}
 function applyCompanyName(){const company=(SETTINGS.company_name||'').trim().toUpperCase();const line=qs('empresaLine');if(line){if(company){line.textContent=`Distribuidores autorizados por ${company}`;line.classList.remove('hidden');}else{line.textContent='';line.classList.add('hidden');}}
 const footerText=qs('footerDistribText');if(footerText)footerText.textContent=company?`Herramienta para distribuidores autorizados por ${company}.`:'Herramienta para distribuidores autorizados.';
 const consent=qs('consentText');if(consent)consent.textContent=company?`Autorizo a ConAccion y a ${company} para recolectar, almacenar y tratar mis datos personales con fines comerciales, promocionales, formativos y de relacionamiento, conforme a la política de tratamiento de datos personales vigente.`:'Autorizo a ConAccion BPS para recolectar, almacenar y tratar mis datos personales con fines comerciales, promocionales, formativos y de relacionamiento, conforme a la política de tratamiento de datos personales vigente.';}
@@ -824,9 +920,10 @@ async function renderProductMedia(referencia){
   if(vids.length)html+=`<div>${vids.map(x=>`<a href="${x.url}" target="_blank" class="badge warn" style="display:inline-block;margin:0 6px 6px 0;text-decoration:none">🎥 ${x.nombre_archivo||'Ver video'}</a>`).join('')}</div>`;
   content.innerHTML=html;card.classList.remove('hidden');
 }
-function calc(){const item=find(ref.value);if(!item){r.innerHTML="<div class='badge warn'>Referencia no encontrada</div><div class='empty'>Revisa el código o selecciona una sugerencia.</div>";copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;qs('mediaCard').classList.add('hidden');qs('suggestedCard').classList.add('hidden');qs('relatedCard').classList.add('hidden');qs('stockCard').classList.add('hidden');SUGGESTED_FOR_LAST=[];RELATED_FOR_LAST=new Map();renderExplore();return;}
+async function calc(){const item=find(ref.value);if(!item){r.innerHTML="<div class='badge warn'>Referencia no encontrada</div><div class='empty'>Revisa el código o selecciona una sugerencia.</div>";copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;qs('mediaCard').classList.add('hidden');qs('suggestedCard').classList.add('hidden');qs('relatedCard').classList.add('hidden');qs('stockCard').classList.add('hidden');SUGGESTED_FOR_LAST=[];RELATED_FOR_LAST=new Map();renderExplore();return;}
 logUsage(item);
-if(isRestricted(item.gama)){copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;qs('mediaCard').classList.add('hidden');qs('suggestedCard').classList.add('hidden');qs('relatedCard').classList.add('hidden');qs('stockCard').classList.add('hidden');SUGGESTED_FOR_LAST=[];RELATED_FOR_LAST=new Map();renderExplore();r.innerHTML=`<div class='badge warn'>No disponible</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='empty'>${CONFIG.restricted_message||'Producto no disponible para cotización en este canal.'}</div>`;return;}
+await precargarMargen(item.gama);
+if(await isRestricted(item.gama)){copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;qs('mediaCard').classList.add('hidden');qs('suggestedCard').classList.add('hidden');qs('relatedCard').classList.add('hidden');qs('stockCard').classList.add('hidden');SUGGESTED_FOR_LAST=[];RELATED_FOR_LAST=new Map();renderExplore();r.innerHTML=`<div class='badge warn'>No disponible</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='empty'>${CONFIG.restricted_message||'Producto no disponible para cotización en este canal.'}</div>`;return;}
 lastItem=item;
 renderPriceCard();
 }
@@ -1457,6 +1554,8 @@ qs('btnSaveCompany').onclick=async()=>{const raw=qs('settingsCompany').value.tri
 qs('btnAddAdmin').onclick=addAdminEmail;
 qs('btnAddOwner').onclick=addOwner;
 qs('btnAddNivel').onclick=addNivel;
+qs('newNivelTipo').onchange=onNivelTipoChange;
+onNivelTipoChange();
 qs('btnAddRegla').onclick=addRegla;
 qs('btnAddDist').onclick=addDistribuidor;
 qs('btnUploadLogo').onclick=async()=>{const file=qs('logoFile').files[0];if(!file){setStatus('logoStatus','Selecciona un archivo de imagen.','err');return;}if(file.size>1024*1024){setStatus('logoStatus','El archivo supera 1MB. Usa una imagen más liviana.','err');return;}setStatus('logoStatus','Subiendo…','info');const path=`logo_${Date.now()}_${file.name}`;const{error:upErr}=await sb.storage.from('app-assets').upload(path,file,{upsert:true});if(upErr){setStatus('logoStatus','Error al subir: '+upErr.message,'err');return;}const{data:pub}=sb.storage.from('app-assets').getPublicUrl(path);const{error}=await sb.from('app_settings').update({logo_url:pub.publicUrl,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('logoStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.logo_url=pub.publicUrl;applyLogo();setStatus('logoStatus','✅ Logo actualizado para todos los usuarios.','ok');qs('logoFile').value='';};
