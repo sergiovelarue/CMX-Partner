@@ -144,8 +144,10 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
         <div><label>Distribuidor / Empresa</label><input id="regCompany" required></div>
         <div><label>Ciudad</label><input id="regCity" required></div>
         <div><label>Punto de venta</label><input id="regStore"></div>
-        <div><label>Cargo</label><select id="regRole"><option value="">Seleccionar</option><option>Vendedor</option><option>Dependiente</option><option>Administrador</option><option>Propietario</option></select></div>
+        <div><label>Cargo</label><select id="regRole"><option value="">Seleccionar</option><option>Vendedor</option><option>Dependiente</option><option>Administrador PDV</option></select></div>
+        <div><label>Código de distribuidor</label><input id="regCodigoDistribuidor" placeholder="Entregado por tu distribuidor" autocomplete="off"></div>
       </div>
+      <p style="margin:6px 0 0;color:var(--muted);font-size:.78rem">El código de distribuidor lo entrega tu distribuidor o el administrador de la plataforma. Sin un código válido no podrás ver margen ni PVD.</p>
       <div class="consent">
         <label><input id="regConsent" type="checkbox"> <span id="consentText">Autorizo a ConAccion BPS para recolectar, almacenar y tratar mis datos personales con fines comerciales, promocionales, formativos y de relacionamiento, conforme a la política de tratamiento de datos personales vigente.</span></label>
       </div>
@@ -367,6 +369,57 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
     </div>
     <div id="adminsList" style="margin-top:10px"></div>
     <div class="mini-status" id="adminsStatus"></div>
+
+    <h5 style="margin:18px 0 6px;font-size:.88rem">🏢 Propietario de Distribuidor</h5>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Igual que un administrador, inicia sesión con código de un solo uso al correo (sin contraseña). Queda asociado a un Distribuidor específico y ve PVD/margen según el nivel de descuento de ese distribuidor — no puede cambiar su propio nivel ni el de otros.</p>
+    <div class="inline-form">
+      <div><label>Correo del propietario</label><input id="newOwnerEmail" type="email" placeholder="nombre@distribuidor.com"></div>
+      <div><label>Distribuidor</label><select id="newOwnerDistribuidor"></select></div>
+      <div><button class="p mini" id="btnAddOwner" style="padding:12px 16px">Agregar propietario</button></div>
+    </div>
+    <p style="margin:6px 0 0;color:var(--muted);font-size:.76rem">Después de agregarlo aquí, crea también su usuario en Supabase Auth (Authentication → Users) con el mismo correo para que pueda iniciar sesión.</p>
+    <div id="ownersList" style="margin-top:10px"></div>
+    <div class="mini-status" id="ownersStatus"></div>
+
+    <h5 style="margin:18px 0 6px;font-size:.88rem">🏬 Administrador PDV</h5>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">No se crea manualmente aquí: se auto-registra en la app ingresando su correo y el código del distribuidor (igual que un dependiente, sin login con contraseña). Aparecerá listado abajo una vez se registre.</p>
+    <div id="adminPdvList" style="margin-top:10px"></div>
+  </div>
+
+  <div class="admin-sub">
+    <h4>📊 Reglas de negocio</h4>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Define los Niveles de descuento (Nivel 1, Nivel 2...) y los Distribuidores. Solo el administrador de la app puede crear niveles y asignarlos a un distribuidor — ni el Propietario ni el Administrador PDV pueden cambiar esta asignación.</p>
+
+    <h5 style="margin:14px 0 6px;font-size:.88rem">Niveles de descuento</h5>
+    <div class="inline-form">
+      <div><label>Nombre del nivel</label><input id="newNivelNombre" placeholder="Ej: Nivel 2"></div>
+      <div><label>Descripción (opcional)</label><input id="newNivelDescripcion" placeholder="Ej: Distribuidores premium"></div>
+      <div><button class="p mini" id="btnAddNivel" style="padding:12px 16px">Crear nivel</button></div>
+    </div>
+    <div id="nivelesList" style="margin-top:10px"></div>
+    <div class="mini-status" id="nivelesStatus"></div>
+
+    <h5 style="margin:18px 0 6px;font-size:.88rem">Reglas de margen por nivel</h5>
+    <div class="inline-form">
+      <div><label>Nivel</label><select id="reglaNivelSelect"></select></div>
+      <div><label>Gama / prefijo</label><input id="reglaMatch" placeholder="Ej: LINEA PREMIUM"></div>
+      <div><label>Tipo</label><select id="reglaTipo"><option value="prefix">Prefijo</option><option value="exact">Exacto</option></select></div>
+      <div><label>Margen %</label><input id="reglaMargen" type="number" step="0.01" placeholder="Ej: 20"></div>
+      <div><button class="p mini" id="btnAddRegla" style="padding:12px 16px">Agregar regla</button></div>
+    </div>
+    <div id="reglasList" style="margin-top:10px"></div>
+    <div class="mini-status" id="reglasStatus"></div>
+
+    <h5 style="margin:18px 0 6px;font-size:.88rem">Distribuidores</h5>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">El código de distribuidor se entrega manualmente al Propietario/Administrador PDV para que sus dependientes se auto-registren. Usa un código no obvio (no el nombre comercial).</p>
+    <div class="inline-form">
+      <div><label>Nombre del distribuidor</label><input id="newDistNombre" placeholder="Ej: El Palacio Del Mueble"></div>
+      <div><label>Código de distribuidor</label><input id="newDistCodigo" placeholder="Ej: PDM-7X2K"></div>
+      <div><label>Nivel de descuento</label><select id="newDistNivel"></select></div>
+      <div><button class="p mini" id="btnAddDist" style="padding:12px 16px">Crear distribuidor</button></div>
+    </div>
+    <div id="distribuidoresList" style="margin-top:10px"></div>
+    <div class="mini-status" id="distribuidoresStatus"></div>
   </div>
 </div>
 <div class='card admin-panel hidden' id='adminDestacadosPanel'>
@@ -463,7 +516,7 @@ function normalizeColombiaPhone(v){let d=String(v||'').replace(/\D/g,'');if(d.st
 function isValidColombiaMobile(v){const d=normalizeColombiaPhone(v);return /^3\d{9}$/.test(d);}
 function isAdmin(user=CURRENT_USER){return !!user&&ADMIN_EMAILS.has(normalizeEmail(user.email));}
 // Visibilidad de margen/PVD/ganancia por perfil declarado en el registro (no confundir con isAdmin, que controla el panel de administración).
-function canSeeMargin(user=CURRENT_USER){const role=String(user?.role||'').trim().toLowerCase();return role==='administrador'||role==='propietario';}
+function canSeeMargin(user=CURRENT_USER){const role=String(user?.role||'').trim().toLowerCase();const perfilRol=String(user?.perfilRol||'').trim().toLowerCase();return role==='administrador'||role==='propietario'||perfilRol==='propietario_distribuidor'||perfilRol==='admin_pdv';}
 async function isAdminUnlocked(){const{data}=await sb.auth.getSession();return !!data?.session;}
 async function reloadAdminEmails(){
   const{data,error}=await sb.from('app_admins').select('email');
@@ -496,7 +549,150 @@ async function removeAdminEmail(email){
   if(error){showToast('Error al quitar: '+error.message);return;}
   await reloadAdminEmails();await renderAdminsList();showToast('Administrador removido');
 }
-function showAdminTab(tab){const pricePanel=qs('adminPricePanel'),settingsPanel=qs('adminSettingsPanel'),destPanel=qs('adminDestacadosPanel'),tp=qs('tabPrices'),ts=qs('tabSettings'),td=qs('tabDestacados');if(!pricePanel||!settingsPanel)return;pricePanel.classList.toggle('hidden',tab!=='prices');settingsPanel.classList.toggle('hidden',tab!=='settings');if(destPanel)destPanel.classList.toggle('hidden',tab!=='destacados');if(tp)tp.className=(tab==='prices'?'p mini':'s mini');if(ts)ts.className=(tab==='settings'?'p mini':'s mini');if(td)td.className=(tab==='destacados'?'p mini':'s mini');if(tab==='settings'&&qs('settingsCompany'))qs('settingsCompany').value=SETTINGS.company_name||'';if(tab==='settings')renderAdminsList();if(tab==='destacados')fillBadgeInputs();}
+// ---- Administradores: Propietario de Distribuidor ----
+async function fillOwnerDistribuidorSelect(){
+  const sel=qs('newOwnerDistribuidor');if(!sel)return;
+  const{data,error}=await sb.from('distribuidores').select('id,nombre').eq('activo',true).order('nombre');
+  if(error){sel.innerHTML="<option value=''>No se pudo cargar distribuidores</option>";return;}
+  const dist=data||[];
+  sel.innerHTML=dist.length?dist.map(d=>`<option value='${d.id}'>${d.nombre}</option>`).join(''):"<option value=''>Crea primero un distribuidor en Reglas de negocio</option>";
+}
+async function renderOwnersList(){
+  const el=qs('ownersList');if(!el)return;
+  const{data,error}=await sb.from('perfiles_usuario').select('*, distribuidores(nombre)').eq('rol','propietario_distribuidor').order('created_at');
+  if(error){el.innerHTML="<div class='empty' style='padding:8px 0'>No se pudo cargar la lista de propietarios.</div>";return;}
+  const owners=data||[];
+  if(!owners.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin propietarios registrados.</div>";return;}
+  el.innerHTML=`<table class='preview-table'><tr><th>Correo</th><th>Distribuidor</th><th></th></tr>${owners.map(o=>`<tr><td class='mono'>${o.email}</td><td>${o.distribuidores?.nombre||'-'}</td><td><button class='rm-btn' data-id='${o.id}'>✕</button></td></tr>`).join('')}</table>`;
+  el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeOwner(btn.dataset.id);});
+}
+async function addOwner(){
+  const email=normalizeEmail(qs('newOwnerEmail').value);
+  const distribuidorId=qs('newOwnerDistribuidor').value;
+  if(!isValidEmail(email)){setStatus('ownersStatus','Ingresa un correo válido.','err');return;}
+  if(!distribuidorId){setStatus('ownersStatus','Selecciona un distribuidor.','err');return;}
+  setStatus('ownersStatus','Guardando…','info');
+  const{error}=await sb.from('perfiles_usuario').insert({email,rol:'propietario_distribuidor',distribuidor_id:distribuidorId,created_by:CURRENT_USER?.email||'admin',updated_by:CURRENT_USER?.email||'admin'});
+  if(error){setStatus('ownersStatus','Error al guardar: '+error.message,'err');return;}
+  setStatus('ownersStatus','✅ Propietario agregado. Recuerda crear también su usuario en Supabase Auth (Authentication → Users).','ok');
+  qs('newOwnerEmail').value='';
+  await renderOwnersList();
+}
+async function removeOwner(id){
+  if(!confirm('¿Quitar este propietario de distribuidor?'))return;
+  const{error}=await sb.from('perfiles_usuario').delete().eq('id',id);
+  if(error){showToast('Error al quitar: '+error.message);return;}
+  await renderOwnersList();showToast('Propietario removido');
+}
+// ---- Administradores: Administrador PDV (solo lectura — se auto-registra) ----
+async function renderAdminPdvList(){
+  const el=qs('adminPdvList');if(!el)return;
+  const{data,error}=await sb.from('perfiles_usuario').select('*, distribuidores(nombre)').eq('rol','admin_pdv').order('created_at');
+  if(error){el.innerHTML="<div class='empty' style='padding:8px 0'>No se pudo cargar la lista de administradores PDV.</div>";return;}
+  const admins=data||[];
+  if(!admins.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin administradores PDV registrados todavía.</div>";return;}
+  el.innerHTML=`<table class='preview-table'><tr><th>Correo</th><th>Distribuidor</th><th>Punto de venta</th></tr>${admins.map(a=>`<tr><td class='mono'>${a.email}</td><td>${a.distribuidores?.nombre||'-'}</td><td>${a.punto_venta||'-'}</td></tr>`).join('')}</table>`;
+}
+// ---- Reglas de negocio: Niveles de descuento ----
+async function renderNivelesList(){
+  const el=qs('nivelesList');if(!el)return;
+  const{data,error}=await sb.from('niveles_descuento').select('*').order('nombre');
+  if(error){el.innerHTML="<div class='empty' style='padding:8px 0'>No se pudo cargar la lista de niveles.</div>";return;}
+  const niveles=data||[];
+  if(!niveles.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin niveles de descuento creados.</div>";}
+  else{el.innerHTML=`<table class='preview-table'><tr><th>Nivel</th><th>Descripción</th><th>Activo</th><th></th></tr>${niveles.map(n=>`<tr><td class='mono'>${n.nombre}</td><td>${n.descripcion||'-'}</td><td>${n.activo?'Sí':'No'}</td><td><button class='rm-btn' data-id='${n.id}'>✕</button></td></tr>`).join('')}</table>`;
+  el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeNivel(btn.dataset.id);});}
+  fillNivelSelects(niveles);
+}
+function fillNivelSelects(niveles){
+  const selReglas=qs('reglaNivelSelect'),selDist=qs('newDistNivel');
+  const opts=niveles.map(n=>`<option value='${n.id}'>${n.nombre}</option>`).join('');
+  if(selReglas){const prev=selReglas.value;selReglas.innerHTML=opts;if(prev)selReglas.value=prev;selReglas.onchange=renderReglasList;}
+  if(selDist){const prev=selDist.value;selDist.innerHTML=opts;if(prev)selDist.value=prev;}
+  if(selReglas&&selReglas.value)renderReglasList();
+}
+async function addNivel(){
+  const nombre=qs('newNivelNombre').value.trim();
+  const descripcion=qs('newNivelDescripcion').value.trim();
+  if(!nombre){setStatus('nivelesStatus','Ingresa un nombre de nivel (ej: Nivel 2).','err');return;}
+  setStatus('nivelesStatus','Guardando…','info');
+  const{error}=await sb.from('niveles_descuento').insert({nombre,descripcion,created_by:CURRENT_USER?.email||'admin',updated_by:CURRENT_USER?.email||'admin'});
+  if(error){setStatus('nivelesStatus','Error al guardar: '+error.message,'err');return;}
+  setStatus('nivelesStatus','✅ Nivel creado.','ok');
+  qs('newNivelNombre').value='';qs('newNivelDescripcion').value='';
+  await renderNivelesList();
+}
+async function removeNivel(id){
+  if(!confirm('¿Eliminar este nivel de descuento? También se eliminarán sus reglas de margen.'))return;
+  const{error}=await sb.from('niveles_descuento').delete().eq('id',id);
+  if(error){showToast('Error al quitar: '+error.message);return;}
+  await renderNivelesList();showToast('Nivel eliminado');
+}
+// ---- Reglas de negocio: Reglas de margen por nivel ----
+async function renderReglasList(){
+  const el=qs('reglasList'),nivelId=qs('reglaNivelSelect')?.value;if(!el)return;
+  if(!nivelId){el.innerHTML="<div class='empty' style='padding:8px 0'>Crea primero un nivel de descuento.</div>";return;}
+  const{data,error}=await sb.from('niveles_descuento_reglas').select('*').eq('nivel_id',nivelId).order('match');
+  if(error){el.innerHTML="<div class='empty' style='padding:8px 0'>No se pudo cargar las reglas.</div>";return;}
+  const reglas=data||[];
+  if(!reglas.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin reglas para este nivel.</div>";return;}
+  el.innerHTML=`<table class='preview-table'><tr><th>Gama</th><th>Tipo</th><th>Margen</th><th></th></tr>${reglas.map(r=>`<tr><td class='mono'>${r.match}</td><td>${r.type}</td><td>${(Number(r.margen)*100).toFixed(0)}%</td><td><button class='rm-btn' data-id='${r.id}'>✕</button></td></tr>`).join('')}</table>`;
+  el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeRegla(btn.dataset.id);});
+}
+async function addRegla(){
+  const nivelId=qs('reglaNivelSelect').value;
+  const match=qs('reglaMatch').value.trim().toUpperCase();
+  const type=qs('reglaTipo').value;
+  const margenPct=Number(qs('reglaMargen').value);
+  if(!nivelId){setStatus('reglasStatus','Crea primero un nivel de descuento.','err');return;}
+  if(!match){setStatus('reglasStatus','Ingresa la gama o prefijo.','err');return;}
+  if(isNaN(margenPct)){setStatus('reglasStatus','Ingresa un margen válido (ej: 20 para 20%).','err');return;}
+  setStatus('reglasStatus','Guardando…','info');
+  const{error}=await sb.from('niveles_descuento_reglas').insert({nivel_id:nivelId,match,type,margen:margenPct/100});
+  if(error){setStatus('reglasStatus','Error al guardar: '+error.message,'err');return;}
+  setStatus('reglasStatus','✅ Regla agregada.','ok');
+  qs('reglaMatch').value='';qs('reglaMargen').value='';
+  await renderReglasList();
+}
+async function removeRegla(id){
+  if(!confirm('¿Eliminar esta regla de margen?'))return;
+  const{error}=await sb.from('niveles_descuento_reglas').delete().eq('id',id);
+  if(error){showToast('Error al quitar: '+error.message);return;}
+  await renderReglasList();showToast('Regla eliminada');
+}
+// ---- Reglas de negocio: Distribuidores ----
+async function renderDistribuidoresList(){
+  const el=qs('distribuidoresList');if(!el)return;
+  const{data,error}=await sb.from('distribuidores').select('*, niveles_descuento(nombre)').order('nombre');
+  if(error){el.innerHTML="<div class='empty' style='padding:8px 0'>No se pudo cargar la lista de distribuidores.</div>";return;}
+  const dist=data||[];
+  if(!dist.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin distribuidores creados.</div>";return;}
+  el.innerHTML=`<table class='preview-table'><tr><th>Distribuidor</th><th>Código</th><th>Nivel</th><th>Activo</th><th></th></tr>${dist.map(d=>`<tr><td>${d.nombre}</td><td class='mono'>${d.codigo_distribuidor}</td><td>${d.niveles_descuento?.nombre||'Sin asignar'}</td><td>${d.activo?'Sí':'No'}</td><td><button class='rm-btn' data-id='${d.id}'>✕</button></td></tr>`).join('')}</table>`;
+  el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeDistribuidor(btn.dataset.id);});
+}
+async function addDistribuidor(){
+  const nombre=qs('newDistNombre').value.trim();
+  const codigo=qs('newDistCodigo').value.trim().toUpperCase();
+  const nivelId=qs('newDistNivel').value;
+  if(!nombre||!codigo){setStatus('distribuidoresStatus','Completa nombre y código de distribuidor.','err');return;}
+  setStatus('distribuidoresStatus','Guardando…','info');
+  const{error}=await sb.from('distribuidores').insert({nombre,codigo_distribuidor:codigo,nivel_descuento_id:nivelId||null,created_by:CURRENT_USER?.email||'admin',updated_by:CURRENT_USER?.email||'admin'});
+  if(error){setStatus('distribuidoresStatus','Error al guardar: '+error.message,'err');return;}
+  setStatus('distribuidoresStatus','✅ Distribuidor creado.','ok');
+  qs('newDistNombre').value='';qs('newDistCodigo').value='';
+  await renderDistribuidoresList();
+}
+async function removeDistribuidor(id){
+  if(!confirm('¿Eliminar este distribuidor? Sus dependientes y administradores PDV asociados quedarán sin distribuidor.'))return;
+  const{error}=await sb.from('distribuidores').delete().eq('id',id);
+  if(error){showToast('Error al quitar: '+error.message);return;}
+  await renderDistribuidoresList();showToast('Distribuidor eliminado');
+}
+async function initReglasNegocio(){
+  await renderNivelesList();
+  await renderDistribuidoresList();
+}
+function showAdminTab(tab){const pricePanel=qs('adminPricePanel'),settingsPanel=qs('adminSettingsPanel'),destPanel=qs('adminDestacadosPanel'),tp=qs('tabPrices'),ts=qs('tabSettings'),td=qs('tabDestacados');if(!pricePanel||!settingsPanel)return;pricePanel.classList.toggle('hidden',tab!=='prices');settingsPanel.classList.toggle('hidden',tab!=='settings');if(destPanel)destPanel.classList.toggle('hidden',tab!=='destacados');if(tp)tp.className=(tab==='prices'?'p mini':'s mini');if(ts)ts.className=(tab==='settings'?'p mini':'s mini');if(td)td.className=(tab==='destacados'?'p mini':'s mini');if(tab==='settings'&&qs('settingsCompany'))qs('settingsCompany').value=SETTINGS.company_name||'';if(tab==='settings'){renderAdminsList();fillOwnerDistribuidorSelect();renderOwnersList();renderAdminPdvList();initReglasNegocio();}if(tab==='destacados')fillBadgeInputs();}
 async function updateAdminTools(){const gate=qs('adminGate'),tools=qs('adminTools'),tabs=qs('adminTabs'),pricePanel=qs('adminPricePanel'),settingsPanel=qs('adminSettingsPanel');if(!gate||!tools)return;const allowed=isAdmin();const unlocked=await isAdminUnlocked();gate.classList.toggle('hidden',!allowed||unlocked);tools.classList.toggle('hidden',!allowed||!unlocked);if(tabs)tabs.classList.toggle('hidden',!allowed||!unlocked);if(allowed&&unlocked){showAdminTab('prices');}else{if(pricePanel)pricePanel.classList.add('hidden');if(settingsPanel)settingsPanel.classList.add('hidden');}}
 async function unlockAdmin(){
   if(!isAdmin()){showToast('Acceso solo para administrador');return;}
@@ -514,10 +710,19 @@ function showMainTab(tab){
   Object.keys(views).forEach(k=>{if(views[k])views[k].classList.toggle('hidden',k!==tab);if(navs[k])navs[k].className=(k===tab?'p mini main-tab-btn':'s mini main-tab-btn');});
   if(tab==='destacados')renderDestacados();
 }
-function showApp(user){CURRENT_USER=user;qs('registerScreen').classList.add('hidden');qs('appScreen').classList.remove('hidden');qs('activeUser').textContent=user.name||'-';qs('activeCompany').textContent=user.company||'-';showMainTab('consultar');renderQuoteCart();updateAdminTools();}
+function showApp(user){CURRENT_USER=user;qs('registerScreen').classList.add('hidden');qs('appScreen').classList.remove('hidden');qs('activeUser').textContent=user.name||'-';qs('activeCompany').textContent=user.company||'-';showMainTab('consultar');renderQuoteCart();updateAdminTools();loadRulesForUser(user);}
 function showRegister(){CURRENT_USER=null;lockAdmin();qs('appScreen').classList.add('hidden');qs('registerScreen').classList.remove('hidden');}
-function activate(){const user={name:qs('regName').value.trim(),phone:normalizeColombiaPhone(qs('regPhone').value),email:normalizeEmail(qs('regEmail').value),company:qs('regCompany').value.trim(),city:qs('regCity').value.trim(),store:qs('regStore').value.trim(),role:qs('regRole').value,consent:qs('regConsent').checked,registeredAt:new Date().toISOString(),lastAccess:new Date().toISOString()};
-const required=['name','phone','email','company','city','role'];const missing=required.some(k=>!user[k]);if(missing||!user.consent){qs('regMsg').textContent='Completa todos los campos obligatorios y acepta la autorización de tratamiento de datos.';return;}if(!isValidEmail(user.email)){qs('regMsg').textContent='Ingresa un correo electrónico válido. Ejemplo: nombre@empresa.com';qs('regEmail').focus();return;}if(!isValidColombiaMobile(user.phone)){qs('regMsg').textContent='Ingresa un celular colombiano válido de 10 dígitos. Ejemplo: 3001234567';qs('regPhone').focus();return;}const users=readJSON(USERS_KEY,[]);const idx=users.findIndex(u=>(u.email||'').toLowerCase()===user.email.toLowerCase()||(u.phone&&normalizeColombiaPhone(u.phone)===user.phone));if(idx>=0){user.registeredAt=users[idx].registeredAt;users[idx]={...users[idx],...user};}else users.push(user);writeJSON(USERS_KEY,users);writeJSON(USER_KEY,user);showApp(user);showToast('Acceso activado');}
+async function activate(){const user={name:qs('regName').value.trim(),phone:normalizeColombiaPhone(qs('regPhone').value),email:normalizeEmail(qs('regEmail').value),company:qs('regCompany').value.trim(),city:qs('regCity').value.trim(),store:qs('regStore').value.trim(),role:qs('regRole').value,codigoDistribuidor:qs('regCodigoDistribuidor').value.trim().toUpperCase(),consent:qs('regConsent').checked,registeredAt:new Date().toISOString(),lastAccess:new Date().toISOString()};
+const required=['name','phone','email','company','city','role'];const missing=required.some(k=>!user[k]);if(missing||!user.consent){qs('regMsg').textContent='Completa todos los campos obligatorios y acepta la autorización de tratamiento de datos.';return;}if(!isValidEmail(user.email)){qs('regMsg').textContent='Ingresa un correo electrónico válido. Ejemplo: nombre@empresa.com';qs('regEmail').focus();return;}if(!isValidColombiaMobile(user.phone)){qs('regMsg').textContent='Ingresa un celular colombiano válido de 10 dígitos. Ejemplo: 3001234567';qs('regPhone').focus();return;}
+if(user.codigoDistribuidor){
+  const rolRpc=user.role.toLowerCase().includes('administrador pdv')?'admin_pdv':'dependiente';
+  qs('regMsg').style.color='var(--muted)';qs('regMsg').textContent='Validando código de distribuidor…';
+  const{data:perfil,error:perfilErr}=await sb.rpc('registrar_perfil_operativo',{p_email:user.email,p_rol:rolRpc,p_codigo_distribuidor:user.codigoDistribuidor,p_punto_venta:user.store||null});
+  if(perfilErr){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Código de distribuidor no válido: '+perfilErr.message;return;}
+  user.perfilRol=perfil.rol;user.distribuidorId=perfil.distribuidor_id;
+}
+qs('regMsg').textContent='';
+const users=readJSON(USERS_KEY,[]);const idx=users.findIndex(u=>(u.email||'').toLowerCase()===user.email.toLowerCase()||(u.phone&&normalizeColombiaPhone(u.phone)===user.phone));if(idx>=0){user.registeredAt=users[idx].registeredAt;users[idx]={...users[idx],...user};}else users.push(user);writeJSON(USERS_KEY,users);writeJSON(USER_KEY,user);showApp(user);showToast('Acceso activado');}
 function logUsage(item){if(!CURRENT_USER||!item)return;const logs=readJSON(LOGS_KEY,[]);logs.push({date:new Date().toLocaleDateString('es-CO'),time:new Date().toLocaleTimeString('es-CO'),iso:new Date().toISOString(),name:CURRENT_USER.name,email:CURRENT_USER.email,phone:CURRENT_USER.phone,company:CURRENT_USER.company,city:CURRENT_USER.city,store:CURRENT_USER.store,role:CURRENT_USER.role,reference:item.referencia,description:item.descripcion,gama:item.gama,product:item.producto});writeJSON(LOGS_KEY,logs);CURRENT_USER.lastAccess=new Date().toISOString();writeJSON(USER_KEY,CURRENT_USER);
 // Fase 3: registro agregado/anónimo (sin datos de usuario) para alimentar "más consultados" y venta cruzada.
 sb.from('consultas_log').insert({referencia:item.referencia}).then(({error})=>{if(error)console.warn('No se pudo registrar consulta agregada:',error.message);});
@@ -530,6 +735,18 @@ const money=v=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',ma
 const pct=v=>Math.max(0,Math.min(100,Number(v)||0))/100; const now=()=>new Intl.DateTimeFormat('es-CO',{dateStyle:'medium',timeStyle:'short'}).format(new Date());
 const normalize=s=>String(s||'').trim().toUpperCase();
 const resolveMargin=g=>{g=normalize(g);for(const rule of RULES){const k=normalize(rule.match_value);if((rule.type||'prefix')==='prefix'&&g.startsWith(k))return Number(rule.margen||0);if(rule.type==='exact'&&g===k)return Number(rule.margen||0);}return 0;};
+// Carga las reglas de margen del Nivel de descuento asignado al distribuidor
+// del usuario actual. Si no hay distribuidor/perfil o el nivel no tiene
+// reglas propias, conserva RULES tal como quedó cargado desde margin_rules
+// (comportamiento actual, sin romper nada para usuarios sin distribuidor).
+async function loadRulesForUser(user=CURRENT_USER){
+  if(!user?.distribuidorId)return; // sin distribuidor asignado: usa margin_rules por defecto
+  const{data:dist,error:distErr}=await sb.from('distribuidores').select('nivel_descuento_id').eq('id',user.distribuidorId).maybeSingle();
+  if(distErr||!dist?.nivel_descuento_id){console.warn('No se pudo resolver el nivel de descuento del distribuidor, se usa margin_rules por defecto.');return;}
+  const{data:reglas,error:reglasErr}=await sb.from('niveles_descuento_reglas').select('match_value:match,type,margen').eq('nivel_id',dist.nivel_descuento_id);
+  if(reglasErr){console.warn('No se pudo cargar niveles_descuento_reglas, se usa margin_rules por defecto:',reglasErr.message);return;}
+  if(reglas&&reglas.length)RULES=reglas;
+}
 const find=q=>{q=normalize(q);if(!q)return null;if(byRef.has(q))return byRef.get(q);return DATA.find(x=>x.search.includes(q));};
 const sugg=q=>{q=normalize(q);if(!q)return[];return DATA.filter(x=>x.search.includes(q)).slice(0,8);};
 function showToast(msg){toast.textContent=msg;toast.style.display='block';setTimeout(()=>toast.style.display='none',1500);}
@@ -1155,6 +1372,7 @@ CATALOGO_ITEMS=catalogoData||[];
 const mediaMap=new Map();(mediaData||[]).forEach(mm=>{const k=normalize(mm.referencia);if(!mediaMap.has(k))mediaMap.set(k,mm.url);});MEDIA_IMAGES=mediaMap;
 if(settingsData)SETTINGS={company_name:settingsData.company_name||'',logo_url:settingsData.logo_url||'',theme:settingsData.theme||'original',catalogo_foco_badge:settingsData.catalogo_foco_badge||'Nuevo',catalogo_bestseller_badge:settingsData.catalogo_bestseller_badge||'Best Seller',catalogo_oferta_badge:settingsData.catalogo_oferta_badge||'Oferta',catalogo_oferta_formato:settingsData.catalogo_oferta_formato||'porcentaje'};
 PRODUCTS=productsData||[];RULES=rulesData||[];
+await loadRulesForUser();
 renderVersionBadge(verData?.fecha_actualizacion);
 DATA=PRODUCTS.filter(x=>x.activo).map(x=>({...x,search:(`${x.referencia} ${x.descripcion} ${x.gama} ${x.producto}`).toUpperCase()}));byRef=new Map(DATA.map(x=>[normalize(x.referencia),x]));document.getElementById('appName').textContent=CONFIG.app_name||'ListaLoop B2B';document.title=CONFIG.app_name||'ListaLoop B2B';const amwt=document.querySelector('meta[name="apple-mobile-web-app-title"]'),anm=document.querySelector('meta[name="application-name"]');if(amwt)amwt.setAttribute('content',CONFIG.app_name||'ListaLoop B2B');if(anm)anm.setAttribute('content',CONFIG.app_name||'ListaLoop B2B');document.getElementById('introText').textContent=CONFIG.intro_text||'Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.';document.getElementById('baseName').textContent=CONFIG.base_name||'-';document.getElementById('devDate').textContent=CONFIG.development_date||'-';document.getElementById('waNote').textContent=CONFIG.whatsapp_note||'';document.getElementById('statRefs').textContent=DATA.length.toLocaleString('es-CO');
 applyCompanyName();applyLogo();applyTheme(SETTINGS.theme||'original');if(qs('settingsCompany'))qs('settingsCompany').value=SETTINGS.company_name||'';
@@ -1187,6 +1405,10 @@ wireRefAutocomplete('vcDisparadoraRef','vcDisparadoraRefBox');wireRefAutocomplet
 qs('btnAddVentaCruzada').onclick=addVentaCruzada;
 qs('btnSaveCompany').onclick=async()=>{const raw=qs('settingsCompany').value.trim();if(!raw){setStatus('companyStatus','Ingresa un nombre de empresa.','err');return;}const company=raw.toUpperCase();setStatus('companyStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({company_name:company,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('companyStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.company_name=company;qs('settingsCompany').value=company;applyCompanyName();setStatus('companyStatus','✅ Empresa contratante actualizada para todos los usuarios.','ok');};
 qs('btnAddAdmin').onclick=addAdminEmail;
+qs('btnAddOwner').onclick=addOwner;
+qs('btnAddNivel').onclick=addNivel;
+qs('btnAddRegla').onclick=addRegla;
+qs('btnAddDist').onclick=addDistribuidor;
 qs('btnUploadLogo').onclick=async()=>{const file=qs('logoFile').files[0];if(!file){setStatus('logoStatus','Selecciona un archivo de imagen.','err');return;}if(file.size>1024*1024){setStatus('logoStatus','El archivo supera 1MB. Usa una imagen más liviana.','err');return;}setStatus('logoStatus','Subiendo…','info');const path=`logo_${Date.now()}_${file.name}`;const{error:upErr}=await sb.storage.from('app-assets').upload(path,file,{upsert:true});if(upErr){setStatus('logoStatus','Error al subir: '+upErr.message,'err');return;}const{data:pub}=sb.storage.from('app-assets').getPublicUrl(path);const{error}=await sb.from('app_settings').update({logo_url:pub.publicUrl,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('logoStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.logo_url=pub.publicUrl;applyLogo();setStatus('logoStatus','✅ Logo actualizado para todos los usuarios.','ok');qs('logoFile').value='';};
 qs('btnRemoveLogo').onclick=async()=>{setStatus('logoStatus','Quitando…','info');const{error}=await sb.from('app_settings').update({logo_url:'',updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('logoStatus','Error: '+error.message,'err');return;}SETTINGS.logo_url='';applyLogo();setStatus('logoStatus','Logo quitado.','ok');};
 document.querySelectorAll('.theme-btn').forEach(b=>{b.onclick=async()=>{const theme=b.dataset.theme;applyTheme(theme);setStatus('themeStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({theme,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('themeStatus','Error al guardar tema: '+error.message,'err');return;}SETTINGS.theme=theme;setStatus('themeStatus','✅ Tema aplicado para todos los usuarios.','ok');};});
