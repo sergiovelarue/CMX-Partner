@@ -667,8 +667,19 @@ async function renderDistribuidoresList(){
   if(error){el.innerHTML="<div class='empty' style='padding:8px 0'>No se pudo cargar la lista de distribuidores.</div>";return;}
   const dist=data||[];
   if(!dist.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin distribuidores creados.</div>";return;}
-  el.innerHTML=`<table class='preview-table'><tr><th>Distribuidor</th><th>Código</th><th>Nivel</th><th>Activo</th><th></th></tr>${dist.map(d=>`<tr><td>${d.nombre}</td><td class='mono'>${d.codigo_distribuidor}</td><td>${d.niveles_descuento?.nombre||'Sin asignar'}</td><td>${d.activo?'Sí':'No'}</td><td><button class='rm-btn' data-id='${d.id}'>✕</button></td></tr>`).join('')}</table>`;
+  const{data:nivelesData}=await sb.from('niveles_descuento').select('id,nombre').order('nombre');
+  const niveles=nivelesData||[];
+  const nivelOptions=(selectedId)=>niveles.map(n=>`<option value='${n.id}' ${n.id===selectedId?'selected':''}>${n.nombre}</option>`).join('');
+  el.innerHTML=`<table class='preview-table'><tr><th>Distribuidor</th><th>Código</th><th>Nivel</th><th>Activo</th><th></th></tr>${dist.map(d=>`<tr><td>${d.nombre}</td><td class='mono'>${d.codigo_distribuidor}</td><td><select class='dist-nivel-select' data-id='${d.id}' style='padding:6px 8px;border:1px solid #cfd8e3;border-radius:10px'>${nivelOptions(d.nivel_descuento_id)}</select></td><td>${d.activo?'Sí':'No'}</td><td><button class='rm-btn' data-id='${d.id}'>✕</button></td></tr>`).join('')}</table>`;
   el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeDistribuidor(btn.dataset.id);});
+  el.querySelectorAll('select.dist-nivel-select').forEach(sel=>{sel.onchange=()=>updateDistribuidorNivel(sel.dataset.id,sel.value);});
+}
+async function updateDistribuidorNivel(distribuidorId,nivelId){
+  setStatus('distribuidoresStatus','Actualizando nivel…','info');
+  const{error}=await sb.from('distribuidores').update({nivel_descuento_id:nivelId,updated_by:CURRENT_USER?.email||'admin'}).eq('id',distribuidorId);
+  if(error){setStatus('distribuidoresStatus','Error al actualizar: '+error.message,'err');return;}
+  setStatus('distribuidoresStatus','✅ Nivel de distribuidor actualizado.','ok');
+  await renderDistribuidoresList();
 }
 async function addDistribuidor(){
   const nombre=qs('newDistNombre').value.trim();
