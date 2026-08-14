@@ -144,7 +144,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
         <div><label>Distribuidor / Empresa</label><input id="regCompany" required></div>
         <div><label>Ciudad</label><input id="regCity" required></div>
         <div><label>Punto de venta</label><input id="regStore"></div>
-        <div id="regRoleWrap"><label>Cargo</label><select id="regRole"><option value="">Seleccionar</option><option>Vendedor</option><option>Dependiente</option><option>Administrador PDV</option></select></div>
+        <div id="regRoleWrap"><label>Cargo</label><select id="regRole"><option value="">Seleccionar</option><option>Vendedor</option><option>Dependiente</option><option>Administrador PDV</option><option>Propietario Distribuidor</option></select></div>
         <div id="regCodigoWrap"><label>Código de distribuidor</label><input id="regCodigoDistribuidor" placeholder="Entregado por tu distribuidor" autocomplete="off"></div>
       </div>
       <p id="regCodigoHelp" style="margin:6px 0 0;color:var(--muted);font-size:.78rem">El código de distribuidor lo entrega tu distribuidor o el administrador de la plataforma. Sin un código válido no podrás ver margen ni PVD.</p>
@@ -335,7 +335,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 
   <div class="admin-sub">
     <h4>👤 Administradores</h4>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Solo un administrador ya autenticado puede agregar o quitar a otro. El acceso se valida con un código de un solo uso enviado al correo, sin contraseña.</p>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Solo un administrador ya autenticado puede agregar o quitar a otro. El correo se agrega aquí; la contraseña se crea aparte en Supabase (Authentication → Users) con ese mismo correo.</p>
     <div class="inline-form">
       <div><label>Correo del nuevo administrador</label><input id="newAdminEmail" type="email" placeholder="nombre@empresa.com"></div>
       <div><button class="p mini" id="btnAddAdmin" style="padding:12px 16px">Agregar administrador</button></div>
@@ -976,7 +976,9 @@ async function loginConPassword(){
   qs('regMsg').textContent='';
   const users=readJSON(USERS_KEY,[]);const idx=users.findIndex(u=>(u.email||'').toLowerCase()===user.email.toLowerCase());if(idx>=0){user.registeredAt=users[idx].registeredAt;users[idx]={...users[idx],...user};}else users.push(user);writeJSON(USERS_KEY,users);writeJSON(USER_KEY,user);showApp(user);showToast('Acceso activado');
 }
-async function activate(){const user={name:qs('regName').value.trim(),phone:normalizeColombiaPhone(qs('regPhone').value),email:normalizeEmail(qs('regEmail').value),company:qs('regCompany').value.trim(),city:qs('regCity').value.trim(),store:qs('regStore').value.trim(),role:qs('regRole').value,codigoDistribuidor:qs('regCodigoDistribuidor').value.trim().toUpperCase(),consent:qs('regConsent').checked,registeredAt:new Date().toISOString(),lastAccess:new Date().toISOString()};
+async function activate(){
+if(qs('regRole').value.toLowerCase()==='propietario distribuidor'){qs('regMsg').textContent='Propietario de Distribuidor ingresa con contraseña. Escribe tu correo y usa el botón "Ingresar con contraseña".';return;}
+const user={name:qs('regName').value.trim(),phone:normalizeColombiaPhone(qs('regPhone').value),email:normalizeEmail(qs('regEmail').value),company:qs('regCompany').value.trim(),city:qs('regCity').value.trim(),store:qs('regStore').value.trim(),role:qs('regRole').value,codigoDistribuidor:qs('regCodigoDistribuidor').value.trim().toUpperCase(),consent:qs('regConsent').checked,registeredAt:new Date().toISOString(),lastAccess:new Date().toISOString()};
 const required=['name','phone','email','company','city','role'];const missing=required.some(k=>!user[k]);if(missing||!user.consent){qs('regMsg').textContent='Completa todos los campos obligatorios y acepta la autorización de tratamiento de datos.';return;}if(!isValidEmail(user.email)){qs('regMsg').textContent='Ingresa un correo electrónico válido. Ejemplo: nombre@empresa.com';qs('regEmail').focus();return;}if(!isValidColombiaMobile(user.phone)){qs('regMsg').textContent='Ingresa un celular colombiano válido de 10 dígitos. Ejemplo: 3001234567';qs('regPhone').focus();return;}
 if(user.role.toLowerCase()!=='vendedor'&&user.codigoDistribuidor){
   const rolRpc=user.role.toLowerCase().includes('administrador pdv')?'admin_pdv':'dependiente';
@@ -1683,7 +1685,15 @@ document.getElementById('calc').onclick=calc;document.getElementById('clear').on
 ref.addEventListener('input',showS);ref.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});sala.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});document.addEventListener('click',e=>{if(!box.contains(e.target)&&e.target!==ref)box.style.display='none';});
 if(cant)cant.addEventListener('input',()=>{if(lastItem)renderPriceCard();});
 copy.onclick=async()=>{if(!lastCopy)return;try{await navigator.clipboard.writeText(lastCopy);showToast('Resultado copiado');}catch(e){}};quote.onclick=async()=>{if(!lastQuote)return;try{await navigator.clipboard.writeText(lastQuote);showToast('Cotización copiada');}catch(e){}};
-qs('activateAccess').onclick=activate;qs('loginPasswordBtn').onclick=loginConPassword;qs('regEmail').onblur=checkEmailRole;qs('changeUser').onclick=()=>{localStorage.removeItem(USER_KEY);showRegister();};qs('adminLogin').onclick=unlockAdmin;qs('adminLogout').onclick=lockAdmin;qs('exportUsers').onclick=()=>downloadCSV('comercial_partner_registros.csv',readJSON(USERS_KEY,[]));qs('exportLogs').onclick=()=>downloadCSV('comercial_partner_uso.csv',readJSON(LOGS_KEY,[]));
+qs('activateAccess').onclick=activate;qs('loginPasswordBtn').onclick=loginConPassword;qs('regEmail').onblur=checkEmailRole;
+qs('regRole').onchange=async()=>{
+  if(qs('regRole').value.toLowerCase()==='propietario distribuidor'){
+    await checkEmailRole();
+    if(!REG_DETECTED){
+      qs('regMsg').textContent='Este correo no está registrado como Propietario de Distribuidor. Pide al administrador que lo cree primero, o verifica que esté bien escrito.';
+    }
+  }
+};qs('changeUser').onclick=()=>{localStorage.removeItem(USER_KEY);showRegister();};qs('adminLogin').onclick=unlockAdmin;qs('adminLogout').onclick=lockAdmin;qs('exportUsers').onclick=()=>downloadCSV('comercial_partner_registros.csv',readJSON(USERS_KEY,[]));qs('exportLogs').onclick=()=>downloadCSV('comercial_partner_uso.csv',readJSON(LOGS_KEY,[]));
 qs('btnUpdateSingle').onclick=updateSinglePrice;qs('btnAnalyzeCSV').onclick=analyzeCSV;qs('btnUploadMedia').onclick=uploadMedia;
 qs('stockTipo').addEventListener('change',toggleStockFields);toggleStockFields();
 qs('btnUpdateStock').onclick=updateStockManual;
