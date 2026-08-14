@@ -362,7 +362,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
       <div><label>Correo del propietario (opcional)</label><input id="newDistOwnerEmail" type="email" placeholder="nombre@distribuidor.com"></div>
       <div><button class="p mini" id="btnAddDist" style="padding:12px 16px">Crear distribuidor</button></div>
     </div>
-    <p style="margin:6px 0 0;color:var(--muted);font-size:.76rem">Con correo: crea también al Propietario. Falta crear su usuario en Supabase Auth (Authentication → Users) con el mismo correo.</p>
+    <p style="margin:6px 0 0;color:var(--muted);font-size:.76rem">Con correo: crea también al Propietario. Ingresa con ese correo + el código de distribuidor, igual que Admin PDV.</p>
     <div id="distribuidoresList" style="margin-top:10px"></div>
     <div class="mini-status" id="distribuidoresStatus"></div>
   </div>
@@ -588,14 +588,21 @@ async function removeOwner(id){
   if(error){showToast('Error al quitar: '+error.message);return;}
   await renderOwnersList();showToast('Propietario removido');
 }
-// ---- Administradores: Administrador PDV (solo lectura — se auto-registra) ----
+// ---- Administradores: Administrador PDV (se auto-registra; el admin puede quitarlo) ----
 async function renderAdminPdvList(){
   const el=qs('adminPdvList');if(!el)return;
   const{data,error}=await sb.from('perfiles_usuario').select('*, distribuidores(nombre)').eq('rol','admin_pdv').order('created_at');
   if(error){el.innerHTML="<div class='empty' style='padding:8px 0'>No se pudo cargar la lista de administradores PDV.</div>";return;}
   const admins=data||[];
   if(!admins.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin administradores PDV registrados todavía.</div>";return;}
-  el.innerHTML=`<table class='preview-table'><tr><th>Correo</th><th>Distribuidor</th><th>Punto de venta</th></tr>${admins.map(a=>`<tr><td class='mono'>${a.email}</td><td>${a.distribuidores?.nombre||'-'}</td><td>${a.punto_venta||'-'}</td></tr>`).join('')}</table>`;
+  el.innerHTML=`<table class='preview-table'><tr><th>Correo</th><th>Distribuidor</th><th>Punto de venta</th><th></th></tr>${admins.map(a=>`<tr><td class='mono'>${a.email}</td><td>${a.distribuidores?.nombre||'-'}</td><td>${a.punto_venta||'-'}</td><td><button class='rm-btn' data-id='${a.id}'>✕</button></td></tr>`).join('')}</table>`;
+  el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeAdminPdv(btn.dataset.id);});
+}
+async function removeAdminPdv(id){
+  if(!confirm('¿Quitar este administrador PDV? Podrá volver a registrarse con el código de distribuidor si lo necesita.'))return;
+  const{error}=await sb.from('perfiles_usuario').delete().eq('id',id);
+  if(error){showToast('Error al quitar: '+error.message);return;}
+  await renderAdminPdvList();showToast('Administrador PDV removido');
 }
 // ---- Reglas de negocio: Niveles de descuento ----
 let NIVELES_CACHE=[];
@@ -842,7 +849,7 @@ async function addDistribuidor(){
       const msg=/duplicate key|unique/i.test(errOwner.message)?'Distribuidor creado, pero ese correo ya está registrado con otro rol. Cámbialo desde la lista de Propietarios si corresponde.':'Distribuidor creado, pero falló el propietario: '+errOwner.message;
       setStatus('distribuidoresStatus',msg,'err');qs('newDistNombre').value='';qs('newDistCodigo').value='';await renderDistribuidoresList();return;
     }
-    setStatus('distribuidoresStatus','✅ Distribuidor y propietario creados. Falta crear el usuario en Supabase Auth (Authentication → Users) con el mismo correo.','ok');
+    setStatus('distribuidoresStatus','✅ Distribuidor y propietario creados. El propietario ya puede ingresar con ese correo + el código de distribuidor.','ok');
     await renderOwnersList();
   }else{
     setStatus('distribuidoresStatus','✅ Distribuidor creado en Nivel 1.','ok');
@@ -920,10 +927,10 @@ function showMainTab(tab){
 }
 function showApp(user){CURRENT_USER=user;qs('registerScreen').classList.add('hidden');qs('appScreen').classList.remove('hidden');qs('activeUser').textContent=user.name||'-';qs('activeCompany').textContent=user.company||'-';showMainTab('consultar');renderQuoteCart();updateAdminTools();loadRulesForUser(user);}
 function showRegister(){CURRENT_USER=null;lockAdmin();qs('appScreen').classList.add('hidden');qs('registerScreen').classList.remove('hidden');}
-// ---- Detección de rol por correo: Administrador y Propietario ya existen en Supabase
-// y usan Auth (correo+contraseña), no el formulario operativo con código. Al perder foco
-// del correo, se consulta y el formulario se ajusta para no pedir un cargo que no aplica.
-let REG_DETECTED=null; // null | {tipo:'administrador'} | {tipo:'propietario', distribuidorId}
+// ---- Detección de rol por correo: solo Administrador usa Auth (correo+contraseña),
+// gestionado en Supabase. Todos los demás roles (Propietario, Admin PDV, Dependiente,
+// Vendedor) usan el formulario operativo con código de distribuidor.
+let REG_DETECTED=null; // null | {tipo:'administrador'}
 async function checkEmailRole(){
   const email=normalizeEmail(qs('regEmail').value);
   REG_DETECTED=null;
@@ -943,16 +950,6 @@ async function checkEmailRole(){
     qs('regDetectedMsg').textContent='Correo de Administrador. Ingresa con tu contraseña.';
     qs('regDetectedMsg').classList.remove('hidden');
     qs('loginPasswordBtn').classList.remove('hidden');
-    return;
-  }
-  const{data:perfil}=await sb.rpc('obtener_perfil_por_correo',{p_email:email}).catch(()=>({data:null}));
-  if(perfil&&perfil.rol==='propietario_distribuidor'){
-    REG_DETECTED={tipo:'propietario',distribuidorId:perfil.distribuidor_id};
-    qs('regRoleWrap').classList.add('hidden');
-    qs('regCodigoHelp').textContent='Confirma el código de tu distribuidor para completar el ingreso.';
-    qs('regDetectedMsg').textContent='Correo de Propietario de Distribuidor. Ingresa con tu contraseña.';
-    qs('regDetectedMsg').classList.remove('hidden');
-    qs('loginPasswordBtn').classList.remove('hidden');
   }
 }
 async function loginConPassword(){
@@ -963,25 +960,16 @@ async function loginConPassword(){
   qs('regMsg').style.color='var(--muted)';qs('regMsg').textContent='Validando…';
   const{error}=await sb.auth.signInWithPassword({email,password:pass});
   if(error){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Clave incorrecta o usuario no autorizado.';return;}
-  const user={name:qs('regName').value.trim()||email,phone:normalizeColombiaPhone(qs('regPhone').value)||'',email,company:qs('regCompany').value.trim()||'',city:qs('regCity').value.trim()||'',store:qs('regStore').value.trim(),registeredAt:new Date().toISOString(),lastAccess:new Date().toISOString()};
-  if(REG_DETECTED?.tipo==='administrador'){
-    user.role='Administrador';
-  }else if(REG_DETECTED?.tipo==='propietario'){
-    const codigo=qs('regCodigoDistribuidor').value.trim().toUpperCase();
-    if(!codigo){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Ingresa el código de tu distribuidor.';return;}
-    const{data:dist,error:distErr}=await sb.from('distribuidores').select('id,codigo_distribuidor').eq('id',REG_DETECTED.distribuidorId).maybeSingle();
-    if(distErr||!dist||dist.codigo_distribuidor!==codigo){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Código de distribuidor no válido.';return;}
-    user.role='Propietario';user.perfilRol='propietario_distribuidor';user.distribuidorId=dist.id;
-  }
+  const user={name:qs('regName').value.trim()||email,phone:normalizeColombiaPhone(qs('regPhone').value)||'',email,company:qs('regCompany').value.trim()||'',city:qs('regCity').value.trim()||'',store:qs('regStore').value.trim(),registeredAt:new Date().toISOString(),lastAccess:new Date().toISOString(),role:'Administrador'};
   qs('regMsg').textContent='';
   const users=readJSON(USERS_KEY,[]);const idx=users.findIndex(u=>(u.email||'').toLowerCase()===user.email.toLowerCase());if(idx>=0){user.registeredAt=users[idx].registeredAt;users[idx]={...users[idx],...user};}else users.push(user);writeJSON(USERS_KEY,users);writeJSON(USER_KEY,user);showApp(user);showToast('Acceso activado');
 }
 async function activate(){
-if(qs('regRole').value.toLowerCase()==='propietario distribuidor'){qs('regMsg').textContent='Propietario de Distribuidor ingresa con contraseña. Escribe tu correo y usa el botón "Ingresar con contraseña".';return;}
 const user={name:qs('regName').value.trim(),phone:normalizeColombiaPhone(qs('regPhone').value),email:normalizeEmail(qs('regEmail').value),company:qs('regCompany').value.trim(),city:qs('regCity').value.trim(),store:qs('regStore').value.trim(),role:qs('regRole').value,codigoDistribuidor:qs('regCodigoDistribuidor').value.trim().toUpperCase(),consent:qs('regConsent').checked,registeredAt:new Date().toISOString(),lastAccess:new Date().toISOString()};
 const required=['name','phone','email','company','city','role'];const missing=required.some(k=>!user[k]);if(missing||!user.consent){qs('regMsg').textContent='Completa todos los campos obligatorios y acepta la autorización de tratamiento de datos.';return;}if(!isValidEmail(user.email)){qs('regMsg').textContent='Ingresa un correo electrónico válido. Ejemplo: nombre@empresa.com';qs('regEmail').focus();return;}if(!isValidColombiaMobile(user.phone)){qs('regMsg').textContent='Ingresa un celular colombiano válido de 10 dígitos. Ejemplo: 3001234567';qs('regPhone').focus();return;}
 if(user.role.toLowerCase()!=='vendedor'&&user.codigoDistribuidor){
-  const rolRpc=user.role.toLowerCase().includes('administrador pdv')?'admin_pdv':'dependiente';
+  const rolLower=user.role.toLowerCase();
+  const rolRpc=rolLower.includes('administrador pdv')?'admin_pdv':rolLower.includes('propietario')?'propietario_distribuidor':'dependiente';
   qs('regMsg').style.color='var(--muted)';qs('regMsg').textContent='Validando código de distribuidor…';
   const{data:perfil,error:perfilErr}=await sb.rpc('registrar_perfil_operativo',{p_email:user.email,p_rol:rolRpc,p_codigo_distribuidor:user.codigoDistribuidor,p_punto_venta:user.store||null});
   if(perfilErr){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Código de distribuidor no válido: '+perfilErr.message;return;}
@@ -1686,14 +1674,7 @@ ref.addEventListener('input',showS);ref.addEventListener('keydown',e=>{if(e.key=
 if(cant)cant.addEventListener('input',()=>{if(lastItem)renderPriceCard();});
 copy.onclick=async()=>{if(!lastCopy)return;try{await navigator.clipboard.writeText(lastCopy);showToast('Resultado copiado');}catch(e){}};quote.onclick=async()=>{if(!lastQuote)return;try{await navigator.clipboard.writeText(lastQuote);showToast('Cotización copiada');}catch(e){}};
 qs('activateAccess').onclick=activate;qs('loginPasswordBtn').onclick=loginConPassword;qs('regEmail').onblur=checkEmailRole;
-qs('regRole').onchange=async()=>{
-  if(qs('regRole').value.toLowerCase()==='propietario distribuidor'){
-    await checkEmailRole();
-    if(!REG_DETECTED){
-      qs('regMsg').textContent='Este correo no está registrado como Propietario de Distribuidor. Pide al administrador que lo cree primero, o verifica que esté bien escrito.';
-    }
-  }
-};qs('changeUser').onclick=()=>{localStorage.removeItem(USER_KEY);showRegister();};qs('adminLogin').onclick=unlockAdmin;qs('adminLogout').onclick=lockAdmin;qs('exportUsers').onclick=()=>downloadCSV('comercial_partner_registros.csv',readJSON(USERS_KEY,[]));qs('exportLogs').onclick=()=>downloadCSV('comercial_partner_uso.csv',readJSON(LOGS_KEY,[]));
+qs('changeUser').onclick=()=>{localStorage.removeItem(USER_KEY);showRegister();};qs('adminLogin').onclick=unlockAdmin;qs('adminLogout').onclick=lockAdmin;qs('exportUsers').onclick=()=>downloadCSV('comercial_partner_registros.csv',readJSON(USERS_KEY,[]));qs('exportLogs').onclick=()=>downloadCSV('comercial_partner_uso.csv',readJSON(LOGS_KEY,[]));
 qs('btnUpdateSingle').onclick=updateSinglePrice;qs('btnAnalyzeCSV').onclick=analyzeCSV;qs('btnUploadMedia').onclick=uploadMedia;
 qs('stockTipo').addEventListener('change',toggleStockFields);toggleStockFields();
 qs('btnUpdateStock').onclick=updateStockManual;
