@@ -1,4 +1,12 @@
 <!doctype html>
+<!--
+  ListaLoop B2B — Software de propiedad intelectual exclusiva de Sergio Velásquez.
+  Queda prohibida su copia, distribución, ingeniería inversa o modificación total o
+  parcial sin autorización previa y expresa del titular. El derecho de uso otorgado
+  a usuarios, distribuidores o empresas contratantes se limita a lo definido en las
+  condiciones contractuales establecidas y autorizadas por Sergio Velásquez.
+  © Sergio Velásquez. Todos los derechos reservados.
+-->
 <html lang="es">
 <head>
 <meta charset="utf-8">
@@ -16,7 +24,7 @@
 <meta name="apple-mobile-web-app-title" content="ListaLoop B2B">
 <style>
 :root{--bg:#F4F5F6;--bg2:#EBEDEF;--card:#FFFFFF;--ink:#1B1F24;--muted:#5B6470;--brand:#20262E;--brand2:#B08A3E;--line:#DCE0E4;--soft:#EBEDEF;--ok:#3F6B4E;--warn:#9C6A22;--danger:#9C3B34;--gain:#FBF1D9;--gainline:#D9B968;--accent-text:#8A6D2E;--font-head:Georgia,'Times New Roman',serif}
-*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-weight:400;background:var(--bg);color:var(--ink);letter-spacing:.1px}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-weight:400;background:var(--bg);color:var(--ink);letter-spacing:.1px;overflow-x:hidden}
 .wrap{max-width:1100px;margin:auto;padding:18px}.hero{background:var(--brand);color:#fff;border-radius:4px;padding:24px 22px;margin-bottom:16px;border:1px solid var(--brand);position:relative}
 .hero::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--brand2)}
 .hero h1{margin:0 0 8px;font-size:1.5rem;font-family:var(--font-head);font-weight:400;letter-spacing:.3px}.hero p{margin:0;opacity:.85;line-height:1.5;max-width:900px;font-size:.92rem}.hero small{display:block;margin-top:10px;opacity:.75}
@@ -64,6 +72,27 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 .preview-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:.82rem}
 .preview-table th,.preview-table td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left}
 .preview-table th{color:var(--muted);font-weight:500;font-size:.76rem;text-transform:uppercase;letter-spacing:.3px}
+/* Tablas de listados admin (Mi equipo, Administradores, Distribuidores, Niveles,
+   Reglas, Vendedores, etc.): en pantallas angostas se desbordarían o comprimirían
+   ilegibles sin esto. Se aplica scroll horizontal contenido, igual patrón que
+   #quoteCartTable, a todos los contenedores donde el JS inyecta un <table class="preview-table">. */
+#adminsList,#ownersList,#adminPdvList,#dependientesList,#vendDistList,
+#nivelesList,#distribuidoresList,#vendedoresList,#reglasList,
+#miEquipoAdminPdv,#miEquipoDependientes,#miEquipoVendedores{
+  overflow-x:auto;-webkit-overflow-scrolling:touch;
+}
+@media(max-width:760px){
+  #adminsList table.preview-table,#ownersList table.preview-table,#adminPdvList table.preview-table,
+  #dependientesList table.preview-table,#vendDistList table.preview-table,
+  #nivelesList table.preview-table,#distribuidoresList table.preview-table,
+  #vendedoresList table.preview-table,#reglasList table.preview-table,
+  #miEquipoAdminPdv table.preview-table,#miEquipoDependientes table.preview-table,#miEquipoVendedores table.preview-table{
+    min-width:520px;
+  }
+  .preview-table input,.preview-table select{min-width:70px;font-size:.8rem}
+  .rm-btn{padding:8px 10px}
+}
+#exploreTableWrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 #quoteCartTable{overflow-x:auto;-webkit-overflow-scrolling:touch}
 #quoteCartTable table.preview-table{min-width:640px}
 #quoteCartTable th,#quoteCartTable td{white-space:nowrap}
@@ -78,7 +107,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 [data-theme="dark"] .hero h1,[data-theme="dark"] .partner-hero h1,[data-theme="dark"] .admin-panel h3,[data-theme="dark"] .admin-sub h4,[data-theme="dark"] .dest-section-title,[data-theme="dark"] .summary-chip b,[data-theme="dark"] h2,[data-theme="dark"] h3{color:var(--brand2)}
 [data-theme="dark"] .admin-panel{background:var(--card);border-color:var(--brand2)}
 [data-theme="pastel"]{--bg:#eef4fb;--bg2:#f7f9fc;--card:#fff;--ink:#17324d;--muted:#667085;--brand:#123a63;--brand2:#1f6fb2;--line:#d9e2ec;--soft:#eef4fb;--ok:#127a4a;--warn:#b45309;--danger:#b42318;--gain:#fff7cc;--gainline:#f3d34a;--accent-text:#1f6fb2}
-.admin-tabs{display:flex;gap:8px;margin-bottom:10px}
+.admin-tabs{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
 .logo-wrap{margin-bottom:10px}.logo-wrap img{max-height:56px;max-width:220px;display:block}
 .theme-swatch{display:inline-flex;align-items:center;gap:6px}
 .qty-input{width:70px;padding:6px;border:1px solid var(--line);border-radius:3px;font-size:.85rem}
@@ -86,7 +115,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 .main-tabs{display:flex;gap:8px;margin-bottom:14px}
 .main-tab-btn{flex:1;padding:14px 12px;font-size:.9rem;display:flex;align-items:center;justify-content:center;gap:6px;letter-spacing:.2px}
 .tab-badge{background:var(--brand2);color:var(--brand);border-radius:2px;padding:1px 8px;font-size:.72rem;font-weight:500;min-width:18px;text-align:center}
-@media(max-width:760px){.main-tab-btn{padding:14px 8px;font-size:.86rem}}
+@media(max-width:760px){.main-tab-btn{padding:14px 8px;font-size:.86rem}.mini{padding:11px 12px;font-size:.82rem}}
 .dest-section-title{font-size:.95rem;color:var(--brand);margin:0 0 10px;font-weight:400;letter-spacing:.3px;text-transform:uppercase;font-size:.8rem}
 .dest-empty{color:var(--muted);font-size:.84rem;padding:14px 0}
 .carousel{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
@@ -568,7 +597,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
     <div class="mini-status" id="vcStatus"></div>
   </div>
 </div>
-<div class='footer'><span id="footerDistribText">Herramienta para distribuidores autorizados.</span> Información de referencia comercial. Derechos reservados.<div class='admin-gate hidden' id='adminGate'><button class='s mini' id='adminLogin'>🔒 Acceso administrador</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Visible solo para correos administradores autorizados.</span></div><div class='admin-tools hidden' id='adminTools'><button class='s mini' id='exportUsers'>Exportar registros CSV</button><button class='s mini' id='exportLogs'>Exportar uso CSV</button><button class='s mini' id='adminLogout'>Bloquear descargas</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Descargas habilitadas para administrador validado.</span></div><div style="margin-top:10px;font-size:.74rem;color:#a9b4c2">© ListaLoop B2B. Todos los derechos reservados — Sergio Velásquez.<span style="float:right;opacity:.45">23:1</span></div></div>
+<div class='footer'><span id="footerDistribText">Herramienta para distribuidores autorizados.</span> Información de referencia comercial. Derechos reservados.<div class='admin-gate hidden' id='adminGate'><button class='s mini' id='adminLogin'>🔒 Acceso administrador</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Visible solo para correos administradores autorizados.</span></div><div class='admin-tools hidden' id='adminTools'><button class='s mini' id='exportUsers'>Exportar registros CSV</button><button class='s mini' id='exportLogs'>Exportar uso CSV</button><button class='s mini' id='adminLogout'>Bloquear descargas</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Descargas habilitadas para administrador validado.</span></div><div style="margin-top:10px;font-size:.74rem;color:#a9b4c2">© ListaLoop B2B — Propiedad intelectual exclusiva de Sergio Velásquez. Prohibida su copia, distribución o modificación sin autorización expresa. El uso por usuarios o empresas contratantes se rige por las condiciones contractuales autorizadas por Sergio Velásquez.<span style="float:right;opacity:.45">23:1</span></div></div>
 </div><div id='toast'>Copiado</div>
 <script>
 const CONFIG_FILE="cmx30_app_config.json";
@@ -731,10 +760,10 @@ async function renderNivelesList(){
   else{el.innerHTML=`<table class='preview-table'><tr><th>Nivel</th><th>Ajuste general</th><th>Descripción</th><th>Activo</th><th></th></tr>${niveles.map(n=>{
     const esProtegido=n.nombre==='Nivel 1';
     const nombreInput=esProtegido
-      ?`<input value='Nivel 1' readonly title='Nivel base: nombre fijo, sin eliminar. Valores editables.' style='padding:6px 8px;border:1px solid #e5e9ef;border-radius:10px;width:110px;background:#f4f6f8;color:var(--muted)'>`
-      :`<input class='nivel-edit-nombre' data-id='${n.id}' data-field='nombre' value='${(n.nombre||'').replace(/'/g,"&#39;")}' style='padding:6px 8px;border:1px solid #cfd8e3;border-radius:10px;width:110px'>`;
+      ?`<input value='Nivel 1' readonly title='Nivel base: nombre fijo, sin eliminar. Valores editables.' style='padding:9px 8px;border:1px solid #e5e9ef;border-radius:10px;min-width:90px;max-width:100%;background:#f4f6f8;color:var(--muted)'>`
+      :`<input class='nivel-edit-nombre' data-id='${n.id}' data-field='nombre' value='${(n.nombre||'').replace(/'/g,"&#39;")}' style='padding:9px 8px;border:1px solid #cfd8e3;border-radius:10px;min-width:90px;max-width:100%'>`;
     const ajusteGeneralCell=n.tipo==='ajuste'
-      ?`<input class='nivel-edit-general' type='number' step='0.01' data-id='${n.id}' value='${n.ajuste_general_pct!=null?(Number(n.ajuste_general_pct)*100).toFixed(2):''}' placeholder='Ej: 5' style='padding:6px 8px;border:1px solid #cfd8e3;border-radius:10px;width:80px'>`
+      ?`<input class='nivel-edit-general' type='number' step='0.01' data-id='${n.id}' value='${n.ajuste_general_pct!=null?(Number(n.ajuste_general_pct)*100).toFixed(2):''}' placeholder='Ej: 5' style='padding:9px 8px;border:1px solid #cfd8e3;border-radius:10px;min-width:70px;max-width:100%'>`
       :'-';
     const rmBtn=esProtegido?'':`<button class='rm-btn' data-id='${n.id}'>✕</button>`;
     return `<tr>
@@ -846,7 +875,7 @@ async function renderReglasList(){
       const dataGama=r?'':g;
       return `<tr>
       <td>${g}</td>
-      <td><input class='regla-edit-margen-base' type='number' step='0.01' data-id='${dataId}' data-gama='${dataGama}' value='${valor.toFixed(2)}' style='padding:6px 8px;border:1px solid #cfd8e3;border-radius:10px;width:90px'></td>
+      <td><input class='regla-edit-margen-base' type='number' step='0.01' data-id='${dataId}' data-gama='${dataGama}' value='${valor.toFixed(2)}' style='padding:9px 8px;border:1px solid #cfd8e3;border-radius:10px;min-width:70px;max-width:100%'></td>
     </tr>`;
     }).join('')}</table>`;
     el.querySelectorAll('input.regla-edit-margen-base').forEach(inp=>{inp.onblur=async()=>{
@@ -921,8 +950,8 @@ async function renderDistribuidoresList(){
   const niveles=nivelesData||[];
   const nivelOptions=(selectedId)=>niveles.map(n=>`<option value='${n.id}' ${n.id===selectedId?'selected':''}>${n.nombre}</option>`).join('');
   el.innerHTML=`<table class='preview-table'><tr><th>Distribuidor</th><th>Código</th><th>Nivel</th><th>Activo</th><th></th></tr>${dist.map(d=>`<tr>
-    <td><input class='dist-edit-nombre' data-id='${d.id}' value='${(d.nombre||'').replace(/'/g,"&#39;")}' style='padding:6px 8px;border:1px solid #cfd8e3;border-radius:10px;width:150px'></td>
-    <td><input class='dist-edit-codigo' data-id='${d.id}' value='${(d.codigo_distribuidor||'').replace(/'/g,"&#39;")}' style='padding:6px 8px;border:1px solid #cfd8e3;border-radius:10px;width:110px' autocomplete='off'></td>
+    <td><input class='dist-edit-nombre' data-id='${d.id}' value='${(d.nombre||'').replace(/'/g,"&#39;")}' style='padding:9px 8px;border:1px solid #cfd8e3;border-radius:10px;min-width:120px;max-width:100%'></td>
+    <td><input class='dist-edit-codigo' data-id='${d.id}' value='${(d.codigo_distribuidor||'').replace(/'/g,"&#39;")}' style='padding:9px 8px;border:1px solid #cfd8e3;border-radius:10px;min-width:90px;max-width:100%' autocomplete='off'></td>
     <td><select class='dist-nivel-select' data-id='${d.id}' style='padding:6px 8px;border:1px solid #cfd8e3;border-radius:10px'>${nivelOptions(d.nivel_descuento_id)}</select></td>
     <td><input type='checkbox' class='dist-edit-activo' data-id='${d.id}' ${d.activo?'checked':''}></td>
     <td><button class='rm-btn' data-id='${d.id}'>✕</button></td>
