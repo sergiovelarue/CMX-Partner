@@ -144,10 +144,10 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
         <div><label>Distribuidor / Empresa</label><input id="regCompany" required></div>
         <div><label>Ciudad</label><input id="regCity" required></div>
         <div><label>Punto de venta</label><input id="regStore"></div>
-        <div id="regRoleWrap"><label>Cargo</label><select id="regRole"><option value="">Seleccionar</option><option>Vendedor</option><option>Dependiente</option><option>Administrador PDV</option><option>Propietario Distribuidor</option></select></div>
+        <div id="regRoleWrap"><label>Cargo</label><select id="regRole"><option value="">Seleccionar</option><option>Vendedor</option><option>Dependiente PDV</option><option>Administrador PDV</option><option>Propietario Distribuidor</option></select></div>
         <div id="regCodigoWrap"><label>Código de distribuidor</label><input id="regCodigoDistribuidor" placeholder="Entregado por tu distribuidor" autocomplete="off"></div>
       </div>
-      <p id="regCodigoHelp" style="margin:6px 0 0;color:var(--muted);font-size:.78rem">El código de distribuidor lo entrega tu distribuidor o el administrador de la plataforma. Sin un código válido no podrás ver margen ni PVD.</p>
+      <p id="regCodigoHelp" style="margin:6px 0 0;color:var(--muted);font-size:.78rem">El código de distribuidor lo entrega tu distribuidor o el administrador de la plataforma. Si eres Vendedor de planta (no de un distribuidor), usa el código de vendedor que te dio el administrador. Sin un código válido no podrás ver margen ni PVD.</p>
       <p id="regDetectedMsg" class="hidden" style="margin:6px 0 0;color:var(--brand);font-size:.82rem;font-weight:600"></p>
       <div class="consent">
         <label><input id="regConsent" type="checkbox"> <span id="consentText">Autorizo a ConAccion BPS para recolectar, almacenar y tratar mis datos personales con fines comerciales, promocionales, formativos y de relacionamiento, conforme a la política de tratamiento de datos personales vigente.</span></label>
@@ -161,7 +161,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   </div>
 </div>
 <div id="appScreen" class='wrap hidden'>
-<div class="userbar"><div>Acceso activo: <b id="activeUser">-</b> · <span id="activeCompany">-</span></div><button class="linkbtn" id="changeUser">Cambiar usuario</button></div>
+<div class="userbar"><div>Acceso activo: <b id="activeUser">-</b><span id="activeRoleWrap"> · <span id="activeRole"></span></span><span id="activeCompanyWrap"> · <span id="activeCompany"></span></span></div><button class="linkbtn" id="changeUser">Cambiar usuario</button></div>
 <div class='hero'>
 <div id="logoWrap" class="logo-wrap hidden"><img id="companyLogo" alt="Logo empresa"></div>
 <h1 id='appName'>ListaLoop B2B</h1>
@@ -351,6 +351,14 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
     <h5 style="margin:18px 0 6px;font-size:.88rem">🏬 Administrador PDV</h5>
     <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Se auto-registra con correo + código de distribuidor. Aparece aquí al registrarse.</p>
     <div id="adminPdvList" style="margin-top:10px"></div>
+
+    <h5 style="margin:18px 0 6px;font-size:.88rem">🧾 Dependiente PDV</h5>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Se auto-registra con correo + código de distribuidor. Aparece aquí al registrarse.</p>
+    <div id="dependientesList" style="margin-top:10px"></div>
+
+    <h5 style="margin:18px 0 6px;font-size:.88rem">🧑‍💼 Vendedores de distribuidor</h5>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Vendedor que se registró con el código de un distribuidor real (no de la empresa contratante). Aparece aquí al registrarse.</p>
+    <div id="vendDistList" style="margin-top:10px"></div>
   </div>
 
   <div class="admin-sub">
@@ -365,6 +373,25 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
     <p style="margin:6px 0 0;color:var(--muted);font-size:.76rem">Con correo: crea también al Propietario. Ingresa con ese correo + el código de distribuidor, igual que Admin PDV.</p>
     <div id="distribuidoresList" style="margin-top:10px"></div>
     <div class="mini-status" id="distribuidoresStatus"></div>
+  </div>
+
+  <div class="admin-sub">
+    <h4>🧑‍💼 Vendedores (empresa contratante)</h4>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Vendedores de planta, no asociados a un distribuidor. Ingresan con correo + teléfono + este código de vendedor. Usan Nivel 1.</p>
+    <div class="inline-form">
+      <div><label>Código de vendedor de la empresa</label><input id="codigoVendedorEmpresa" placeholder="Ej: TRAINCOL-VEN"></div>
+      <div><button class="p mini" id="btnSaveCodigoVendedor" style="padding:12px 16px">Guardar código</button></div>
+    </div>
+    <div class="mini-status" id="codigoVendedorStatus"></div>
+    <div class="inline-form" style="margin-top:14px">
+      <div><label>Nombre</label><input id="newVendNombre" placeholder="Ej: Laura"></div>
+      <div><label>Apellido</label><input id="newVendApellido" placeholder="Ej: Gómez"></div>
+      <div><label>Correo</label><input id="newVendEmail" type="email" placeholder="laura@empresa.com"></div>
+      <div><label>Celular</label><input id="newVendTelefono" placeholder="Ej: 3001234567"></div>
+      <div><button class="p mini" id="btnAddVendedor" style="padding:12px 16px">Agregar vendedor</button></div>
+    </div>
+    <div id="vendedoresList" style="margin-top:10px"></div>
+    <div class="mini-status" id="vendedoresStatus"></div>
   </div>
 
   <div class="admin-sub">
@@ -579,7 +606,12 @@ async function renderOwnersList(){
   if(error){el.innerHTML="<div class='empty' style='padding:8px 0'>No se pudo cargar la lista de propietarios.</div>";return;}
   const owners=data||[];
   if(!owners.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin propietarios registrados.</div>";return;}
-  el.innerHTML=`<table class='preview-table'><tr><th>Correo</th><th>Distribuidor</th><th></th></tr>${owners.map(o=>`<tr><td class='mono'>${o.email}</td><td>${o.distribuidores?.nombre||'-'}</td><td><button class='rm-btn' data-id='${o.id}'>✕</button></td></tr>`).join('')}</table>`;
+  el.innerHTML=`<table class='preview-table'><tr><th>Correo</th><th>Distribuidor</th><th>Estado</th><th></th></tr>${owners.map(o=>`<tr>
+    <td class='mono'>${o.email}</td><td>${o.distribuidores?.nombre||'-'}</td>
+    <td>${o.activo?"<span class='tag-good'>Activo</span>":"<span class='tag-low'>Bloqueado</span>"}</td>
+    <td><button class='s mini toggle-btn' data-id='${o.id}' data-activo='${o.activo}'>${o.activo?'Bloquear':'Activar'}</button> <button class='rm-btn' data-id='${o.id}'>✕</button></td>
+  </tr>`).join('')}</table>`;
+  el.querySelectorAll('button.toggle-btn').forEach(btn=>{btn.onclick=()=>togglePerfilUsuario(btn.dataset.id,btn.dataset.activo==='true',renderOwnersList);});
   el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeOwner(btn.dataset.id);});
 }
 async function removeOwner(id){
@@ -588,6 +620,12 @@ async function removeOwner(id){
   if(error){showToast('Error al quitar: '+error.message);return;}
   await renderOwnersList();showToast('Propietario removido');
 }
+// Reutilizable: bloquea/activa cualquier fila de perfiles_usuario (Propietario, Admin PDV, Dependiente PDV).
+async function togglePerfilUsuario(id,activoActual,refrescar){
+  const{error}=await sb.from('perfiles_usuario').update({activo:!activoActual,updated_by:CURRENT_USER?.email||'admin',updated_at:new Date().toISOString()}).eq('id',id);
+  if(error){showToast('Error al actualizar: '+error.message);return;}
+  await refrescar();showToast(activoActual?'Usuario bloqueado':'Usuario activado');
+}
 // ---- Administradores: Administrador PDV (se auto-registra; el admin puede quitarlo) ----
 async function renderAdminPdvList(){
   const el=qs('adminPdvList');if(!el)return;
@@ -595,7 +633,12 @@ async function renderAdminPdvList(){
   if(error){el.innerHTML="<div class='empty' style='padding:8px 0'>No se pudo cargar la lista de administradores PDV.</div>";return;}
   const admins=data||[];
   if(!admins.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin administradores PDV registrados todavía.</div>";return;}
-  el.innerHTML=`<table class='preview-table'><tr><th>Correo</th><th>Distribuidor</th><th>Punto de venta</th><th></th></tr>${admins.map(a=>`<tr><td class='mono'>${a.email}</td><td>${a.distribuidores?.nombre||'-'}</td><td>${a.punto_venta||'-'}</td><td><button class='rm-btn' data-id='${a.id}'>✕</button></td></tr>`).join('')}</table>`;
+  el.innerHTML=`<table class='preview-table'><tr><th>Correo</th><th>Distribuidor</th><th>Punto de venta</th><th>Estado</th><th></th></tr>${admins.map(a=>`<tr>
+    <td class='mono'>${a.email}</td><td>${a.distribuidores?.nombre||'-'}</td><td>${a.punto_venta||'-'}</td>
+    <td>${a.activo?"<span class='tag-good'>Activo</span>":"<span class='tag-low'>Bloqueado</span>"}</td>
+    <td><button class='s mini toggle-btn' data-id='${a.id}' data-activo='${a.activo}'>${a.activo?'Bloquear':'Activar'}</button> <button class='rm-btn' data-id='${a.id}'>✕</button></td>
+  </tr>`).join('')}</table>`;
+  el.querySelectorAll('button.toggle-btn').forEach(btn=>{btn.onclick=()=>togglePerfilUsuario(btn.dataset.id,btn.dataset.activo==='true',renderAdminPdvList);});
   el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeAdminPdv(btn.dataset.id);});
 }
 async function removeAdminPdv(id){
@@ -603,6 +646,48 @@ async function removeAdminPdv(id){
   const{error}=await sb.from('perfiles_usuario').delete().eq('id',id);
   if(error){showToast('Error al quitar: '+error.message);return;}
   await renderAdminPdvList();showToast('Administrador PDV removido');
+}
+// ---- Dependiente PDV (se auto-registra; el admin puede bloquear/quitar) ----
+async function renderDependientesList(){
+  const el=qs('dependientesList');if(!el)return;
+  const{data,error}=await sb.from('perfiles_usuario').select('*, distribuidores(nombre)').eq('rol','dependiente').order('created_at');
+  if(error){el.innerHTML="<div class='empty' style='padding:8px 0'>No se pudo cargar la lista de dependientes PDV.</div>";return;}
+  const deps=data||[];
+  if(!deps.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin dependientes PDV registrados todavía.</div>";return;}
+  el.innerHTML=`<table class='preview-table'><tr><th>Correo</th><th>Distribuidor</th><th>Punto de venta</th><th>Estado</th><th></th></tr>${deps.map(d=>`<tr>
+    <td class='mono'>${d.email}</td><td>${d.distribuidores?.nombre||'-'}</td><td>${d.punto_venta||'-'}</td>
+    <td>${d.activo?"<span class='tag-good'>Activo</span>":"<span class='tag-low'>Bloqueado</span>"}</td>
+    <td><button class='s mini toggle-btn' data-id='${d.id}' data-activo='${d.activo}'>${d.activo?'Bloquear':'Activar'}</button> <button class='rm-btn' data-id='${d.id}'>✕</button></td>
+  </tr>`).join('')}</table>`;
+  el.querySelectorAll('button.toggle-btn').forEach(btn=>{btn.onclick=()=>togglePerfilUsuario(btn.dataset.id,btn.dataset.activo==='true',renderDependientesList);});
+  el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeDependiente(btn.dataset.id);});
+}
+async function removeDependiente(id){
+  if(!confirm('¿Quitar este dependiente PDV? Podrá volver a registrarse con el código de distribuidor si lo necesita.'))return;
+  const{error}=await sb.from('perfiles_usuario').delete().eq('id',id);
+  if(error){showToast('Error al quitar: '+error.message);return;}
+  await renderDependientesList();showToast('Dependiente PDV removido');
+}
+// ---- Vendedor de un distribuidor real (rol='vendedor' con distribuidor_id) ----
+async function renderVendDistList(){
+  const el=qs('vendDistList');if(!el)return;
+  const{data,error}=await sb.from('perfiles_usuario').select('*, distribuidores(nombre)').eq('rol','vendedor').order('created_at');
+  if(error){el.innerHTML="<div class='empty' style='padding:8px 0'>No se pudo cargar la lista de vendedores de distribuidor.</div>";return;}
+  const vend=data||[];
+  if(!vend.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin vendedores de distribuidor registrados todavía.</div>";return;}
+  el.innerHTML=`<table class='preview-table'><tr><th>Correo</th><th>Distribuidor</th><th>Estado</th><th></th></tr>${vend.map(v=>`<tr>
+    <td class='mono'>${v.email}</td><td>${v.distribuidores?.nombre||'-'}</td>
+    <td>${v.activo?"<span class='tag-good'>Activo</span>":"<span class='tag-low'>Bloqueado</span>"}</td>
+    <td><button class='s mini toggle-btn' data-id='${v.id}' data-activo='${v.activo}'>${v.activo?'Bloquear':'Activar'}</button> <button class='rm-btn' data-id='${v.id}'>✕</button></td>
+  </tr>`).join('')}</table>`;
+  el.querySelectorAll('button.toggle-btn').forEach(btn=>{btn.onclick=()=>togglePerfilUsuario(btn.dataset.id,btn.dataset.activo==='true',renderVendDistList);});
+  el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeVendDist(btn.dataset.id);});
+}
+async function removeVendDist(id){
+  if(!confirm('¿Quitar este vendedor de distribuidor?'))return;
+  const{error}=await sb.from('perfiles_usuario').delete().eq('id',id);
+  if(error){showToast('Error al quitar: '+error.message);return;}
+  await renderVendDistList();showToast('Vendedor removido');
 }
 // ---- Reglas de negocio: Niveles de descuento ----
 let NIVELES_CACHE=[];
@@ -863,6 +948,65 @@ async function removeDistribuidor(id){
   if(error){showToast('Error al quitar: '+error.message);return;}
   await renderDistribuidoresList();showToast('Distribuidor eliminado');
 }
+// ---- Vendedores de la empresa contratante (no asociados a un distribuidor) ----
+async function loadCodigoVendedor(){
+  const el=qs('codigoVendedorEmpresa');if(!el)return;
+  const{data}=await sb.from('app_settings').select('codigo_vendedor_empresa').eq('id',1).maybeSingle();
+  el.value=data?.codigo_vendedor_empresa||'';
+}
+async function saveCodigoVendedor(){
+  const codigo=qs('codigoVendedorEmpresa').value.trim().toUpperCase();
+  if(!codigo){setStatus('codigoVendedorStatus','Ingresa un código.','err');return;}
+  setStatus('codigoVendedorStatus','Guardando…','info');
+  const{error}=await sb.from('app_settings').update({codigo_vendedor_empresa:codigo,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);
+  if(error){setStatus('codigoVendedorStatus','Error al guardar: '+error.message,'err');return;}
+  setStatus('codigoVendedorStatus','✅ Código guardado.','ok');
+}
+async function renderVendedoresList(){
+  const el=qs('vendedoresList');if(!el)return;
+  const{data,error}=await sb.from('vendedores_empresa').select('*').order('created_at');
+  if(error){el.innerHTML="<div class='empty' style='padding:8px 0'>No se pudo cargar la lista de vendedores.</div>";return;}
+  const vend=data||[];
+  if(!vend.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin vendedores registrados.</div>";return;}
+  el.innerHTML=`<table class='preview-table'><tr><th>Nombre</th><th>Correo</th><th>Celular</th><th>Estado</th><th></th></tr>${vend.map(v=>`<tr>
+    <td>${v.nombre} ${v.apellido}</td>
+    <td class='mono'>${v.email}</td>
+    <td>${v.telefono}</td>
+    <td>${v.activo?"<span class='tag-good'>Activo</span>":"<span class='tag-low'>Bloqueado</span>"}</td>
+    <td><button class='s mini toggle-btn' data-id='${v.id}' data-activo='${v.activo}'>${v.activo?'Bloquear':'Activar'}</button> <button class='rm-btn' data-id='${v.id}'>✕</button></td>
+  </tr>`).join('')}</table>`;
+  el.querySelectorAll('button.toggle-btn').forEach(btn=>{btn.onclick=()=>toggleVendedor(btn.dataset.id,btn.dataset.activo==='true');});
+  el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeVendedor(btn.dataset.id);});
+}
+async function addVendedor(){
+  const nombre=qs('newVendNombre').value.trim();
+  const apellido=qs('newVendApellido').value.trim();
+  const email=normalizeEmail(qs('newVendEmail').value);
+  const telefono=normalizeColombiaPhone(qs('newVendTelefono').value);
+  if(!nombre||!apellido){setStatus('vendedoresStatus','Completa nombre y apellido.','err');return;}
+  if(!isValidEmail(email)){setStatus('vendedoresStatus','Ingresa un correo válido.','err');return;}
+  if(!isValidColombiaMobile(telefono)){setStatus('vendedoresStatus','Ingresa un celular colombiano válido de 10 dígitos.','err');return;}
+  setStatus('vendedoresStatus','Guardando…','info');
+  const{error}=await sb.from('vendedores_empresa').insert({nombre,apellido,email,telefono,created_by:CURRENT_USER?.email||'admin',updated_by:CURRENT_USER?.email||'admin'});
+  if(error){
+    const msg=/duplicate key|unique/i.test(error.message)?'Ese correo ya está registrado como vendedor.':'Error al guardar: '+error.message;
+    setStatus('vendedoresStatus',msg,'err');return;
+  }
+  setStatus('vendedoresStatus','✅ Vendedor agregado.','ok');
+  qs('newVendNombre').value='';qs('newVendApellido').value='';qs('newVendEmail').value='';qs('newVendTelefono').value='';
+  await renderVendedoresList();
+}
+async function toggleVendedor(id,activoActual){
+  const{error}=await sb.from('vendedores_empresa').update({activo:!activoActual,updated_by:CURRENT_USER?.email||'admin',updated_at:new Date().toISOString()}).eq('id',id);
+  if(error){showToast('Error al actualizar: '+error.message);return;}
+  await renderVendedoresList();showToast(activoActual?'Vendedor bloqueado':'Vendedor activado');
+}
+async function removeVendedor(id){
+  if(!confirm('¿Eliminar este vendedor?'))return;
+  const{error}=await sb.from('vendedores_empresa').delete().eq('id',id);
+  if(error){showToast('Error al quitar: '+error.message);return;}
+  await renderVendedoresList();showToast('Vendedor eliminado');
+}
 function fillReglaGamaSelect(){
   const sel=qs('reglaMatch');if(!sel)return;
   const prev=sel.value;
@@ -892,7 +1036,7 @@ async function showAdminTab(tab){
   if(!panels.prices)return;
   Object.keys(panels).forEach(k=>{if(panels[k])panels[k].classList.toggle('hidden',tab!==k);if(tabs[k])tabs[k].className=(tab===k?'p mini':'s mini');});
   if(tab==='settings'&&qs('settingsCompany'))qs('settingsCompany').value=SETTINGS.company_name||'';
-  if(tab==='usuarios'){renderAdminsList();renderOwnersList();renderAdminPdvList();await renderNivelesList();renderDistribuidoresList();}
+  if(tab==='usuarios'){renderAdminsList();renderOwnersList();renderAdminPdvList();renderDependientesList();renderVendDistList();await renderNivelesList();renderDistribuidoresList();loadCodigoVendedor();renderVendedoresList();}
   if(tab==='reglas')initReglasNegocio();
   if(tab==='destacados')fillBadgeInputs();
 }
@@ -925,7 +1069,20 @@ function showMainTab(tab){
   Object.keys(views).forEach(k=>{if(views[k])views[k].classList.toggle('hidden',k!==tab);if(navs[k])navs[k].className=(k===tab?'p mini main-tab-btn':'s mini main-tab-btn');});
   if(tab==='destacados')renderDestacados();
 }
-function showApp(user){CURRENT_USER=user;qs('registerScreen').classList.add('hidden');qs('appScreen').classList.remove('hidden');qs('activeUser').textContent=user.name||'-';qs('activeCompany').textContent=user.company||'-';showMainTab('consultar');renderQuoteCart();updateAdminTools();loadRulesForUser(user);}
+function showApp(user){
+  CURRENT_USER=user;qs('registerScreen').classList.add('hidden');qs('appScreen').classList.remove('hidden');
+  qs('activeUser').textContent=user.name||'-';
+  const roleEl=qs('activeRole'),roleWrap=qs('activeRoleWrap');
+  if(roleEl&&roleWrap){if(user.role){roleEl.textContent=user.role;roleWrap.classList.remove('hidden');}else{roleWrap.classList.add('hidden');}}
+  const companyEl=qs('activeCompany'),companyWrap=qs('activeCompanyWrap');
+  // Empresa/distribuidor a mostrar: para Administrador y Vendedor de la empresa contratante,
+  // se usa el nombre de empresa contratante (SETTINGS.company_name) — si no está definido, no se muestra nada.
+  // Para el resto (Propietario, Admin PDV, Dependiente PDV, Vendedor de un distribuidor real), se usa el nombre
+  // real del distribuidor (ya resuelto en user.distribuidorNombre por activate()/loginConPassword()).
+  const empresaMostrar=user.esEmpresaContratante?(SETTINGS.company_name||''):(user.distribuidorNombre||'');
+  if(companyEl&&companyWrap){if(empresaMostrar){companyEl.textContent=empresaMostrar;companyWrap.classList.remove('hidden');}else{companyWrap.classList.add('hidden');}}
+  showMainTab('consultar');renderQuoteCart();updateAdminTools();loadRulesForUser(user);
+}
 function showRegister(){CURRENT_USER=null;lockAdmin();qs('appScreen').classList.add('hidden');qs('registerScreen').classList.remove('hidden');}
 // ---- Detección de rol por correo: solo Administrador usa Auth (correo+contraseña),
 // gestionado en Supabase. Todos los demás roles (Propietario, Admin PDV, Dependiente,
@@ -960,20 +1117,37 @@ async function loginConPassword(){
   qs('regMsg').style.color='var(--muted)';qs('regMsg').textContent='Validando…';
   const{error}=await sb.auth.signInWithPassword({email,password:pass});
   if(error){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Clave incorrecta o usuario no autorizado.';return;}
-  const user={name:qs('regName').value.trim()||email,phone:normalizeColombiaPhone(qs('regPhone').value)||'',email,company:qs('regCompany').value.trim()||'',city:qs('regCity').value.trim()||'',store:qs('regStore').value.trim(),registeredAt:new Date().toISOString(),lastAccess:new Date().toISOString(),role:'Administrador'};
+  const user={name:qs('regName').value.trim()||email,phone:normalizeColombiaPhone(qs('regPhone').value)||'',email,company:qs('regCompany').value.trim()||'',city:qs('regCity').value.trim()||'',store:qs('regStore').value.trim(),registeredAt:new Date().toISOString(),lastAccess:new Date().toISOString(),role:'Administrador',esEmpresaContratante:true};
   qs('regMsg').textContent='';
   const users=readJSON(USERS_KEY,[]);const idx=users.findIndex(u=>(u.email||'').toLowerCase()===user.email.toLowerCase());if(idx>=0){user.registeredAt=users[idx].registeredAt;users[idx]={...users[idx],...user};}else users.push(user);writeJSON(USERS_KEY,users);writeJSON(USER_KEY,user);showApp(user);showToast('Acceso activado');
 }
 async function activate(){
 const user={name:qs('regName').value.trim(),phone:normalizeColombiaPhone(qs('regPhone').value),email:normalizeEmail(qs('regEmail').value),company:qs('regCompany').value.trim(),city:qs('regCity').value.trim(),store:qs('regStore').value.trim(),role:qs('regRole').value,codigoDistribuidor:qs('regCodigoDistribuidor').value.trim().toUpperCase(),consent:qs('regConsent').checked,registeredAt:new Date().toISOString(),lastAccess:new Date().toISOString()};
 const required=['name','phone','email','company','city','role'];const missing=required.some(k=>!user[k]);if(missing||!user.consent){qs('regMsg').textContent='Completa todos los campos obligatorios y acepta la autorización de tratamiento de datos.';return;}if(!isValidEmail(user.email)){qs('regMsg').textContent='Ingresa un correo electrónico válido. Ejemplo: nombre@empresa.com';qs('regEmail').focus();return;}if(!isValidColombiaMobile(user.phone)){qs('regMsg').textContent='Ingresa un celular colombiano válido de 10 dígitos. Ejemplo: 3001234567';qs('regPhone').focus();return;}
-if(user.role.toLowerCase()!=='vendedor'&&user.codigoDistribuidor){
-  const rolLower=user.role.toLowerCase();
+const rolLower=user.role.toLowerCase();
+if(rolLower==='vendedor'){
+  if(!user.codigoDistribuidor){qs('regMsg').textContent='Ingresa el código de distribuidor, o el código de vendedor de la empresa si no perteneces a un distribuidor.';return;}
+  qs('regMsg').style.color='var(--muted)';qs('regMsg').textContent='Validando código…';
+  // 1) ¿Es un código de distribuidor real? Se prueba primero porque es la ruta más común.
+  const{data:dist}=await sb.from('distribuidores').select('id,nombre').eq('codigo_distribuidor',user.codigoDistribuidor).eq('activo',true).maybeSingle();
+  if(dist){
+    const{data:perfil,error:perfilErr}=await sb.rpc('registrar_perfil_operativo',{p_email:user.email,p_rol:'vendedor',p_codigo_distribuidor:user.codigoDistribuidor,p_punto_venta:user.store||null});
+    if(perfilErr){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Código de distribuidor no válido: '+perfilErr.message;return;}
+    user.perfilRol='vendedor';user.distribuidorId=perfil.distribuidor_id;user.distribuidorNombre=dist.nombre;user.esEmpresaContratante=false;
+  }else{
+    // 2) ¿Es el código de vendedor de la empresa contratante?
+    const{data:esValido}=await sb.rpc('validar_vendedor_empresa',{p_email:user.email,p_telefono:user.phone,p_codigo:user.codigoDistribuidor}).catch(()=>({data:false}));
+    if(!esValido){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Código no válido. Verifica el código de distribuidor o de vendedor de la empresa.';return;}
+    user.perfilRol='vendedor';user.esEmpresaContratante=true;user.distribuidorId=null;
+  }
+}else if(rolLower!=='vendedor'&&user.codigoDistribuidor){
   const rolRpc=rolLower.includes('administrador pdv')?'admin_pdv':rolLower.includes('propietario')?'propietario_distribuidor':'dependiente';
   qs('regMsg').style.color='var(--muted)';qs('regMsg').textContent='Validando código de distribuidor…';
   const{data:perfil,error:perfilErr}=await sb.rpc('registrar_perfil_operativo',{p_email:user.email,p_rol:rolRpc,p_codigo_distribuidor:user.codigoDistribuidor,p_punto_venta:user.store||null});
   if(perfilErr){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Código de distribuidor no válido: '+perfilErr.message;return;}
   user.perfilRol=perfil.rol;user.distribuidorId=perfil.distribuidor_id;
+  const{data:dist}=await sb.from('distribuidores').select('nombre').eq('id',perfil.distribuidor_id).maybeSingle();
+  user.distribuidorNombre=dist?.nombre||'';
 }
 qs('regMsg').textContent='';
 const users=readJSON(USERS_KEY,[]);const idx=users.findIndex(u=>(u.email||'').toLowerCase()===user.email.toLowerCase()||(u.phone&&normalizeColombiaPhone(u.phone)===user.phone));if(idx>=0){user.registeredAt=users[idx].registeredAt;users[idx]={...users[idx],...user};}else users.push(user);writeJSON(USERS_KEY,users);writeJSON(USER_KEY,user);showApp(user);showToast('Acceso activado');}
@@ -1702,6 +1876,8 @@ qs('newNivelTipo').onchange=onNivelTipoChange;
 onNivelTipoChange();
 qs('btnAddRegla').onclick=addRegla;
 qs('btnAddDist').onclick=addDistribuidor;
+qs('btnSaveCodigoVendedor').onclick=saveCodigoVendedor;
+qs('btnAddVendedor').onclick=addVendedor;
 qs('btnUploadLogo').onclick=async()=>{const file=qs('logoFile').files[0];if(!file){setStatus('logoStatus','Selecciona un archivo de imagen.','err');return;}if(file.size>1024*1024){setStatus('logoStatus','El archivo supera 1MB. Usa una imagen más liviana.','err');return;}setStatus('logoStatus','Subiendo…','info');const path=`logo_${Date.now()}_${file.name}`;const{error:upErr}=await sb.storage.from('app-assets').upload(path,file,{upsert:true});if(upErr){setStatus('logoStatus','Error al subir: '+upErr.message,'err');return;}const{data:pub}=sb.storage.from('app-assets').getPublicUrl(path);const{error}=await sb.from('app_settings').update({logo_url:pub.publicUrl,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('logoStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.logo_url=pub.publicUrl;applyLogo();setStatus('logoStatus','✅ Logo actualizado para todos los usuarios.','ok');qs('logoFile').value='';};
 qs('btnRemoveLogo').onclick=async()=>{setStatus('logoStatus','Quitando…','info');const{error}=await sb.from('app_settings').update({logo_url:'',updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('logoStatus','Error: '+error.message,'err');return;}SETTINGS.logo_url='';applyLogo();setStatus('logoStatus','Logo quitado.','ok');};
 document.querySelectorAll('.theme-btn').forEach(b=>{b.onclick=async()=>{const theme=b.dataset.theme;applyTheme(theme);setStatus('themeStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({theme,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('themeStatus','Error al guardar tema: '+error.message,'err');return;}SETTINGS.theme=theme;setStatus('themeStatus','✅ Tema aplicado para todos los usuarios.','ok');};});
