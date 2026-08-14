@@ -412,8 +412,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
       <div><label>Ajuste (puntos +/-)</label><input id="reglaMargen" type="number" step="0.01" placeholder="Ej: 5 o -3"></div>
       <div><button class="p mini" id="btnAddRegla" style="padding:12px 16px">Agregar excepción</button></div>
     </div>
-    <p id="reglaFormBase" style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Nivel base/copia: edita el % directamente en cada fila de la tabla.</p>
-    <div id="reglasVerificacion" style="margin-top:10px"></div>
+    <p id="reglaFormBase" style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Edita el % directo en cada fila.</p>
     <div id="reglasList" style="margin-top:10px"></div>
     <div class="mini-status" id="reglasStatus"></div>
 
@@ -703,66 +702,72 @@ function onReglaNivelChange(){
   qs('reglaFormBase').classList.toggle('hidden',esAjuste);
   renderReglasList();
 }
+// ---- Vista única: SIEMPRE todas las gamas reales de Lista 1 con su % final ----
+// Base/copia: % editable directo (margen absoluto).
+// Ajuste: % final (general + excepción si existe) de solo lectura + botón para gestionar la excepción de esa fila.
 async function renderReglasList(){
-  const nivelId=qs('reglaNivelSelect')?.value;
-  if(nivelSeleccionadoEsAjuste())await renderExcepcionesAjuste(nivelId);
-  else await renderTablaBase(nivelId);
-}
-// ---- Vista para niveles tipo Base/Copia: TODAS las gamas reales con % editable ----
-async function renderTablaBase(nivelId){
-  const el=qs('reglasList');if(!el)return;
+  const el=qs('reglasList'),nivelId=qs('reglaNivelSelect')?.value;if(!el)return;
   if(!nivelId){el.innerHTML="<div class='empty' style='padding:8px 0'>Selecciona un nivel.</div>";return;}
-  const{data,error}=await sb.from('niveles_descuento_reglas').select('*').eq('nivel_id',nivelId).order('match');
-  if(error){el.innerHTML="<div class='empty' style='padding:8px 0'>No se pudo cargar las gamas.</div>";return;}
-  const reglas=data||[];
-  if(!reglas.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Este nivel no tiene gamas configuradas.</div>";return;}
-  el.innerHTML=`<table class='preview-table'><tr><th>Gama</th><th>Margen %</th></tr>${reglas.map(r=>{
-    const valor=Number(r.margen||0)*100;
-    return `<tr>
-    <td>${r.match}</td>
-    <td><input class='regla-edit-margen-base' type='number' step='0.01' data-id='${r.id}' value='${valor.toFixed(2)}' style='padding:6px 8px;border:1px solid #cfd8e3;border-radius:10px;width:90px'></td>
-  </tr>`;
-  }).join('')}</table>`;
-  el.querySelectorAll('input.regla-edit-margen-base').forEach(inp=>{inp.onblur=()=>{const v=Number(inp.value);if(isNaN(v)){setStatus('reglasStatus','Valor no válido.','err');return;}updateReglaCampo(inp.dataset.id,'margen',v/100);};});
-}
-// ---- Vista para niveles tipo Ajuste: solo las excepciones puntuales ----
-async function renderExcepcionesAjuste(nivelId){
-  const el=qs('reglasList');if(!el)return;
-  if(!nivelId){el.innerHTML="<div class='empty' style='padding:8px 0'>Selecciona un nivel.</div>";return;}
-  const{data,error}=await sb.from('niveles_descuento_reglas').select('*').eq('nivel_id',nivelId).order('match');
-  if(error){el.innerHTML="<div class='empty' style='padding:8px 0'>No se pudo cargar las excepciones.</div>";return;}
-  const reglas=data||[];
-  if(!reglas.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin excepciones: todas las gamas usan el ajuste general.</div>";return;}
-  el.innerHTML=`<table class='preview-table'><tr><th>Gama (excepción)</th><th>Ajuste</th><th></th></tr>${reglas.map(r=>{
-    const valor=Number(r.ajuste_pct||0)*100;
-    return `<tr>
-    <td>${r.match}</td>
-    <td><input class='regla-edit-margen-ajuste' type='number' step='0.01' data-id='${r.id}' value='${valor.toFixed(2)}' style='padding:6px 8px;border:1px solid #cfd8e3;border-radius:10px;width:90px'></td>
-    <td><button class='rm-btn' data-id='${r.id}'>✕</button></td>
-  </tr>`;
-  }).join('')}</table>`;
-  el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeRegla(btn.dataset.id);});
-  el.querySelectorAll('input.regla-edit-margen-ajuste').forEach(inp=>{inp.onblur=()=>{const v=Number(inp.value);if(isNaN(v)){setStatus('reglasStatus','Valor no válido.','err');return;}updateReglaCampo(inp.dataset.id,'ajuste_pct',v/100);};});
-}
-async function renderVerificacionGamas(){
-  const el=qs('reglasVerificacion'),nivelId=qs('reglaNivelSelect')?.value;if(!el)return;
-  if(!nivelId||!nivelSeleccionadoEsAjuste()){el.innerHTML='';return;}
   const gamas=uniqueSortedValues('gama');
-  if(!gamas.length){el.innerHTML='';return;}
+  if(!gamas.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Aún no hay catálogo cargado.</div>";return;}
+  const esAjuste=nivelSeleccionadoEsAjuste();
   el.innerHTML="<div class='empty' style='padding:8px 0'>Calculando…</div>";
+
+  if(!esAjuste){
+    // Base/copia: leer filas reales de niveles_descuento_reglas (una por gama) y editar margen directo.
+    const{data,error}=await sb.from('niveles_descuento_reglas').select('*').eq('nivel_id',nivelId);
+    if(error){el.innerHTML="<div class='empty' style='padding:8px 0'>No se pudo cargar las gamas.</div>";return;}
+    const porGama={};(data||[]).forEach(r=>{porGama[(r.match||'').toUpperCase()]=r;});
+    el.innerHTML=`<table class='preview-table'><tr><th>Gama</th><th>Margen %</th></tr>${gamas.map(g=>{
+      const r=porGama[g.toUpperCase()];
+      const valor=r?Number(r.margen||0)*100:0;
+      const dataId=r?r.id:'';
+      const dataGama=r?'':g;
+      return `<tr>
+      <td>${g}</td>
+      <td><input class='regla-edit-margen-base' type='number' step='0.01' data-id='${dataId}' data-gama='${dataGama}' value='${valor.toFixed(2)}' style='padding:6px 8px;border:1px solid #cfd8e3;border-radius:10px;width:90px'></td>
+    </tr>`;
+    }).join('')}</table>`;
+    el.querySelectorAll('input.regla-edit-margen-base').forEach(inp=>{inp.onblur=async()=>{
+      const v=Number(inp.value);if(isNaN(v)){setStatus('reglasStatus','Valor no válido.','err');return;}
+      if(inp.dataset.id){await updateReglaCampo(inp.dataset.id,'margen',v/100);}
+      else{
+        // La gama no tenía fila propia todavía: se crea al editar.
+        const{data:nueva,error}=await sb.from('niveles_descuento_reglas').insert({nivel_id:nivelId,match:inp.dataset.gama,type:'exact',margen:v/100}).select().single();
+        if(error){setStatus('reglasStatus','Error al guardar: '+error.message,'err');return;}
+        inp.dataset.id=nueva.id;inp.dataset.gama='';
+        setStatus('reglasStatus','✅ Actualizado.','ok');
+      }
+    };});
+    return;
+  }
+
+  // Ajuste: margen final = resolver_margen_nivel (general + excepción ya aplicada), de solo lectura.
+  const{data:excepciones,error:errExc}=await sb.from('niveles_descuento_reglas').select('*').eq('nivel_id',nivelId);
+  if(errExc){el.innerHTML="<div class='empty' style='padding:8px 0'>No se pudo cargar las excepciones.</div>";return;}
+  const excPorGama={};(excepciones||[]).forEach(r=>{excPorGama[(r.match||'').toUpperCase()]=r;});
   const resultados=await Promise.all(gamas.map(async g=>{
     const{data}=await sb.rpc('resolver_margen_nivel',{p_nivel_id:nivelId,p_gama:g});
     return{gama:g,margen:Number(data||0)};
   }));
-  el.innerHTML=`<details><summary style="cursor:pointer;font-weight:700;color:var(--brand);font-size:.86rem">Ver cómo queda cada gama en este nivel (${resultados.length})</summary>
-    <table class='preview-table' style='margin-top:8px'><tr><th>Gama</th><th>Margen final</th></tr>${resultados.map(r=>`<tr><td>${r.gama}</td><td>${r.margen<=0?"<span class='tag-low'>No disponible</span>":`${(r.margen*100).toFixed(0)}%`}</td></tr>`).join('')}</table>
-  </details>`;
+  el.innerHTML=`<table class='preview-table'><tr><th>Gama</th><th>Margen final</th><th></th></tr>${resultados.map(r=>{
+    const exc=excPorGama[r.gama.toUpperCase()];
+    const texto=r.margen<=0?"<span class='tag-low'>No disponible</span>":`${(r.margen*100).toFixed(2)}%`;
+    const btn=exc
+      ?`<button class='rm-btn' data-id='${exc.id}' title='Quitar excepción'>✕ excepción</button>`
+      :`<button class='mini exc-btn' data-gama='${r.gama}' style='padding:4px 10px;font-size:.76rem'>+ excepción</button>`;
+    return `<tr><td>${r.gama}${exc?" <span style='color:var(--muted);font-size:.75rem'>(excepción)</span>":''}</td><td>${texto}</td><td>${btn}</td></tr>`;
+  }).join('')}</table>`;
+  el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeRegla(btn.dataset.id);});
+  el.querySelectorAll('button.exc-btn').forEach(btn=>{btn.onclick=()=>{
+    qs('reglaMatch').value=btn.dataset.gama;
+    qs('reglaMargen').focus();
+  };});
 }
 async function updateReglaCampo(id,campo,valor){
   const{error}=await sb.from('niveles_descuento_reglas').update({[campo]:valor,updated_at:new Date().toISOString()}).eq('id',id);
   if(error){setStatus('reglasStatus','Error al actualizar: '+error.message,'err');return;}
   setStatus('reglasStatus','✅ Actualizado.','ok');
-  await renderVerificacionGamas();
 }
 async function addRegla(){
   const nivelId=qs('reglaNivelSelect').value;
@@ -777,13 +782,11 @@ async function addRegla(){
   setStatus('reglasStatus','✅ Excepción agregada.','ok');
   qs('reglaMargen').value='';
   await renderReglasList();
-  await renderVerificacionGamas();
 }
 async function removeRegla(id){
   if(!confirm('¿Eliminar esta excepción? La gama volverá a usar el ajuste general.'))return;
   const{error}=await sb.from('niveles_descuento_reglas').delete().eq('id',id);
   if(error){showToast('Error al quitar: '+error.message);return;}
-  await renderVerificacionGamas();
   await renderReglasList();showToast('Regla eliminada');
 }
 // ---- Reglas de negocio: Distribuidores ----
