@@ -691,6 +691,7 @@ async function addNivel(){
   }
   qs('newNivelNombre').value='';qs('newNivelDescripcion').value='';qs('newNivelAjusteGeneral').value='';
   await renderNivelesList();
+  await renderDistribuidoresList();
 }
 async function removeNivel(id){
   const nivel=NIVELES_CACHE.find(n=>n.id===id);
@@ -698,7 +699,9 @@ async function removeNivel(id){
   if(!confirm('¿Eliminar este nivel de descuento? También se eliminarán sus reglas/ajustes. Si otro nivel tipo Ajuste depende de este, quedará sin poder calcular.'))return;
   const{error}=await sb.from('niveles_descuento').delete().eq('id',id);
   if(error){showToast('Error al quitar: '+error.message);return;}
-  await renderNivelesList();showToast('Nivel eliminado');
+  await renderNivelesList();
+  await renderDistribuidoresList();
+  showToast('Nivel eliminado');
 }
 // ---- Reglas de negocio: Reglas de margen por nivel ----
 function nivelSeleccionadoEsAjuste(){
@@ -799,7 +802,14 @@ async function renderDistribuidoresList(){
 async function updateDistribuidorCampo(id,campo,valor){
   setStatus('distribuidoresStatus','Guardando…','info');
   const{error}=await sb.from('distribuidores').update({[campo]:valor,updated_by:CURRENT_USER?.email||'admin',updated_at:new Date().toISOString()}).eq('id',id);
-  if(error){setStatus('distribuidoresStatus','Error al actualizar: '+error.message,'err');return;}
+  if(error){
+    const msg=(campo==='nivel_descuento_id'&&/foreign key/i.test(error.message))
+      ?'El nivel seleccionado ya no existe o cambió. Refrescando la lista, intenta de nuevo.'
+      :'Error al actualizar: '+error.message;
+    setStatus('distribuidoresStatus',msg,'err');
+    await renderDistribuidoresList();
+    return;
+  }
   setStatus('distribuidoresStatus','✅ Distribuidor actualizado.','ok');
   if(campo==='codigo_distribuidor'||campo==='nombre')await renderDistribuidoresList();
 }
