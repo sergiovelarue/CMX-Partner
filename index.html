@@ -178,6 +178,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   <button class='p mini main-tab-btn' id='navConsultar'>🔍 Consultar</button>
   <button class='s mini main-tab-btn' id='navCotizacion'>🧾 Cotización<span class='tab-badge hidden' id='cartBadge'>0</span></button>
   <button class='s mini main-tab-btn' id='navDestacados'>⭐ Destacados</button>
+  <button class='s mini main-tab-btn hidden' id='navMiEquipo'>👥 Mi equipo</button>
 </div>
 <div id='viewConsultar'>
 <div class='card'><div class='grid'>
@@ -239,6 +240,19 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   <div class='card'>
     <h3 class='dest-section-title'>🏷️ <span id='ofBadgeLabel'>Ofertas</span></h3>
     <div class='dest-grid' id='ofGrid'><div class='dest-empty'>Cargando…</div></div>
+  </div>
+</div>
+<div id='viewMiEquipo' class='hidden'>
+  <div class='card'>
+    <h3 style="margin:0 0 8px;color:var(--brand)">👥 Mi equipo</h3>
+    <p style="margin:0 0 14px;color:var(--muted);font-size:.86rem">Administradores PDV, Dependientes PDV y Vendedores de tu distribuidor. Puedes activarlos, bloquearlos o eliminarlos.</p>
+    <h5 style="margin:14px 0 6px;font-size:.88rem">🏬 Administradores PDV</h5>
+    <div id='miEquipoAdminPdv' style="margin-top:6px"></div>
+    <h5 style="margin:18px 0 6px;font-size:.88rem">🧾 Dependientes PDV</h5>
+    <div id='miEquipoDependientes' style="margin-top:6px"></div>
+    <h5 style="margin:18px 0 6px;font-size:.88rem">🧑‍💼 Vendedores</h5>
+    <div id='miEquipoVendedores' style="margin-top:6px"></div>
+    <div class="mini-status" id="miEquipoStatus"></div>
   </div>
 </div>
 <div id='destOverlay' class='overlay-backdrop hidden'>
@@ -376,12 +390,14 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   </div>
 
   <div class="admin-sub">
-    <h4>🧑‍💼 Vendedores (empresa contratante)</h4>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Vendedores de planta, no asociados a un distribuidor. Ingresan con correo + teléfono + este código de vendedor. Usan Nivel 1.</p>
+    <h4 id="vendedoresTitulo">🧑‍💼 Vendedores</h4>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Vendedores de planta, no asociados a un distribuidor. Ingresan con correo + teléfono + este código.</p>
     <div class="inline-form">
-      <div><label>Código de vendedor de la empresa</label><input id="codigoVendedorEmpresa" placeholder="Ej: TRAINCOL-VEN"></div>
-      <div><button class="p mini" id="btnSaveCodigoVendedor" style="padding:12px 16px">Guardar código</button></div>
+      <div><label>Código de la empresa para vendedores</label><input id="codigoVendedorEmpresa" placeholder="Ej: TRAINCOL-VEN"></div>
+      <div><label>Nivel de descuento</label><select id="nivelVendedorEmpresa"></select></div>
+      <div><button class="p mini" id="btnSaveCodigoVendedor" style="padding:12px 16px">Guardar</button></div>
     </div>
+    <p style="margin:6px 0 0;color:var(--muted);font-size:.76rem">Si cambias el código, los vendedores de la empresa deberán volver a ingresar como la primera vez.</p>
     <div class="mini-status" id="codigoVendedorStatus"></div>
     <div class="inline-form" style="margin-top:14px">
       <div><label>Nombre</label><input id="newVendNombre" placeholder="Ej: Laura"></div>
@@ -470,6 +486,19 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
       <button class="s mini theme-btn" data-theme="pastel">Pastel</button>
     </div>
     <div class="mini-status" id="themeStatus"></div>
+  </div>
+
+  <div class="admin-sub">
+    <h4>Límites del sistema</h4>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Controlan cuántos registros puede crear la plataforma en cada categoría. Todos inician en 10 y se pueden ajustar aquí en cualquier momento.</p>
+    <div class="inline-form">
+      <div><label>Puntos de venta por distribuidor</label><input id="limitePdv" type="number" min="1" step="1"></div>
+      <div><label>Vendedores + Dependientes por distribuidor</label><input id="limiteVendDep" type="number" min="1" step="1"></div>
+      <div><label>Distribuidores totales</label><input id="limiteDist" type="number" min="1" step="1"></div>
+      <div><label>Vendedores de la empresa contratante</label><input id="limiteVendEmpresa" type="number" min="1" step="1"></div>
+      <div><button class="p mini" id="btnSaveLimites" style="padding:12px 16px">Guardar límites</button></div>
+    </div>
+    <div class="mini-status" id="limitesStatus"></div>
   </div>
 </div>
 <div class='card admin-panel hidden' id='adminDestacadosPanel'>
@@ -654,8 +683,8 @@ async function renderDependientesList(){
   if(error){el.innerHTML="<div class='empty' style='padding:8px 0'>No se pudo cargar la lista de dependientes PDV.</div>";return;}
   const deps=data||[];
   if(!deps.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin dependientes PDV registrados todavía.</div>";return;}
-  el.innerHTML=`<table class='preview-table'><tr><th>Correo</th><th>Distribuidor</th><th>Punto de venta</th><th>Estado</th><th></th></tr>${deps.map(d=>`<tr>
-    <td class='mono'>${d.email}</td><td>${d.distribuidores?.nombre||'-'}</td><td>${d.punto_venta||'-'}</td>
+  el.innerHTML=`<table class='preview-table'><tr><th>Correo</th><th>Teléfono</th><th>Distribuidor</th><th>Punto de venta</th><th>Estado</th><th></th></tr>${deps.map(d=>`<tr>
+    <td class='mono'>${d.email}</td><td>${d.telefono||'-'}</td><td>${d.distribuidores?.nombre||'-'}</td><td>${d.punto_venta||'-'}</td>
     <td>${d.activo?"<span class='tag-good'>Activo</span>":"<span class='tag-low'>Bloqueado</span>"}</td>
     <td><button class='s mini toggle-btn' data-id='${d.id}' data-activo='${d.activo}'>${d.activo?'Bloquear':'Activar'}</button> <button class='rm-btn' data-id='${d.id}'>✕</button></td>
   </tr>`).join('')}</table>`;
@@ -675,8 +704,8 @@ async function renderVendDistList(){
   if(error){el.innerHTML="<div class='empty' style='padding:8px 0'>No se pudo cargar la lista de vendedores de distribuidor.</div>";return;}
   const vend=data||[];
   if(!vend.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin vendedores de distribuidor registrados todavía.</div>";return;}
-  el.innerHTML=`<table class='preview-table'><tr><th>Correo</th><th>Distribuidor</th><th>Estado</th><th></th></tr>${vend.map(v=>`<tr>
-    <td class='mono'>${v.email}</td><td>${v.distribuidores?.nombre||'-'}</td>
+  el.innerHTML=`<table class='preview-table'><tr><th>Correo</th><th>Teléfono</th><th>Distribuidor</th><th>Estado</th><th></th></tr>${vend.map(v=>`<tr>
+    <td class='mono'>${v.email}</td><td>${v.telefono||'-'}</td><td>${v.distribuidores?.nombre||'-'}</td>
     <td>${v.activo?"<span class='tag-good'>Activo</span>":"<span class='tag-low'>Bloqueado</span>"}</td>
     <td><button class='s mini toggle-btn' data-id='${v.id}' data-activo='${v.activo}'>${v.activo?'Bloquear':'Activar'}</button> <button class='rm-btn' data-id='${v.id}'>✕</button></td>
   </tr>`).join('')}</table>`;
@@ -949,18 +978,27 @@ async function removeDistribuidor(id){
   await renderDistribuidoresList();showToast('Distribuidor eliminado');
 }
 // ---- Vendedores de la empresa contratante (no asociados a un distribuidor) ----
+function fillNivelVendedorEmpresaSelect(nivelActualId){
+  const sel=qs('nivelVendedorEmpresa');if(!sel)return;
+  sel.innerHTML=NIVELES_CACHE.map(n=>`<option value='${n.id}'>${n.nombre}</option>`).join('');
+  if(nivelActualId)sel.value=nivelActualId;
+}
 async function loadCodigoVendedor(){
   const el=qs('codigoVendedorEmpresa');if(!el)return;
-  const{data}=await sb.from('app_settings').select('codigo_vendedor_empresa').eq('id',1).maybeSingle();
+  const titulo=qs('vendedoresTitulo');
+  if(titulo)titulo.textContent=`🧑‍💼 Vendedores${SETTINGS.company_name?' '+SETTINGS.company_name:''}`;
+  const{data}=await sb.from('app_settings').select('codigo_vendedor_empresa,nivel_vendedor_empresa_id').eq('id',1).maybeSingle();
   el.value=data?.codigo_vendedor_empresa||'';
+  fillNivelVendedorEmpresaSelect(data?.nivel_vendedor_empresa_id);
 }
 async function saveCodigoVendedor(){
   const codigo=qs('codigoVendedorEmpresa').value.trim().toUpperCase();
+  const nivelId=qs('nivelVendedorEmpresa').value;
   if(!codigo){setStatus('codigoVendedorStatus','Ingresa un código.','err');return;}
   setStatus('codigoVendedorStatus','Guardando…','info');
-  const{error}=await sb.from('app_settings').update({codigo_vendedor_empresa:codigo,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);
+  const{error}=await sb.from('app_settings').update({codigo_vendedor_empresa:codigo,nivel_vendedor_empresa_id:nivelId||null,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);
   if(error){setStatus('codigoVendedorStatus','Error al guardar: '+error.message,'err');return;}
-  setStatus('codigoVendedorStatus','✅ Código guardado.','ok');
+  setStatus('codigoVendedorStatus','✅ Código y nivel guardados. Si el código cambió, los vendedores deberán volver a ingresar como la primera vez.','ok');
 }
 async function renderVendedoresList(){
   const el=qs('vendedoresList');if(!el)return;
@@ -1063,11 +1101,56 @@ async function unlockAdmin(){
 }
 function downloadCSV(filename, rows){if(!isAdmin()||!isAdminUnlocked()){showToast('Acceso solo para administrador validado');return;}if(!rows.length){showToast('No hay datos para exportar');return;}const headers=Object.keys(rows[0]);const csv=[headers.join(','),...rows.map(r=>headers.map(h=>csvEscape(r[h])).join(','))].join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();URL.revokeObjectURL(a.href);}
 function showMainTab(tab){
-  const views={consultar:qs('viewConsultar'),cotizacion:qs('viewCotizacion'),destacados:qs('viewDestacados')};
-  const navs={consultar:qs('navConsultar'),cotizacion:qs('navCotizacion'),destacados:qs('navDestacados')};
+  const views={consultar:qs('viewConsultar'),cotizacion:qs('viewCotizacion'),destacados:qs('viewDestacados'),miequipo:qs('viewMiEquipo')};
+  const navs={consultar:qs('navConsultar'),cotizacion:qs('navCotizacion'),destacados:qs('navDestacados'),miequipo:qs('navMiEquipo')};
   if(!views.consultar||!views.cotizacion)return;
   Object.keys(views).forEach(k=>{if(views[k])views[k].classList.toggle('hidden',k!==tab);if(navs[k])navs[k].className=(k===tab?'p mini main-tab-btn':'s mini main-tab-btn');});
   if(tab==='destacados')renderDestacados();
+  if(tab==='miequipo')renderMiEquipo();
+}
+// Propietario de Distribuidor no usa el panel admin general (no tiene sesión
+// Auth ni está en app_admins) — en su lugar ve esta pestaña propia, filtrada
+// a su distribuidor, con las mismas acciones de activar/bloquear/eliminar.
+function esPropietarioConEquipo(user=CURRENT_USER){
+  return String(user?.perfilRol||'').toLowerCase()==='propietario_distribuidor'&&!!user?.distribuidorId;
+}
+async function renderMiEquipo(){
+  if(!esPropietarioConEquipo())return;
+  // El Propietario no tiene sesión de Supabase Auth (entra por código, no
+  // por contraseña), así que RLS no lo deja leer/escribir perfiles_usuario
+  // directamente. Se usan RPC security definer que validan correo + código
+  // de distribuidor (segundo factor) server-side y limitan todo a su propio
+  // distribuidor.
+  const emailProp=CURRENT_USER.email;
+  const codigoProp=CURRENT_USER.codigoDistribuidor;
+  if(!emailProp||!codigoProp){qs('miEquipoStatus').textContent='No se pudo identificar tu correo o código de distribuidor.';return;}
+  qs('miEquipoStatus').textContent='';
+  const{data,error}=await sb.rpc('listar_equipo_propietario',{p_email:emailProp,p_codigo_distribuidor:codigoProp});
+  if(error){qs('miEquipoStatus').textContent='No se pudo cargar tu equipo: '+error.message;return;}
+  const filas=data||[];
+  const porRol=(rol)=>filas.filter(f=>f.rol===rol);
+  const tabla=(items,extraCols)=>{
+    if(!items.length)return "<div class='empty' style='padding:8px 0'>Sin registros.</div>";
+    return `<table class='preview-table'><tr><th>Correo</th><th>Teléfono</th>${extraCols?"<th>Punto de venta</th>":''}<th>Estado</th><th></th></tr>${items.map(i=>`<tr>
+      <td class='mono'>${i.email}</td><td>${i.telefono||'-'}</td>${extraCols?`<td>${i.punto_venta||'-'}</td>`:''}
+      <td>${i.activo?"<span class='tag-good'>Activo</span>":"<span class='tag-low'>Bloqueado</span>"}</td>
+      <td><button class='s mini eq-toggle' data-id='${i.id}' data-activo='${i.activo}'>${i.activo?'Bloquear':'Activar'}</button> <button class='rm-btn eq-rm' data-id='${i.id}'>✕</button></td>
+    </tr>`).join('')}</table>`;
+  };
+  qs('miEquipoAdminPdv').innerHTML=tabla(porRol('admin_pdv'),true);
+  qs('miEquipoDependientes').innerHTML=tabla(porRol('dependiente'),true);
+  qs('miEquipoVendedores').innerHTML=tabla(porRol('vendedor'),false);
+  document.querySelectorAll('#viewMiEquipo button.eq-toggle').forEach(btn=>{btn.onclick=async()=>{
+    const{error}=await sb.rpc('toggle_miembro_equipo',{p_email_propietario:emailProp,p_codigo_distribuidor:codigoProp,p_id_miembro:btn.dataset.id,p_activo:btn.dataset.activo!=='true'});
+    if(error){showToast('Error: '+error.message);return;}
+    await renderMiEquipo();
+  };});
+  document.querySelectorAll('#viewMiEquipo button.eq-rm').forEach(btn=>{btn.onclick=async()=>{
+    if(!confirm('¿Quitar a este miembro de tu equipo?'))return;
+    const{error}=await sb.rpc('eliminar_miembro_equipo',{p_email_propietario:emailProp,p_codigo_distribuidor:codigoProp,p_id_miembro:btn.dataset.id});
+    if(error){showToast('Error al quitar: '+error.message);return;}
+    await renderMiEquipo();showToast('Removido');
+  };});
 }
 function showApp(user){
   CURRENT_USER=user;qs('registerScreen').classList.add('hidden');qs('appScreen').classList.remove('hidden');
@@ -1081,6 +1164,7 @@ function showApp(user){
   // real del distribuidor (ya resuelto en user.distribuidorNombre por activate()/loginConPassword()).
   const empresaMostrar=user.esEmpresaContratante?(SETTINGS.company_name||''):(user.distribuidorNombre||'');
   if(companyEl&&companyWrap){if(empresaMostrar){companyEl.textContent=empresaMostrar;companyWrap.classList.remove('hidden');}else{companyWrap.classList.add('hidden');}}
+  const navMiEquipo=qs('navMiEquipo');if(navMiEquipo)navMiEquipo.classList.toggle('hidden',!esPropietarioConEquipo(user));
   showMainTab('consultar');renderQuoteCart();updateAdminTools();loadRulesForUser(user);
 }
 function showRegister(){CURRENT_USER=null;lockAdmin();qs('appScreen').classList.add('hidden');qs('registerScreen').classList.remove('hidden');}
@@ -1131,7 +1215,7 @@ if(rolLower==='vendedor'){
   // 1) ¿Es un código de distribuidor real? Se prueba primero porque es la ruta más común.
   const{data:dist}=await sb.from('distribuidores').select('id,nombre').eq('codigo_distribuidor',user.codigoDistribuidor).eq('activo',true).maybeSingle();
   if(dist){
-    const{data:perfil,error:perfilErr}=await sb.rpc('registrar_perfil_operativo',{p_email:user.email,p_rol:'vendedor',p_codigo_distribuidor:user.codigoDistribuidor,p_punto_venta:user.store||null});
+    const{data:perfil,error:perfilErr}=await sb.rpc('registrar_perfil_operativo',{p_email:user.email,p_rol:'vendedor',p_codigo_distribuidor:user.codigoDistribuidor,p_punto_venta:user.store||null,p_telefono:user.phone||null});
     if(perfilErr){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Código de distribuidor no válido: '+perfilErr.message;return;}
     user.perfilRol='vendedor';user.distribuidorId=perfil.distribuidor_id;user.distribuidorNombre=dist.nombre;user.esEmpresaContratante=false;
   }else{
@@ -1139,11 +1223,13 @@ if(rolLower==='vendedor'){
     const{data:esValido}=await sb.rpc('validar_vendedor_empresa',{p_email:user.email,p_telefono:user.phone,p_codigo:user.codigoDistribuidor}).catch(()=>({data:false}));
     if(!esValido){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Código no válido. Verifica el código de distribuidor o de vendedor de la empresa.';return;}
     user.perfilRol='vendedor';user.esEmpresaContratante=true;user.distribuidorId=null;
+    const{data:settingsNivel}=await sb.from('app_settings').select('nivel_vendedor_empresa_id').eq('id',1).maybeSingle();
+    user.nivelEmpresaId=settingsNivel?.nivel_vendedor_empresa_id||null;
   }
 }else if(rolLower!=='vendedor'&&user.codigoDistribuidor){
   const rolRpc=rolLower.includes('administrador pdv')?'admin_pdv':rolLower.includes('propietario')?'propietario_distribuidor':'dependiente';
   qs('regMsg').style.color='var(--muted)';qs('regMsg').textContent='Validando código de distribuidor…';
-  const{data:perfil,error:perfilErr}=await sb.rpc('registrar_perfil_operativo',{p_email:user.email,p_rol:rolRpc,p_codigo_distribuidor:user.codigoDistribuidor,p_punto_venta:user.store||null});
+  const{data:perfil,error:perfilErr}=await sb.rpc('registrar_perfil_operativo',{p_email:user.email,p_rol:rolRpc,p_codigo_distribuidor:user.codigoDistribuidor,p_punto_venta:user.store||null,p_telefono:user.phone||null});
   if(perfilErr){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Código de distribuidor no válido: '+perfilErr.message;return;}
   user.perfilRol=perfil.rol;user.distribuidorId=perfil.distribuidor_id;
   const{data:dist}=await sb.from('distribuidores').select('nombre').eq('id',perfil.distribuidor_id).maybeSingle();
@@ -1157,7 +1243,7 @@ sb.from('consultas_log').insert({referencia:item.referencia}).then(({error})=>{i
 }
 let PRODUCTS=[],RULES=[],CONFIG={},DATA=[],byRef=new Map(),lastCopy="",lastQuote="",lastItem=null,QUOTE_ITEMS=[],CATALOGO_ITEMS=[],MEDIA_IMAGES=new Map(),QUOTE_SESSION_ID=null,RANKING_MAP=new Map(),EXPLORE_PAGE=1,DISPONIBILIDAD_MAP=new Map(),SUGGESTED_FOR_LAST=[],RELATED_FOR_LAST=new Map();
 const EXPLORE_PAGE_SIZE=20;
-let SETTINGS={company_name:'',logo_url:'',theme:'original',catalogo_foco_badge:'Nuevo',catalogo_bestseller_badge:'Best Seller',catalogo_oferta_badge:'Oferta',catalogo_oferta_formato:'porcentaje'};
+let SETTINGS={company_name:'',logo_url:'',theme:'original',catalogo_foco_badge:'Nuevo',catalogo_bestseller_badge:'Best Seller',catalogo_oferta_badge:'Oferta',catalogo_oferta_formato:'porcentaje',limite_pdv_por_distribuidor:10,limite_vendedores_dependientes_por_distribuidor:10,limite_distribuidores:10,limite_vendedores_empresa:10};
 const ref=document.getElementById('ref'),sala=document.getElementById('sala'),cant=document.getElementById('cantidad'),r=document.getElementById('r'),box=document.getElementById('box'),copy=document.getElementById('copy'),quote=document.getElementById('quote'),addBtn=document.getElementById('addToQuote'),toast=document.getElementById('toast');
 const money=v=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(Math.round(v));
 const pct=v=>Math.max(0,Math.min(100,Number(v)||0))/100; const now=()=>new Intl.DateTimeFormat('es-CO',{dateStyle:'medium',timeStyle:'short'}).format(new Date());
@@ -1198,6 +1284,7 @@ async function precargarMargen(gama){
 // (RULES cargado de margin_rules vía Nivel 1, sin romper nada).
 async function loadRulesForUser(user=CURRENT_USER){
   NIVEL_ACTUAL_ID=null;MARGEN_CACHE=new Map();
+  if(user?.esEmpresaContratante&&user?.nivelEmpresaId){NIVEL_ACTUAL_ID=user.nivelEmpresaId;return;}
   if(!user?.distribuidorId)return;
   const{data:dist,error:distErr}=await sb.from('distribuidores').select('nivel_descuento_id').eq('id',user.distribuidorId).maybeSingle();
   if(distErr||!dist?.nivel_descuento_id){console.warn('No se pudo resolver el nivel de descuento del distribuidor, se usa Nivel 1 por defecto.');return;}
@@ -1834,12 +1921,16 @@ RANKING_MAP=new Map((rankingData||[]).map(x=>[normalize(x.referencia),Number(x.v
 DISPONIBILIDAD_MAP=new Map((stockData||[]).map(x=>[normalize(x.referencia),x]));
 CATALOGO_ITEMS=catalogoData||[];
 const mediaMap=new Map();(mediaData||[]).forEach(mm=>{const k=normalize(mm.referencia);if(!mediaMap.has(k))mediaMap.set(k,mm.url);});MEDIA_IMAGES=mediaMap;
-if(settingsData)SETTINGS={company_name:settingsData.company_name||'',logo_url:settingsData.logo_url||'',theme:settingsData.theme||'original',catalogo_foco_badge:settingsData.catalogo_foco_badge||'Nuevo',catalogo_bestseller_badge:settingsData.catalogo_bestseller_badge||'Best Seller',catalogo_oferta_badge:settingsData.catalogo_oferta_badge||'Oferta',catalogo_oferta_formato:settingsData.catalogo_oferta_formato||'porcentaje'};
+if(settingsData)SETTINGS={company_name:settingsData.company_name||'',logo_url:settingsData.logo_url||'',theme:settingsData.theme||'original',catalogo_foco_badge:settingsData.catalogo_foco_badge||'Nuevo',catalogo_bestseller_badge:settingsData.catalogo_bestseller_badge||'Best Seller',catalogo_oferta_badge:settingsData.catalogo_oferta_badge||'Oferta',catalogo_oferta_formato:settingsData.catalogo_oferta_formato||'porcentaje',limite_pdv_por_distribuidor:settingsData.limite_pdv_por_distribuidor??10,limite_vendedores_dependientes_por_distribuidor:settingsData.limite_vendedores_dependientes_por_distribuidor??10,limite_distribuidores:settingsData.limite_distribuidores??10,limite_vendedores_empresa:settingsData.limite_vendedores_empresa??10};
 PRODUCTS=productsData||[];RULES=rulesData||[];
 await loadRulesForUser();
 renderVersionBadge(verData?.fecha_actualizacion);
 DATA=PRODUCTS.filter(x=>x.activo).map(x=>({...x,search:(`${x.referencia} ${x.descripcion} ${x.gama} ${x.producto}`).toUpperCase()}));byRef=new Map(DATA.map(x=>[normalize(x.referencia),x]));document.getElementById('appName').textContent=CONFIG.app_name||'ListaLoop B2B';document.title=CONFIG.app_name||'ListaLoop B2B';const amwt=document.querySelector('meta[name="apple-mobile-web-app-title"]'),anm=document.querySelector('meta[name="application-name"]');if(amwt)amwt.setAttribute('content',CONFIG.app_name||'ListaLoop B2B');if(anm)anm.setAttribute('content',CONFIG.app_name||'ListaLoop B2B');document.getElementById('introText').textContent=CONFIG.intro_text||'Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.';document.getElementById('baseName').textContent=CONFIG.base_name||'-';document.getElementById('devDate').textContent=CONFIG.development_date||'-';document.getElementById('waNote').textContent=CONFIG.whatsapp_note||'';document.getElementById('statRefs').textContent=DATA.length.toLocaleString('es-CO');
 applyCompanyName();applyLogo();applyTheme(SETTINGS.theme||'original');if(qs('settingsCompany'))qs('settingsCompany').value=SETTINGS.company_name||'';
+if(qs('limitePdv'))qs('limitePdv').value=SETTINGS.limite_pdv_por_distribuidor;
+if(qs('limiteVendDep'))qs('limiteVendDep').value=SETTINGS.limite_vendedores_dependientes_por_distribuidor;
+if(qs('limiteDist'))qs('limiteDist').value=SETTINGS.limite_distribuidores;
+if(qs('limiteVendEmpresa'))qs('limiteVendEmpresa').value=SETTINGS.limite_vendedores_empresa;
 renderDestacadosAdmin();renderVentaCruzadaAdmin();renderDestacados();
 populateExploreFilters();EXPLORE_PAGE=1;renderExplore();
 r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";}catch(err){console.error(err);r.innerHTML="<div class='badge danger'>Error de carga</div><div class='empty'>No fue posible conectar con la base de precios (Supabase). Intenta recargar la página; si el error persiste, contacta a soporte.</div>";renderVersionBadge(null);}}
@@ -1854,7 +1945,7 @@ qs('stockTipo').addEventListener('change',toggleStockFields);toggleStockFields()
 qs('btnUpdateStock').onclick=updateStockManual;
 qs('btnAnalyzeStockCSV').onclick=analyzeStockCSV;
 qs('addToQuote').onclick=addToQuote;qs('btnCopyMultiQuote').onclick=copyMultiQuote;qs('btnClearQuoteCart').onclick=clearQuoteCart;
-qs('navConsultar').onclick=()=>showMainTab('consultar');qs('navCotizacion').onclick=()=>showMainTab('cotizacion');qs('navDestacados').onclick=()=>showMainTab('destacados');
+qs('navConsultar').onclick=()=>showMainTab('consultar');qs('navCotizacion').onclick=()=>showMainTab('cotizacion');qs('navDestacados').onclick=()=>showMainTab('destacados');qs('navMiEquipo').onclick=()=>showMainTab('miequipo');
 qs('exploreVista').addEventListener('change',()=>{EXPLORE_PAGE=1;renderExplore();});
 qs('exploreGama').addEventListener('change',()=>{EXPLORE_PAGE=1;renderExplore();});
 qs('exploreProducto').addEventListener('change',()=>{EXPLORE_PAGE=1;renderExplore();});
@@ -1881,6 +1972,21 @@ qs('btnAddVendedor').onclick=addVendedor;
 qs('btnUploadLogo').onclick=async()=>{const file=qs('logoFile').files[0];if(!file){setStatus('logoStatus','Selecciona un archivo de imagen.','err');return;}if(file.size>1024*1024){setStatus('logoStatus','El archivo supera 1MB. Usa una imagen más liviana.','err');return;}setStatus('logoStatus','Subiendo…','info');const path=`logo_${Date.now()}_${file.name}`;const{error:upErr}=await sb.storage.from('app-assets').upload(path,file,{upsert:true});if(upErr){setStatus('logoStatus','Error al subir: '+upErr.message,'err');return;}const{data:pub}=sb.storage.from('app-assets').getPublicUrl(path);const{error}=await sb.from('app_settings').update({logo_url:pub.publicUrl,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('logoStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.logo_url=pub.publicUrl;applyLogo();setStatus('logoStatus','✅ Logo actualizado para todos los usuarios.','ok');qs('logoFile').value='';};
 qs('btnRemoveLogo').onclick=async()=>{setStatus('logoStatus','Quitando…','info');const{error}=await sb.from('app_settings').update({logo_url:'',updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('logoStatus','Error: '+error.message,'err');return;}SETTINGS.logo_url='';applyLogo();setStatus('logoStatus','Logo quitado.','ok');};
 document.querySelectorAll('.theme-btn').forEach(b=>{b.onclick=async()=>{const theme=b.dataset.theme;applyTheme(theme);setStatus('themeStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({theme,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('themeStatus','Error al guardar tema: '+error.message,'err');return;}SETTINGS.theme=theme;setStatus('themeStatus','✅ Tema aplicado para todos los usuarios.','ok');};});
+qs('btnSaveLimites').onclick=async()=>{
+  const campos={limitePdv:'limite_pdv_por_distribuidor',limiteVendDep:'limite_vendedores_dependientes_por_distribuidor',limiteDist:'limite_distribuidores',limiteVendEmpresa:'limite_vendedores_empresa'};
+  const payload={};let invalido=false;
+  Object.entries(campos).forEach(([inputId,col])=>{
+    const v=parseInt(qs(inputId).value,10);
+    if(!Number.isFinite(v)||v<1)invalido=true;
+    payload[col]=v;
+  });
+  if(invalido){setStatus('limitesStatus','Todos los límites deben ser números enteros mayores o iguales a 1.','err');return;}
+  setStatus('limitesStatus','Guardando…','info');
+  const{error}=await sb.from('app_settings').update({...payload,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);
+  if(error){setStatus('limitesStatus','Error al guardar: '+error.message,'err');return;}
+  Object.assign(SETTINGS,payload);
+  setStatus('limitesStatus','✅ Límites actualizados. Aplican de inmediato para toda la plataforma.','ok');
+};
 const savedUser=readJSON(USER_KEY,null);if(savedUser&&savedUser.consent)showApp(savedUser);else showRegister();
 init();
 </script></body></html>
