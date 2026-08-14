@@ -496,6 +496,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
       <div><label>Vendedores + Dependientes por distribuidor</label><input id="limiteVendDep" type="number" min="1" step="1"></div>
       <div><label>Distribuidores totales</label><input id="limiteDist" type="number" min="1" step="1"></div>
       <div><label>Vendedores de la empresa contratante</label><input id="limiteVendEmpresa" type="number" min="1" step="1"></div>
+      <div><label>Niveles de descuento</label><input id="limiteNiveles" type="number" min="1" step="1"></div>
       <div><button class="p mini" id="btnSaveLimites" style="padding:12px 16px">Guardar límites</button></div>
     </div>
     <div class="mini-status" id="limitesStatus"></div>
@@ -1249,7 +1250,7 @@ sb.from('consultas_log').insert({referencia:item.referencia}).then(({error})=>{i
 }
 let PRODUCTS=[],RULES=[],CONFIG={},DATA=[],byRef=new Map(),lastCopy="",lastQuote="",lastItem=null,QUOTE_ITEMS=[],CATALOGO_ITEMS=[],MEDIA_IMAGES=new Map(),QUOTE_SESSION_ID=null,RANKING_MAP=new Map(),EXPLORE_PAGE=1,DISPONIBILIDAD_MAP=new Map(),SUGGESTED_FOR_LAST=[],RELATED_FOR_LAST=new Map();
 const EXPLORE_PAGE_SIZE=20;
-let SETTINGS={company_name:'',logo_url:'',theme:'original',catalogo_foco_badge:'Nuevo',catalogo_bestseller_badge:'Best Seller',catalogo_oferta_badge:'Oferta',catalogo_oferta_formato:'porcentaje',limite_pdv_por_distribuidor:10,limite_vendedores_dependientes_por_distribuidor:10,limite_distribuidores:10,limite_vendedores_empresa:10};
+let SETTINGS={company_name:'',logo_url:'',theme:'original',catalogo_foco_badge:'Nuevo',catalogo_bestseller_badge:'Best Seller',catalogo_oferta_badge:'Oferta',catalogo_oferta_formato:'porcentaje',limite_pdv_por_distribuidor:10,limite_vendedores_dependientes_por_distribuidor:10,limite_distribuidores:10,limite_vendedores_empresa:10,limite_niveles_descuento:10};
 const ref=document.getElementById('ref'),sala=document.getElementById('sala'),cant=document.getElementById('cantidad'),r=document.getElementById('r'),box=document.getElementById('box'),copy=document.getElementById('copy'),quote=document.getElementById('quote'),addBtn=document.getElementById('addToQuote'),toast=document.getElementById('toast');
 const money=v=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(Math.round(v));
 const pct=v=>Math.max(0,Math.min(100,Number(v)||0))/100; const now=()=>new Intl.DateTimeFormat('es-CO',{dateStyle:'medium',timeStyle:'short'}).format(new Date());
@@ -1927,7 +1928,7 @@ RANKING_MAP=new Map((rankingData||[]).map(x=>[normalize(x.referencia),Number(x.v
 DISPONIBILIDAD_MAP=new Map((stockData||[]).map(x=>[normalize(x.referencia),x]));
 CATALOGO_ITEMS=catalogoData||[];
 const mediaMap=new Map();(mediaData||[]).forEach(mm=>{const k=normalize(mm.referencia);if(!mediaMap.has(k))mediaMap.set(k,mm.url);});MEDIA_IMAGES=mediaMap;
-if(settingsData)SETTINGS={company_name:settingsData.company_name||'',logo_url:settingsData.logo_url||'',theme:settingsData.theme||'original',catalogo_foco_badge:settingsData.catalogo_foco_badge||'Nuevo',catalogo_bestseller_badge:settingsData.catalogo_bestseller_badge||'Best Seller',catalogo_oferta_badge:settingsData.catalogo_oferta_badge||'Oferta',catalogo_oferta_formato:settingsData.catalogo_oferta_formato||'porcentaje',limite_pdv_por_distribuidor:settingsData.limite_pdv_por_distribuidor??10,limite_vendedores_dependientes_por_distribuidor:settingsData.limite_vendedores_dependientes_por_distribuidor??10,limite_distribuidores:settingsData.limite_distribuidores??10,limite_vendedores_empresa:settingsData.limite_vendedores_empresa??10};
+if(settingsData)SETTINGS={company_name:settingsData.company_name||'',logo_url:settingsData.logo_url||'',theme:settingsData.theme||'original',catalogo_foco_badge:settingsData.catalogo_foco_badge||'Nuevo',catalogo_bestseller_badge:settingsData.catalogo_bestseller_badge||'Best Seller',catalogo_oferta_badge:settingsData.catalogo_oferta_badge||'Oferta',catalogo_oferta_formato:settingsData.catalogo_oferta_formato||'porcentaje',limite_pdv_por_distribuidor:settingsData.limite_pdv_por_distribuidor??10,limite_vendedores_dependientes_por_distribuidor:settingsData.limite_vendedores_dependientes_por_distribuidor??10,limite_distribuidores:settingsData.limite_distribuidores??10,limite_vendedores_empresa:settingsData.limite_vendedores_empresa??10,limite_niveles_descuento:settingsData.limite_niveles_descuento??10};
 PRODUCTS=productsData||[];RULES=rulesData||[];
 await loadRulesForUser();
 renderVersionBadge(verData?.fecha_actualizacion);
@@ -1937,6 +1938,7 @@ if(qs('limitePdv'))qs('limitePdv').value=SETTINGS.limite_pdv_por_distribuidor;
 if(qs('limiteVendDep'))qs('limiteVendDep').value=SETTINGS.limite_vendedores_dependientes_por_distribuidor;
 if(qs('limiteDist'))qs('limiteDist').value=SETTINGS.limite_distribuidores;
 if(qs('limiteVendEmpresa'))qs('limiteVendEmpresa').value=SETTINGS.limite_vendedores_empresa;
+if(qs('limiteNiveles'))qs('limiteNiveles').value=SETTINGS.limite_niveles_descuento;
 renderDestacadosAdmin();renderVentaCruzadaAdmin();renderDestacados();
 populateExploreFilters();EXPLORE_PAGE=1;renderExplore();
 r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";}catch(err){console.error(err);r.innerHTML="<div class='badge danger'>Error de carga</div><div class='empty'>No fue posible conectar con la base de precios (Supabase). Intenta recargar la página; si el error persiste, contacta a soporte.</div>";renderVersionBadge(null);}}
@@ -1979,7 +1981,7 @@ qs('btnUploadLogo').onclick=async()=>{const file=qs('logoFile').files[0];if(!fil
 qs('btnRemoveLogo').onclick=async()=>{setStatus('logoStatus','Quitando…','info');const{error}=await sb.from('app_settings').update({logo_url:'',updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('logoStatus','Error: '+error.message,'err');return;}SETTINGS.logo_url='';applyLogo();setStatus('logoStatus','Logo quitado.','ok');};
 document.querySelectorAll('.theme-btn').forEach(b=>{b.onclick=async()=>{const theme=b.dataset.theme;applyTheme(theme);setStatus('themeStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({theme,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('themeStatus','Error al guardar tema: '+error.message,'err');return;}SETTINGS.theme=theme;setStatus('themeStatus','✅ Tema aplicado para todos los usuarios.','ok');};});
 qs('btnSaveLimites').onclick=async()=>{
-  const campos={limitePdv:'limite_pdv_por_distribuidor',limiteVendDep:'limite_vendedores_dependientes_por_distribuidor',limiteDist:'limite_distribuidores',limiteVendEmpresa:'limite_vendedores_empresa'};
+  const campos={limitePdv:'limite_pdv_por_distribuidor',limiteVendDep:'limite_vendedores_dependientes_por_distribuidor',limiteDist:'limite_distribuidores',limiteVendEmpresa:'limite_vendedores_empresa',limiteNiveles:'limite_niveles_descuento'};
   const payload={};let invalido=false;
   Object.entries(campos).forEach(([inputId,col])=>{
     const v=parseInt(qs(inputId).value,10);
