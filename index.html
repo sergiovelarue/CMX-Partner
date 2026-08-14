@@ -144,14 +144,18 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
         <div><label>Distribuidor / Empresa</label><input id="regCompany" required></div>
         <div><label>Ciudad</label><input id="regCity" required></div>
         <div><label>Punto de venta</label><input id="regStore"></div>
-        <div><label>Cargo</label><select id="regRole"><option value="">Seleccionar</option><option>Vendedor</option><option>Dependiente</option><option>Administrador PDV</option></select></div>
-        <div><label>Código de distribuidor</label><input id="regCodigoDistribuidor" placeholder="Entregado por tu distribuidor" autocomplete="off"></div>
+        <div id="regRoleWrap"><label>Cargo</label><select id="regRole"><option value="">Seleccionar</option><option>Vendedor</option><option>Dependiente</option><option>Administrador PDV</option></select></div>
+        <div id="regCodigoWrap"><label>Código de distribuidor</label><input id="regCodigoDistribuidor" placeholder="Entregado por tu distribuidor" autocomplete="off"></div>
       </div>
-      <p style="margin:6px 0 0;color:var(--muted);font-size:.78rem">El código de distribuidor lo entrega tu distribuidor o el administrador de la plataforma. Sin un código válido no podrás ver margen ni PVD.</p>
+      <p id="regCodigoHelp" style="margin:6px 0 0;color:var(--muted);font-size:.78rem">El código de distribuidor lo entrega tu distribuidor o el administrador de la plataforma. Sin un código válido no podrás ver margen ni PVD.</p>
+      <p id="regDetectedMsg" class="hidden" style="margin:6px 0 0;color:var(--brand);font-size:.82rem;font-weight:600"></p>
       <div class="consent">
         <label><input id="regConsent" type="checkbox"> <span id="consentText">Autorizo a ConAccion BPS para recolectar, almacenar y tratar mis datos personales con fines comerciales, promocionales, formativos y de relacionamiento, conforme a la política de tratamiento de datos personales vigente.</span></label>
       </div>
-      <div class="actions"><button class="p" id="activateAccess">Activar mi acceso</button></div>
+      <div class="actions">
+        <button class="p" id="activateAccess">Activar mi acceso</button>
+        <button class="s hidden" id="loginPasswordBtn" style="margin-left:8px">Ingresar con contraseña</button>
+      </div>
       <div id="regMsg" style="color:var(--danger);font-size:.86rem;margin-top:8px"></div>
     </div>
   </div>
@@ -865,9 +869,65 @@ function showMainTab(tab){
 }
 function showApp(user){CURRENT_USER=user;qs('registerScreen').classList.add('hidden');qs('appScreen').classList.remove('hidden');qs('activeUser').textContent=user.name||'-';qs('activeCompany').textContent=user.company||'-';showMainTab('consultar');renderQuoteCart();updateAdminTools();loadRulesForUser(user);}
 function showRegister(){CURRENT_USER=null;lockAdmin();qs('appScreen').classList.add('hidden');qs('registerScreen').classList.remove('hidden');}
+// ---- Detección de rol por correo: Administrador y Propietario ya existen en Supabase
+// y usan Auth (correo+contraseña), no el formulario operativo con código. Al perder foco
+// del correo, se consulta y el formulario se ajusta para no pedir un cargo que no aplica.
+let REG_DETECTED=null; // null | {tipo:'administrador'} | {tipo:'propietario', distribuidorId}
+async function checkEmailRole(){
+  const email=normalizeEmail(qs('regEmail').value);
+  REG_DETECTED=null;
+  qs('regDetectedMsg').classList.add('hidden');
+  qs('loginPasswordBtn').classList.add('hidden');
+  qs('regRoleWrap').classList.remove('hidden');
+  qs('regCodigoWrap').classList.remove('hidden');
+  qs('regCodigoHelp').classList.remove('hidden');
+  qs('activateAccess').classList.remove('hidden');
+  if(!isValidEmail(email))return;
+  if(ADMIN_EMAILS.has(email)){
+    REG_DETECTED={tipo:'administrador'};
+    qs('regRoleWrap').classList.add('hidden');
+    qs('regCodigoWrap').classList.add('hidden');
+    qs('regCodigoHelp').classList.add('hidden');
+    qs('activateAccess').classList.add('hidden');
+    qs('regDetectedMsg').textContent='Correo de Administrador. Ingresa con tu contraseña.';
+    qs('regDetectedMsg').classList.remove('hidden');
+    qs('loginPasswordBtn').classList.remove('hidden');
+    return;
+  }
+  const{data:perfil}=await sb.rpc('obtener_perfil_por_correo',{p_email:email}).catch(()=>({data:null}));
+  if(perfil&&perfil.rol==='propietario_distribuidor'){
+    REG_DETECTED={tipo:'propietario',distribuidorId:perfil.distribuidor_id};
+    qs('regRoleWrap').classList.add('hidden');
+    qs('regCodigoHelp').textContent='Confirma el código de tu distribuidor para completar el ingreso.';
+    qs('regDetectedMsg').textContent='Correo de Propietario de Distribuidor. Ingresa con tu contraseña.';
+    qs('regDetectedMsg').classList.remove('hidden');
+    qs('loginPasswordBtn').classList.remove('hidden');
+  }
+}
+async function loginConPassword(){
+  const email=normalizeEmail(qs('regEmail').value);
+  if(!isValidEmail(email)){qs('regMsg').textContent='Ingresa un correo electrónico válido.';return;}
+  const pass=prompt('Ingresa tu contraseña');
+  if(pass===null)return;
+  qs('regMsg').style.color='var(--muted)';qs('regMsg').textContent='Validando…';
+  const{error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Clave incorrecta o usuario no autorizado.';return;}
+  const user={name:qs('regName').value.trim()||email,phone:normalizeColombiaPhone(qs('regPhone').value)||'',email,company:qs('regCompany').value.trim()||'',city:qs('regCity').value.trim()||'',store:qs('regStore').value.trim(),registeredAt:new Date().toISOString(),lastAccess:new Date().toISOString()};
+  if(REG_DETECTED?.tipo==='administrador'){
+    user.role='Administrador';
+  }else if(REG_DETECTED?.tipo==='propietario'){
+    const codigo=qs('regCodigoDistribuidor').value.trim().toUpperCase();
+    if(!codigo){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Ingresa el código de tu distribuidor.';return;}
+    const{data:dist,error:distErr}=await sb.from('distribuidores').select('id,codigo_distribuidor').eq('id',REG_DETECTED.distribuidorId).maybeSingle();
+    if(distErr||!dist||dist.codigo_distribuidor!==codigo){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Código de distribuidor no válido.';return;}
+    user.role='Propietario';user.perfilRol='propietario_distribuidor';user.distribuidorId=dist.id;
+  }
+  qs('regMsg').textContent='';
+  const users=readJSON(USERS_KEY,[]);const idx=users.findIndex(u=>(u.email||'').toLowerCase()===user.email.toLowerCase());if(idx>=0){user.registeredAt=users[idx].registeredAt;users[idx]={...users[idx],...user};}else users.push(user);writeJSON(USERS_KEY,users);writeJSON(USER_KEY,user);showApp(user);showToast('Acceso activado');
+}
 async function activate(){const user={name:qs('regName').value.trim(),phone:normalizeColombiaPhone(qs('regPhone').value),email:normalizeEmail(qs('regEmail').value),company:qs('regCompany').value.trim(),city:qs('regCity').value.trim(),store:qs('regStore').value.trim(),role:qs('regRole').value,codigoDistribuidor:qs('regCodigoDistribuidor').value.trim().toUpperCase(),consent:qs('regConsent').checked,registeredAt:new Date().toISOString(),lastAccess:new Date().toISOString()};
 const required=['name','phone','email','company','city','role'];const missing=required.some(k=>!user[k]);if(missing||!user.consent){qs('regMsg').textContent='Completa todos los campos obligatorios y acepta la autorización de tratamiento de datos.';return;}if(!isValidEmail(user.email)){qs('regMsg').textContent='Ingresa un correo electrónico válido. Ejemplo: nombre@empresa.com';qs('regEmail').focus();return;}if(!isValidColombiaMobile(user.phone)){qs('regMsg').textContent='Ingresa un celular colombiano válido de 10 dígitos. Ejemplo: 3001234567';qs('regPhone').focus();return;}
-if(user.codigoDistribuidor){
+if(user.role.toLowerCase()!=='vendedor'&&user.codigoDistribuidor){
   const rolRpc=user.role.toLowerCase().includes('administrador pdv')?'admin_pdv':'dependiente';
   qs('regMsg').style.color='var(--muted)';qs('regMsg').textContent='Validando código de distribuidor…';
   const{data:perfil,error:perfilErr}=await sb.rpc('registrar_perfil_operativo',{p_email:user.email,p_rol:rolRpc,p_codigo_distribuidor:user.codigoDistribuidor,p_punto_venta:user.store||null});
@@ -1572,7 +1632,7 @@ document.getElementById('calc').onclick=calc;document.getElementById('clear').on
 ref.addEventListener('input',showS);ref.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});sala.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});document.addEventListener('click',e=>{if(!box.contains(e.target)&&e.target!==ref)box.style.display='none';});
 if(cant)cant.addEventListener('input',()=>{if(lastItem)renderPriceCard();});
 copy.onclick=async()=>{if(!lastCopy)return;try{await navigator.clipboard.writeText(lastCopy);showToast('Resultado copiado');}catch(e){}};quote.onclick=async()=>{if(!lastQuote)return;try{await navigator.clipboard.writeText(lastQuote);showToast('Cotización copiada');}catch(e){}};
-qs('activateAccess').onclick=activate;qs('changeUser').onclick=()=>{localStorage.removeItem(USER_KEY);showRegister();};qs('adminLogin').onclick=unlockAdmin;qs('adminLogout').onclick=lockAdmin;qs('exportUsers').onclick=()=>downloadCSV('comercial_partner_registros.csv',readJSON(USERS_KEY,[]));qs('exportLogs').onclick=()=>downloadCSV('comercial_partner_uso.csv',readJSON(LOGS_KEY,[]));
+qs('activateAccess').onclick=activate;qs('loginPasswordBtn').onclick=loginConPassword;qs('regEmail').onblur=checkEmailRole;qs('changeUser').onclick=()=>{localStorage.removeItem(USER_KEY);showRegister();};qs('adminLogin').onclick=unlockAdmin;qs('adminLogout').onclick=lockAdmin;qs('exportUsers').onclick=()=>downloadCSV('comercial_partner_registros.csv',readJSON(USERS_KEY,[]));qs('exportLogs').onclick=()=>downloadCSV('comercial_partner_uso.csv',readJSON(LOGS_KEY,[]));
 qs('btnUpdateSingle').onclick=updateSinglePrice;qs('btnAnalyzeCSV').onclick=analyzeCSV;qs('btnUploadMedia').onclick=uploadMedia;
 qs('stockTipo').addEventListener('change',toggleStockFields);toggleStockFields();
 qs('btnUpdateStock').onclick=updateStockManual;
