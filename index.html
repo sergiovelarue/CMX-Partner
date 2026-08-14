@@ -1112,6 +1112,12 @@ function showMainTab(tab){
 // Auth ni está en app_admins) — en su lugar ve esta pestaña propia, filtrada
 // a su distribuidor, con las mismas acciones de activar/bloquear/eliminar.
 function esPropietarioConEquipo(user=CURRENT_USER){
+  // Se excluye explícitamente a Administrador y a Vendedor/Admin de la empresa
+  // contratante: un correo pudo haber quedado con perfilRol/distribuidorId
+  // residual en localStorage de un registro anterior como Propietario, y no
+  // debe filtrarse a otros roles ni mezclarse con el panel de Usuarios.
+  if(String(user?.role||'').toLowerCase()==='administrador')return false;
+  if(user?.esEmpresaContratante)return false;
   return String(user?.perfilRol||'').toLowerCase()==='propietario_distribuidor'&&!!user?.distribuidorId;
 }
 async function renderMiEquipo(){
@@ -1201,7 +1207,7 @@ async function loginConPassword(){
   qs('regMsg').style.color='var(--muted)';qs('regMsg').textContent='Validando…';
   const{error}=await sb.auth.signInWithPassword({email,password:pass});
   if(error){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Clave incorrecta o usuario no autorizado.';return;}
-  const user={name:qs('regName').value.trim()||email,phone:normalizeColombiaPhone(qs('regPhone').value)||'',email,company:qs('regCompany').value.trim()||'',city:qs('regCity').value.trim()||'',store:qs('regStore').value.trim(),registeredAt:new Date().toISOString(),lastAccess:new Date().toISOString(),role:'Administrador',esEmpresaContratante:true};
+  const user={name:qs('regName').value.trim()||email,phone:normalizeColombiaPhone(qs('regPhone').value)||'',email,company:qs('regCompany').value.trim()||'',city:qs('regCity').value.trim()||'',store:qs('regStore').value.trim(),registeredAt:new Date().toISOString(),lastAccess:new Date().toISOString(),role:'Administrador',esEmpresaContratante:true,perfilRol:null,distribuidorId:null,distribuidorNombre:'',codigoDistribuidor:''};
   qs('regMsg').textContent='';
   const users=readJSON(USERS_KEY,[]);const idx=users.findIndex(u=>(u.email||'').toLowerCase()===user.email.toLowerCase());if(idx>=0){user.registeredAt=users[idx].registeredAt;users[idx]={...users[idx],...user};}else users.push(user);writeJSON(USERS_KEY,users);writeJSON(USER_KEY,user);showApp(user);showToast('Acceso activado');
 }
