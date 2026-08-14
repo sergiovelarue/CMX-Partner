@@ -252,8 +252,10 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 </div>
 <div class="admin-tabs hidden" id="adminTabs">
   <button class="p mini" id="tabPrices">💲 Precios</button>
-  <button class="s mini" id="tabSettings">⚙️ Ajustes Generales</button>
+  <button class="s mini" id="tabUsuarios">👥 Usuarios</button>
+  <button class="s mini" id="tabReglas">📊 Reglas de negocio</button>
   <button class="s mini" id="tabDestacados">⭐ Destacados</button>
+  <button class="s mini hidden" id="tabSettings">⚙️ Ajustes Generales</button>
 </div>
 <div class='card admin-panel hidden' id='adminPricePanel'>
   <h3>🔧 Lista de precios 1 — Administración</h3>
@@ -327,9 +329,88 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
     <div class="mini-status" id="stockBulkStatus"></div>
   </div>
 </div>
+<div class='card admin-panel hidden' id='adminUsuariosPanel'>
+  <h3>👥 Usuarios</h3>
+  <p style="margin:0;color:var(--muted);font-size:.86rem">Visible solo para el administrador autenticado.</p>
+
+  <div class="admin-sub">
+    <h4>👤 Administradores</h4>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Solo un administrador ya autenticado puede agregar o quitar a otro. El acceso se valida con un código de un solo uso enviado al correo, sin contraseña.</p>
+    <div class="inline-form">
+      <div><label>Correo del nuevo administrador</label><input id="newAdminEmail" type="email" placeholder="nombre@empresa.com"></div>
+      <div><button class="p mini" id="btnAddAdmin" style="padding:12px 16px">Agregar administrador</button></div>
+    </div>
+    <div id="adminsList" style="margin-top:10px"></div>
+    <div class="mini-status" id="adminsStatus"></div>
+
+    <h5 style="margin:18px 0 6px;font-size:.88rem">🏢 Propietario de Distribuidor</h5>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Se crea junto al distribuidor (sección Distribuidores, abajo). Aquí solo se lista.</p>
+    <div id="ownersList" style="margin-top:10px"></div>
+    <div class="mini-status" id="ownersStatus"></div>
+
+    <h5 style="margin:18px 0 6px;font-size:.88rem">🏬 Administrador PDV</h5>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Se auto-registra con correo + código de distribuidor. Aparece aquí al registrarse.</p>
+    <div id="adminPdvList" style="margin-top:10px"></div>
+  </div>
+
+  <div class="admin-sub">
+    <h4>🏬 Distribuidores</h4>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Nace en Nivel 1; reasigna el nivel en la tabla. Código no obvio: habilita también el registro de Admin PDV y Dependientes.</p>
+    <div class="inline-form">
+      <div><label>Nombre del distribuidor</label><input id="newDistNombre" placeholder="Ej: El Palacio Del Mueble"></div>
+      <div><label>Código de distribuidor</label><input id="newDistCodigo" placeholder="Ej: PDM-7X2K"></div>
+      <div><label>Correo del propietario (opcional)</label><input id="newDistOwnerEmail" type="email" placeholder="nombre@distribuidor.com"></div>
+      <div><button class="p mini" id="btnAddDist" style="padding:12px 16px">Crear distribuidor</button></div>
+    </div>
+    <p style="margin:6px 0 0;color:var(--muted);font-size:.76rem">Con correo: crea también al Propietario. Falta crear su usuario en Supabase Auth (Authentication → Users) con el mismo correo.</p>
+    <div id="distribuidoresList" style="margin-top:10px"></div>
+    <div class="mini-status" id="distribuidoresStatus"></div>
+  </div>
+
+  <div class="admin-sub">
+    <h4>Descargas</h4>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Registros de usuarios y uso de la plataforma.</p>
+    <div class="actions">
+      <button class="s mini" id="exportUsersTab">Exportar registros CSV</button>
+      <button class="s mini" id="exportLogsTab">Exportar uso CSV</button>
+    </div>
+  </div>
+</div>
+<div class='card admin-panel hidden' id='adminReglasPanel'>
+  <h3>📊 Reglas de negocio</h3>
+  <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Nivel = margen por gama. Distribuidor hereda el Nivel asignado (sección Usuarios). Solo el admin cambia niveles.</p>
+
+  <div class="admin-sub">
+    <h5 style="margin:14px 0 6px;font-size:.88rem">Niveles de descuento</h5>
+    <div class="inline-form">
+      <div><label>Tipo</label><select id="newNivelTipo">
+        <option value="ajuste">Ajuste general por puntos (sobre Nivel 1)</option>
+        <option value="copia">Copia editable (desde Nivel 1)</option>
+      </select></div>
+      <div id="newNivelGeneralWrap"><label>Ajuste general (puntos +/-)</label><input id="newNivelAjusteGeneral" type="number" step="0.01" placeholder="Ej: 5 o -3"></div>
+      <div><label>Descripción</label><input id="newNivelDescripcion" placeholder="Ej: Distribuidores premium zona norte"></div>
+      <div><button class="p mini" id="btnAddNivel" style="padding:12px 16px">Crear nivel</button></div>
+    </div>
+    <div id="nivelesList" style="margin-top:10px"></div>
+    <div class="mini-status" id="nivelesStatus"></div>
+
+    <h5 style="margin:18px 0 6px;font-size:.88rem">Reglas de margen por nivel</h5>
+    <div class="inline-form">
+      <div><label>Nivel</label><select id="reglaNivelSelect"></select></div>
+    </div>
+    <div class="inline-form" id="reglaFormExcepcion">
+      <div><label>Gama (excepción)</label><select id="reglaMatch"></select></div>
+      <div><label>Ajuste (puntos +/-)</label><input id="reglaMargen" type="number" step="0.01" placeholder="Ej: 5 o -3"></div>
+      <div><button class="p mini" id="btnAddRegla" style="padding:12px 16px">Agregar excepción</button></div>
+    </div>
+    <p id="reglaFormBase" style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Edita el % directo en cada fila.</p>
+    <div id="reglasList" style="margin-top:10px"></div>
+    <div class="mini-status" id="reglasStatus"></div>
+  </div>
+</div>
 <div class='card admin-panel hidden' id='adminSettingsPanel'>
   <h3>⚙️ Ajustes Generales</h3>
-  <p style="margin:0;color:var(--muted);font-size:.86rem">Visible solo para el administrador autenticado. Los cambios aquí afectan a todos los usuarios de inmediato.</p>
+  <p style="margin:0;color:var(--muted);font-size:.86rem">Visible solo para el creador de la aplicación. Los cambios aquí afectan a todos los usuarios de inmediato.</p>
 
   <div class="admin-sub">
     <h4>Empresa contratante</h4>
@@ -362,69 +443,6 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
       <button class="s mini theme-btn" data-theme="pastel">Pastel</button>
     </div>
     <div class="mini-status" id="themeStatus"></div>
-  </div>
-
-  <div class="admin-sub">
-    <h4>👤 Administradores</h4>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Solo un administrador ya autenticado puede agregar o quitar a otro. El acceso se valida con un código de un solo uso enviado al correo, sin contraseña.</p>
-    <div class="inline-form">
-      <div><label>Correo del nuevo administrador</label><input id="newAdminEmail" type="email" placeholder="nombre@empresa.com"></div>
-      <div><button class="p mini" id="btnAddAdmin" style="padding:12px 16px">Agregar administrador</button></div>
-    </div>
-    <div id="adminsList" style="margin-top:10px"></div>
-    <div class="mini-status" id="adminsStatus"></div>
-
-    <h5 style="margin:18px 0 6px;font-size:.88rem">🏢 Propietario de Distribuidor</h5>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Se crea junto al distribuidor (sección Distribuidores, abajo). Aquí solo se lista.</p>
-    <div id="ownersList" style="margin-top:10px"></div>
-    <div class="mini-status" id="ownersStatus"></div>
-
-    <h5 style="margin:18px 0 6px;font-size:.88rem">🏬 Administrador PDV</h5>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Se auto-registra con correo + código de distribuidor. Aparece aquí al registrarse.</p>
-    <div id="adminPdvList" style="margin-top:10px"></div>
-  </div>
-
-  <div class="admin-sub">
-    <h4>📊 Reglas de negocio</h4>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Nivel = margen por gama. Distribuidor hereda el Nivel asignado. Solo el admin cambia niveles.</p>
-
-    <h5 style="margin:14px 0 6px;font-size:.88rem">Niveles de descuento</h5>
-    <div class="inline-form">
-      <div><label>Tipo</label><select id="newNivelTipo">
-        <option value="ajuste">Ajuste general por puntos (sobre Nivel 1)</option>
-        <option value="copia">Copia editable (desde Nivel 1)</option>
-      </select></div>
-      <div id="newNivelGeneralWrap"><label>Ajuste general (puntos +/-)</label><input id="newNivelAjusteGeneral" type="number" step="0.01" placeholder="Ej: 5 o -3"></div>
-      <div><label>Descripción</label><input id="newNivelDescripcion" placeholder="Ej: Distribuidores premium zona norte"></div>
-      <div><button class="p mini" id="btnAddNivel" style="padding:12px 16px">Crear nivel</button></div>
-    </div>
-    <div id="nivelesList" style="margin-top:10px"></div>
-    <div class="mini-status" id="nivelesStatus"></div>
-
-    <h5 style="margin:18px 0 6px;font-size:.88rem">Reglas de margen por nivel</h5>
-    <div class="inline-form">
-      <div><label>Nivel</label><select id="reglaNivelSelect"></select></div>
-    </div>
-    <div class="inline-form" id="reglaFormExcepcion">
-      <div><label>Gama (excepción)</label><select id="reglaMatch"></select></div>
-      <div><label>Ajuste (puntos +/-)</label><input id="reglaMargen" type="number" step="0.01" placeholder="Ej: 5 o -3"></div>
-      <div><button class="p mini" id="btnAddRegla" style="padding:12px 16px">Agregar excepción</button></div>
-    </div>
-    <p id="reglaFormBase" style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Edita el % directo en cada fila.</p>
-    <div id="reglasList" style="margin-top:10px"></div>
-    <div class="mini-status" id="reglasStatus"></div>
-
-    <h5 style="margin:18px 0 6px;font-size:.88rem">Distribuidores</h5>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Nace en Nivel 1; reasigna el nivel en la tabla. Código no obvio: habilita también el registro de Admin PDV y Dependientes.</p>
-    <div class="inline-form">
-      <div><label>Nombre del distribuidor</label><input id="newDistNombre" placeholder="Ej: El Palacio Del Mueble"></div>
-      <div><label>Código de distribuidor</label><input id="newDistCodigo" placeholder="Ej: PDM-7X2K"></div>
-      <div><label>Correo del propietario (opcional)</label><input id="newDistOwnerEmail" type="email" placeholder="nombre@distribuidor.com"></div>
-      <div><button class="p mini" id="btnAddDist" style="padding:12px 16px">Crear distribuidor</button></div>
-    </div>
-    <p style="margin:6px 0 0;color:var(--muted);font-size:.76rem">Con correo: crea también al Propietario. Falta crear su usuario en Supabase Auth (Authentication → Users) con el mismo correo.</p>
-    <div id="distribuidoresList" style="margin-top:10px"></div>
-    <div class="mini-status" id="distribuidoresStatus"></div>
   </div>
 </div>
 <div class='card admin-panel hidden' id='adminDestacadosPanel'>
@@ -849,8 +867,41 @@ async function initReglasNegocio(){
   await renderNivelesList();
   await renderDistribuidoresList();
 }
-function showAdminTab(tab){const pricePanel=qs('adminPricePanel'),settingsPanel=qs('adminSettingsPanel'),destPanel=qs('adminDestacadosPanel'),tp=qs('tabPrices'),ts=qs('tabSettings'),td=qs('tabDestacados');if(!pricePanel||!settingsPanel)return;pricePanel.classList.toggle('hidden',tab!=='prices');settingsPanel.classList.toggle('hidden',tab!=='settings');if(destPanel)destPanel.classList.toggle('hidden',tab!=='destacados');if(tp)tp.className=(tab==='prices'?'p mini':'s mini');if(ts)ts.className=(tab==='settings'?'p mini':'s mini');if(td)td.className=(tab==='destacados'?'p mini':'s mini');if(tab==='settings'&&qs('settingsCompany'))qs('settingsCompany').value=SETTINGS.company_name||'';if(tab==='settings'){renderAdminsList();renderOwnersList();renderAdminPdvList();initReglasNegocio();}if(tab==='destacados')fillBadgeInputs();}
-async function updateAdminTools(){const gate=qs('adminGate'),tools=qs('adminTools'),tabs=qs('adminTabs'),pricePanel=qs('adminPricePanel'),settingsPanel=qs('adminSettingsPanel');if(!gate||!tools)return;const allowed=isAdmin();const unlocked=await isAdminUnlocked();gate.classList.toggle('hidden',!allowed||unlocked);tools.classList.toggle('hidden',!allowed||!unlocked);if(tabs)tabs.classList.toggle('hidden',!allowed||!unlocked);if(allowed&&unlocked){showAdminTab('prices');}else{if(pricePanel)pricePanel.classList.add('hidden');if(settingsPanel)settingsPanel.classList.add('hidden');}}
+// Rol oculto ("creador de la aplicación"): no aparece en ningún selector de
+// cargo ni formulario de registro. Se valida contra app_superadmins en
+// Supabase (RLS: cada quien solo puede leer su propia fila), así que no
+// basta con conocer un correo — hay que estar autenticado como ese correo.
+let SUPERADMIN_CACHE=null; // null=no consultado, true/false=resultado ya conocido para la sesión actual
+async function isSuperAdmin(){
+  if(SUPERADMIN_CACHE!==null)return SUPERADMIN_CACHE;
+  if(!CURRENT_USER?.email){SUPERADMIN_CACHE=false;return false;}
+  const{data,error}=await sb.from('app_superadmins').select('email').eq('email',normalizeEmail(CURRENT_USER.email)).maybeSingle();
+  SUPERADMIN_CACHE=!error&&!!data;
+  return SUPERADMIN_CACHE;
+}
+async function showAdminTab(tab){
+  const panels={prices:qs('adminPricePanel'),usuarios:qs('adminUsuariosPanel'),reglas:qs('adminReglasPanel'),destacados:qs('adminDestacadosPanel'),settings:qs('adminSettingsPanel')};
+  const tabs={prices:qs('tabPrices'),usuarios:qs('tabUsuarios'),reglas:qs('tabReglas'),destacados:qs('tabDestacados'),settings:qs('tabSettings')};
+  if(!panels.prices)return;
+  Object.keys(panels).forEach(k=>{if(panels[k])panels[k].classList.toggle('hidden',tab!==k);if(tabs[k])tabs[k].className=(tab===k?'p mini':'s mini');});
+  if(tab==='settings'&&qs('settingsCompany'))qs('settingsCompany').value=SETTINGS.company_name||'';
+  if(tab==='usuarios'){renderAdminsList();renderOwnersList();renderAdminPdvList();await renderNivelesList();renderDistribuidoresList();}
+  if(tab==='reglas')initReglasNegocio();
+  if(tab==='destacados')fillBadgeInputs();
+}
+async function updateAdminTools(){
+  const gate=qs('adminGate'),tools=qs('adminTools'),tabs=qs('adminTabs'),pricePanel=qs('adminPricePanel'),settingsPanel=qs('adminSettingsPanel'),tabSettings=qs('tabSettings');
+  if(!gate||!tools)return;
+  SUPERADMIN_CACHE=null;
+  const allowed=isAdmin();const unlocked=await isAdminUnlocked();
+  gate.classList.toggle('hidden',!allowed||unlocked);tools.classList.toggle('hidden',!allowed||!unlocked);if(tabs)tabs.classList.toggle('hidden',!allowed||!unlocked);
+  if(allowed&&unlocked){
+    if(tabSettings){const soySuperAdmin=await isSuperAdmin();tabSettings.classList.toggle('hidden',!soySuperAdmin);}
+    showAdminTab('prices');
+  }else{
+    if(pricePanel)pricePanel.classList.add('hidden');if(settingsPanel)settingsPanel.classList.add('hidden');
+  }
+}
 async function unlockAdmin(){
   if(!isAdmin()){showToast('Acceso solo para administrador');return;}
   const pass=prompt('Ingresa tu contraseña de administrador (Supabase)');
@@ -1647,7 +1698,8 @@ qs('explorePrev').onclick=()=>{EXPLORE_PAGE--;renderExplore();};
 qs('exploreNext').onclick=()=>{EXPLORE_PAGE++;renderExplore();};
 qs('btnCloseOverlay').onclick=closeDestOverlay;qs('destOverlay').addEventListener('click',e=>{if(e.target.id==='destOverlay')closeDestOverlay();});
 qs('editRef').addEventListener('input',updateCurrentPriceDisplay);qs('editPrice').addEventListener('input',updateCurrentPriceDisplay);
-qs('tabPrices').onclick=()=>showAdminTab('prices');qs('tabSettings').onclick=()=>showAdminTab('settings');qs('tabDestacados').onclick=()=>showAdminTab('destacados');
+qs('tabPrices').onclick=()=>showAdminTab('prices');qs('tabUsuarios').onclick=()=>showAdminTab('usuarios');qs('tabReglas').onclick=()=>showAdminTab('reglas');qs('tabSettings').onclick=()=>showAdminTab('settings');qs('tabDestacados').onclick=()=>showAdminTab('destacados');
+qs('exportUsersTab').onclick=()=>downloadCSV('comercial_partner_registros.csv',readJSON(USERS_KEY,[]));qs('exportLogsTab').onclick=()=>downloadCSV('comercial_partner_uso.csv',readJSON(LOGS_KEY,[]));
 qs('btnSaveBadges').onclick=saveBadgeSettings;qs('btnAddFoco').onclick=()=>addDestacado('foco');qs('btnAddBs').onclick=()=>addDestacado('bestseller');qs('btnAddOf').onclick=()=>addDestacado('oferta');
 wireRefAutocomplete('focoRef','focoRefBox');wireRefAutocomplete('bsRef','bsRefBox');wireRefAutocomplete('ofRef','ofRefBox');
 wireRefAutocomplete('vcDisparadoraRef','vcDisparadoraRefBox');wireRefAutocomplete('vcSugeridaRef','vcSugeridaRefBox');
