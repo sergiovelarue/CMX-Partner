@@ -371,13 +371,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
     <div class="mini-status" id="adminsStatus"></div>
 
     <h5 style="margin:18px 0 6px;font-size:.88rem">🏢 Propietario de Distribuidor</h5>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Inicia sesión con código al correo. Asociado a un Distribuidor; no puede cambiar su nivel.</p>
-    <div class="inline-form">
-      <div><label>Correo del propietario</label><input id="newOwnerEmail" type="email" placeholder="nombre@distribuidor.com"></div>
-      <div><label>Distribuidor</label><select id="newOwnerDistribuidor"></select></div>
-      <div><button class="p mini" id="btnAddOwner" style="padding:12px 16px">Agregar propietario</button></div>
-    </div>
-    <p style="margin:6px 0 0;color:var(--muted);font-size:.76rem">Crea también su usuario en Supabase Auth (Authentication → Users) con el mismo correo.</p>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Se crea junto al distribuidor (sección Distribuidores, abajo). Aquí solo se lista.</p>
     <div id="ownersList" style="margin-top:10px"></div>
     <div class="mini-status" id="ownersStatus"></div>
 
@@ -417,12 +411,14 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
     <div class="mini-status" id="reglasStatus"></div>
 
     <h5 style="margin:18px 0 6px;font-size:.88rem">Distribuidores</h5>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Nace en Nivel 1; reasigna el nivel en la tabla. Usa un código no obvio.</p>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Nace en Nivel 1; reasigna el nivel en la tabla. Código no obvio: habilita también el registro de Admin PDV y Dependientes.</p>
     <div class="inline-form">
       <div><label>Nombre del distribuidor</label><input id="newDistNombre" placeholder="Ej: El Palacio Del Mueble"></div>
       <div><label>Código de distribuidor</label><input id="newDistCodigo" placeholder="Ej: PDM-7X2K"></div>
-      <div><button class="p mini" id="btnAddDist" style="padding:12px 16px">Crear distribuidor (Nivel 1)</button></div>
+      <div><label>Correo del propietario (opcional)</label><input id="newDistOwnerEmail" type="email" placeholder="nombre@distribuidor.com"></div>
+      <div><button class="p mini" id="btnAddDist" style="padding:12px 16px">Crear distribuidor</button></div>
     </div>
+    <p style="margin:6px 0 0;color:var(--muted);font-size:.76rem">Con correo: crea también al Propietario. Falta crear su usuario en Supabase Auth (Authentication → Users) con el mismo correo.</p>
     <div id="distribuidoresList" style="margin-top:10px"></div>
     <div class="mini-status" id="distribuidoresStatus"></div>
   </div>
@@ -554,14 +550,7 @@ async function removeAdminEmail(email){
   if(error){showToast('Error al quitar: '+error.message);return;}
   await reloadAdminEmails();await renderAdminsList();showToast('Administrador removido');
 }
-// ---- Administradores: Propietario de Distribuidor ----
-async function fillOwnerDistribuidorSelect(){
-  const sel=qs('newOwnerDistribuidor');if(!sel)return;
-  const{data,error}=await sb.from('distribuidores').select('id,nombre').eq('activo',true).order('nombre');
-  if(error){sel.innerHTML="<option value=''>No se pudo cargar distribuidores</option>";return;}
-  const dist=data||[];
-  sel.innerHTML=dist.length?dist.map(d=>`<option value='${d.id}'>${d.nombre}</option>`).join(''):"<option value=''>Crea primero un distribuidor en Reglas de negocio</option>";
-}
+// ---- Administradores: Propietario de Distribuidor (solo listado; se crea junto al distribuidor) ----
 async function renderOwnersList(){
   const el=qs('ownersList');if(!el)return;
   const{data,error}=await sb.from('perfiles_usuario').select('*, distribuidores(nombre)').eq('rol','propietario_distribuidor').order('created_at');
@@ -570,18 +559,6 @@ async function renderOwnersList(){
   if(!owners.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin propietarios registrados.</div>";return;}
   el.innerHTML=`<table class='preview-table'><tr><th>Correo</th><th>Distribuidor</th><th></th></tr>${owners.map(o=>`<tr><td class='mono'>${o.email}</td><td>${o.distribuidores?.nombre||'-'}</td><td><button class='rm-btn' data-id='${o.id}'>✕</button></td></tr>`).join('')}</table>`;
   el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeOwner(btn.dataset.id);});
-}
-async function addOwner(){
-  const email=normalizeEmail(qs('newOwnerEmail').value);
-  const distribuidorId=qs('newOwnerDistribuidor').value;
-  if(!isValidEmail(email)){setStatus('ownersStatus','Ingresa un correo válido.','err');return;}
-  if(!distribuidorId){setStatus('ownersStatus','Selecciona un distribuidor.','err');return;}
-  setStatus('ownersStatus','Guardando…','info');
-  const{error}=await sb.from('perfiles_usuario').insert({email,rol:'propietario_distribuidor',distribuidor_id:distribuidorId,created_by:CURRENT_USER?.email||'admin',updated_by:CURRENT_USER?.email||'admin'});
-  if(error){setStatus('ownersStatus','Error al guardar: '+error.message,'err');return;}
-  setStatus('ownersStatus','✅ Propietario agregado. Recuerda crear también su usuario en Supabase Auth (Authentication → Users).','ok');
-  qs('newOwnerEmail').value='';
-  await renderOwnersList();
 }
 async function removeOwner(id){
   if(!confirm('¿Quitar este propietario de distribuidor?'))return;
@@ -829,14 +806,26 @@ async function updateDistribuidorCampo(id,campo,valor){
 async function addDistribuidor(){
   const nombre=qs('newDistNombre').value.trim();
   const codigo=qs('newDistCodigo').value.trim().toUpperCase();
+  const ownerEmail=normalizeEmail(qs('newDistOwnerEmail').value);
   if(!nombre||!codigo){setStatus('distribuidoresStatus','Completa nombre y código de distribuidor.','err');return;}
+  if(ownerEmail&&!isValidEmail(ownerEmail)){setStatus('distribuidoresStatus','El correo del propietario no es válido.','err');return;}
   setStatus('distribuidoresStatus','Guardando…','info');
   const nivel1=NIVELES_CACHE.find(n=>n.nombre==='Nivel 1');
   if(!nivel1){setStatus('distribuidoresStatus','No se encontró Nivel 1. Verifica en la sección de arriba que exista un nivel llamado exactamente "Nivel 1".','err');return;}
-  const{error}=await sb.from('distribuidores').insert({nombre,codigo_distribuidor:codigo,nivel_descuento_id:nivel1.id,created_by:CURRENT_USER?.email||'admin',updated_by:CURRENT_USER?.email||'admin'});
+  const{data:nuevoDist,error}=await sb.from('distribuidores').insert({nombre,codigo_distribuidor:codigo,nivel_descuento_id:nivel1.id,created_by:CURRENT_USER?.email||'admin',updated_by:CURRENT_USER?.email||'admin'}).select().single();
   if(error){setStatus('distribuidoresStatus','Error al guardar: '+error.message,'err');return;}
-  setStatus('distribuidoresStatus','✅ Distribuidor creado en Nivel 1. Puedes reasignarle otro Nivel en la tabla de abajo si lo necesitas.','ok');
-  qs('newDistNombre').value='';qs('newDistCodigo').value='';
+  if(ownerEmail){
+    const{error:errOwner}=await sb.from('perfiles_usuario').insert({email:ownerEmail,rol:'propietario_distribuidor',distribuidor_id:nuevoDist.id,created_by:CURRENT_USER?.email||'admin',updated_by:CURRENT_USER?.email||'admin'});
+    if(errOwner){
+      const msg=/duplicate key|unique/i.test(errOwner.message)?'Distribuidor creado, pero ese correo ya está registrado con otro rol. Cámbialo desde la lista de Propietarios si corresponde.':'Distribuidor creado, pero falló el propietario: '+errOwner.message;
+      setStatus('distribuidoresStatus',msg,'err');qs('newDistNombre').value='';qs('newDistCodigo').value='';await renderDistribuidoresList();return;
+    }
+    setStatus('distribuidoresStatus','✅ Distribuidor y propietario creados. Falta crear el usuario en Supabase Auth (Authentication → Users) con el mismo correo.','ok');
+    await renderOwnersList();
+  }else{
+    setStatus('distribuidoresStatus','✅ Distribuidor creado en Nivel 1.','ok');
+  }
+  qs('newDistNombre').value='';qs('newDistCodigo').value='';qs('newDistOwnerEmail').value='';
   await renderDistribuidoresList();
 }
 async function removeDistribuidor(id){
@@ -856,7 +845,7 @@ async function initReglasNegocio(){
   await renderNivelesList();
   await renderDistribuidoresList();
 }
-function showAdminTab(tab){const pricePanel=qs('adminPricePanel'),settingsPanel=qs('adminSettingsPanel'),destPanel=qs('adminDestacadosPanel'),tp=qs('tabPrices'),ts=qs('tabSettings'),td=qs('tabDestacados');if(!pricePanel||!settingsPanel)return;pricePanel.classList.toggle('hidden',tab!=='prices');settingsPanel.classList.toggle('hidden',tab!=='settings');if(destPanel)destPanel.classList.toggle('hidden',tab!=='destacados');if(tp)tp.className=(tab==='prices'?'p mini':'s mini');if(ts)ts.className=(tab==='settings'?'p mini':'s mini');if(td)td.className=(tab==='destacados'?'p mini':'s mini');if(tab==='settings'&&qs('settingsCompany'))qs('settingsCompany').value=SETTINGS.company_name||'';if(tab==='settings'){renderAdminsList();fillOwnerDistribuidorSelect();renderOwnersList();renderAdminPdvList();initReglasNegocio();}if(tab==='destacados')fillBadgeInputs();}
+function showAdminTab(tab){const pricePanel=qs('adminPricePanel'),settingsPanel=qs('adminSettingsPanel'),destPanel=qs('adminDestacadosPanel'),tp=qs('tabPrices'),ts=qs('tabSettings'),td=qs('tabDestacados');if(!pricePanel||!settingsPanel)return;pricePanel.classList.toggle('hidden',tab!=='prices');settingsPanel.classList.toggle('hidden',tab!=='settings');if(destPanel)destPanel.classList.toggle('hidden',tab!=='destacados');if(tp)tp.className=(tab==='prices'?'p mini':'s mini');if(ts)ts.className=(tab==='settings'?'p mini':'s mini');if(td)td.className=(tab==='destacados'?'p mini':'s mini');if(tab==='settings'&&qs('settingsCompany'))qs('settingsCompany').value=SETTINGS.company_name||'';if(tab==='settings'){renderAdminsList();renderOwnersList();renderAdminPdvList();initReglasNegocio();}if(tab==='destacados')fillBadgeInputs();}
 async function updateAdminTools(){const gate=qs('adminGate'),tools=qs('adminTools'),tabs=qs('adminTabs'),pricePanel=qs('adminPricePanel'),settingsPanel=qs('adminSettingsPanel');if(!gate||!tools)return;const allowed=isAdmin();const unlocked=await isAdminUnlocked();gate.classList.toggle('hidden',!allowed||unlocked);tools.classList.toggle('hidden',!allowed||!unlocked);if(tabs)tabs.classList.toggle('hidden',!allowed||!unlocked);if(allowed&&unlocked){showAdminTab('prices');}else{if(pricePanel)pricePanel.classList.add('hidden');if(settingsPanel)settingsPanel.classList.add('hidden');}}
 async function unlockAdmin(){
   if(!isAdmin()){showToast('Acceso solo para administrador');return;}
@@ -1605,7 +1594,6 @@ wireRefAutocomplete('vcDisparadoraRef','vcDisparadoraRefBox');wireRefAutocomplet
 qs('btnAddVentaCruzada').onclick=addVentaCruzada;
 qs('btnSaveCompany').onclick=async()=>{const raw=qs('settingsCompany').value.trim();if(!raw){setStatus('companyStatus','Ingresa un nombre de empresa.','err');return;}const company=raw.toUpperCase();setStatus('companyStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({company_name:company,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('companyStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.company_name=company;qs('settingsCompany').value=company;applyCompanyName();setStatus('companyStatus','✅ Empresa contratante actualizada para todos los usuarios.','ok');};
 qs('btnAddAdmin').onclick=addAdminEmail;
-qs('btnAddOwner').onclick=addOwner;
 qs('btnAddNivel').onclick=addNivel;
 qs('newNivelTipo').onchange=onNivelTipoChange;
 onNivelTipoChange();
