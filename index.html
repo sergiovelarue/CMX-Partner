@@ -1142,13 +1142,18 @@ function showMainTab(tab){
 // Auth ni está en app_admins) — en su lugar ve esta pestaña propia, filtrada
 // a su distribuidor, con las mismas acciones de activar/bloquear/eliminar.
 function esPropietarioConEquipo(user=CURRENT_USER){
-  // Se excluye explícitamente a Administrador y a Vendedor/Admin de la empresa
-  // contratante: un correo pudo haber quedado con perfilRol/distribuidorId
-  // residual en localStorage de un registro anterior como Propietario, y no
-  // debe filtrarse a otros roles ni mezclarse con el panel de Usuarios.
+  // "Mi equipo" es exclusiva del Propietario de Distribuidor. Se exige doble
+  // coincidencia —el cargo visible elegido en el formulario (user.role) Y el
+  // rol operativo devuelto por la base de datos (user.perfilRol)— porque
+  // localStorage puede quedar con datos de un registro anterior (otro rol,
+  // u otra sesión en el mismo dispositivo) si no se completó un registro
+  // limpio después de un cambio de código o de cargo. Si cualquiera de los
+  // dos no es exactamente "propietario", no se muestra la pestaña.
   if(String(user?.role||'').toLowerCase()==='administrador')return false;
   if(user?.esEmpresaContratante)return false;
-  return String(user?.perfilRol||'').toLowerCase()==='propietario_distribuidor'&&!!user?.distribuidorId;
+  const rolTexto=String(user?.role||'').toLowerCase();
+  const perfilRol=String(user?.perfilRol||'').toLowerCase();
+  return rolTexto.includes('propietario')&&perfilRol==='propietario_distribuidor'&&!!user?.distribuidorId;
 }
 async function renderMiEquipo(){
   if(!esPropietarioConEquipo())return;
@@ -1241,6 +1246,18 @@ async function loginConPassword(){
   qs('regMsg').textContent='';
   const users=readJSON(USERS_KEY,[]);const idx=users.findIndex(u=>(u.email||'').toLowerCase()===user.email.toLowerCase());if(idx>=0){user.registeredAt=users[idx].registeredAt;users[idx]={...users[idx],...user};}else users.push(user);writeJSON(USERS_KEY,users);writeJSON(USER_KEY,user);showApp(user);showToast('Acceso activado');
 }
+// Envuelve una promesa de Supabase con un límite de tiempo: si la red falla o
+// la conexión queda colgada a mitad de una consulta, esto evita que la
+// pantalla de registro se quede indefinidamente en "Validando…" sin mostrar
+// ningún mensaje al usuario. Devuelve {data:null,error:{message}} en caso de
+// timeout, con la misma forma que devuelve Supabase-js, para que el código
+// que lo consume no necesite cambiar su manejo de errores.
+function conTimeout(promesa,ms=15000){
+  return Promise.race([
+    promesa,
+    new Promise(resolve=>setTimeout(()=>resolve({data:null,error:{message:'Tiempo de espera agotado. Verifica tu conexión a internet e intenta de nuevo.'}}),ms))
+  ]);
+}
 async function activate(){
 const user={name:qs('regName').value.trim(),phone:normalizeColombiaPhone(qs('regPhone').value),email:normalizeEmail(qs('regEmail').value),company:qs('regCompany').value.trim(),city:qs('regCity').value.trim(),store:qs('regStore').value.trim(),role:qs('regRole').value,codigoDistribuidor:qs('regCodigoDistribuidor').value.trim().toUpperCase(),consent:qs('regConsent').checked,registeredAt:new Date().toISOString(),lastAccess:new Date().toISOString()};
 const required=['name','phone','email','company','city','role'];const missing=required.some(k=>!user[k]);if(missing||!user.consent){qs('regMsg').textContent='Completa todos los campos obligatorios y acepta la autorización de tratamiento de datos.';return;}if(!isValidEmail(user.email)){qs('regMsg').textContent='Ingresa un correo electrónico válido. Ejemplo: nombre@empresa.com';qs('regEmail').focus();return;}if(!isValidColombiaMobile(user.phone)){qs('regMsg').textContent='Ingresa un celular colombiano válido de 10 dígitos. Ejemplo: 3001234567';qs('regPhone').focus();return;}
@@ -1249,26 +1266,34 @@ if(rolLower==='vendedor'){
   if(!user.codigoDistribuidor){qs('regMsg').textContent='Ingresa el código de distribuidor, o el código de vendedor de la empresa si no perteneces a un distribuidor.';return;}
   qs('regMsg').style.color='var(--muted)';qs('regMsg').textContent='Validando código…';
   // 1) ¿Es un código de distribuidor real? Se prueba primero porque es la ruta más común.
-  const{data:dist}=await sb.from('distribuidores').select('id,nombre').eq('codigo_distribuidor',user.codigoDistribuidor).eq('activo',true).maybeSingle();
+  const{data:dist,error:distErr}=await conTimeout(sb.from('distribuidores').select('id,nombre').eq('codigo_distribuidor',user.codigoDistribuidor).eq('activo',true).maybeSingle());
+  if(distErr){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent=distErr.message;return;}
   if(dist){
-    const{data:perfil,error:perfilErr}=await sb.rpc('registrar_perfil_operativo',{p_email:user.email,p_rol:'vendedor',p_codigo_distribuidor:user.codigoDistribuidor,p_punto_venta:user.store||null,p_telefono:user.phone||null});
+    const{data:perfil,error:perfilErr}=await conTimeout(sb.rpc('registrar_perfil_operativo',{p_email:user.email,p_rol:'vendedor',p_codigo_distribuidor:user.codigoDistribuidor,p_punto_venta:user.store||null,p_telefono:user.phone||null}));
     if(perfilErr){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Código de distribuidor no válido: '+perfilErr.message;return;}
     user.perfilRol='vendedor';user.distribuidorId=perfil.distribuidor_id;user.distribuidorNombre=dist.nombre;user.esEmpresaContratante=false;
   }else{
     // 2) ¿Es el código de vendedor de la empresa contratante?
-    const{data:esValido}=await sb.rpc('validar_vendedor_empresa',{p_email:user.email,p_telefono:user.phone,p_codigo:user.codigoDistribuidor}).catch(()=>({data:false}));
-    if(!esValido){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Código no válido. Verifica el código de distribuidor o de vendedor de la empresa.';return;}
+    // La RPC devuelve el motivo exacto (no solo true/false) para poder guiar
+    // al usuario con una acción concreta según lo que realmente falló, en vez
+    // de un "código no válido" genérico que confunde cuando el código sí era
+    // correcto y lo que falta es la autorización previa del administrador.
+    const{data:motivo,error:validarErr}=await conTimeout(sb.rpc('validar_vendedor_empresa_v2',{p_email:user.email,p_telefono:user.phone,p_codigo:user.codigoDistribuidor})).catch(()=>({data:'codigo',error:null}));
+    if(validarErr){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent=validarErr.message;return;}
+    if(motivo==='codigo'){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='El código ingresado no es válido. Verifica el código de distribuidor o de vendedor de la empresa con quien te lo entregó.';return;}
+    if(motivo==='no_autorizado'){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='El código es correcto, pero aún no tienes autorización como vendedor. Solicita al administrador de la plataforma que registre tu correo y celular en la sección Vendedores, y vuelve a intentar.';return;}
+    if(motivo==='bloqueado'){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Tu acceso como vendedor está bloqueado. Contacta al administrador de la plataforma para reactivarlo.';return;}
     user.perfilRol='vendedor';user.esEmpresaContratante=true;user.distribuidorId=null;
-    const{data:settingsNivel}=await sb.from('app_settings').select('nivel_vendedor_empresa_id').eq('id',1).maybeSingle();
+    const{data:settingsNivel}=await conTimeout(sb.from('app_settings').select('nivel_vendedor_empresa_id').eq('id',1).maybeSingle());
     user.nivelEmpresaId=settingsNivel?.nivel_vendedor_empresa_id||null;
   }
 }else if(rolLower!=='vendedor'&&user.codigoDistribuidor){
   const rolRpc=rolLower.includes('administrador pdv')?'admin_pdv':rolLower.includes('propietario')?'propietario_distribuidor':'dependiente';
   qs('regMsg').style.color='var(--muted)';qs('regMsg').textContent='Validando código de distribuidor…';
-  const{data:perfil,error:perfilErr}=await sb.rpc('registrar_perfil_operativo',{p_email:user.email,p_rol:rolRpc,p_codigo_distribuidor:user.codigoDistribuidor,p_punto_venta:user.store||null,p_telefono:user.phone||null});
+  const{data:perfil,error:perfilErr}=await conTimeout(sb.rpc('registrar_perfil_operativo',{p_email:user.email,p_rol:rolRpc,p_codigo_distribuidor:user.codigoDistribuidor,p_punto_venta:user.store||null,p_telefono:user.phone||null}));
   if(perfilErr){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Código de distribuidor no válido: '+perfilErr.message;return;}
   user.perfilRol=perfil.rol;user.distribuidorId=perfil.distribuidor_id;
-  const{data:dist}=await sb.from('distribuidores').select('nombre').eq('id',perfil.distribuidor_id).maybeSingle();
+  const{data:dist}=await conTimeout(sb.from('distribuidores').select('nombre').eq('id',perfil.distribuidor_id).maybeSingle());
   user.distribuidorNombre=dist?.nombre||'';
 }
 qs('regMsg').textContent='';
