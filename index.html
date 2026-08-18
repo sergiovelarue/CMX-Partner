@@ -293,6 +293,41 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
     <div id='overlayContent'></div>
   </div>
 </div>
+<div id='soporteOverlay' class='overlay-backdrop hidden'>
+  <div class='overlay-panel'>
+    <div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:10px'>
+      <h3 style='margin:0;color:var(--brand)'>💬 Soporte y sugerencias</h3>
+      <button class='s mini' id='btnCloseSoporte'>✕ Cerrar</button>
+    </div>
+    <div id='soporteTipoPicker'>
+      <p style="margin:0 0 14px;color:var(--muted);font-size:.86rem">Tu opinión nos ayuda a mejorar la aplicación. Elige qué quieres hacer:</p>
+      <div style="display:grid;gap:10px">
+        <button class='s' id='btnSoporteProblema' style="text-align:left;padding:14px 16px">🐞 <b>Reportar un problema</b><br><span style="font-size:.8rem;color:var(--muted)">Algo no funciona como debería</span></button>
+        <button class='s' id='btnSoporteSugerencia' style="text-align:left;padding:14px 16px">💡 <b>Sugerir una mejora</b><br><span style="font-size:.8rem;color:var(--muted)">Tienes una idea para la aplicación</span></button>
+        <button class='s' id='btnSoporteCalificacion' style="text-align:left;padding:14px 16px">⭐ <b>Calificar la aplicación</b><br><span style="font-size:.8rem;color:var(--muted)">Cuéntanos cómo ha sido tu experiencia</span></button>
+      </div>
+    </div>
+    <div id='soporteFormWrap' class='hidden'>
+      <button class='s mini' id='btnSoporteVolver' style="margin-bottom:12px">← Volver</button>
+      <div id='soporteFormTitulo' style="font-weight:600;color:var(--brand);margin-bottom:10px"></div>
+      <div id='soporteEstrellasWrap' class='hidden' style="margin-bottom:14px;font-size:1.6rem;letter-spacing:6px;cursor:pointer" data-valor="0">
+        <span data-star="1">☆</span><span data-star="2">☆</span><span data-star="3">☆</span><span data-star="4">☆</span><span data-star="5">☆</span>
+      </div>
+      <div id='soporteMensajeWrap'>
+        <label>Cuéntanos con detalle</label>
+        <textarea id='soporteMensaje' rows="4" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:3px;font-size:.92rem;font-family:inherit" placeholder="Ej: Al consultar la referencia X123 no aparece el precio."></textarea>
+      </div>
+      <p style="margin:10px 0 0;color:var(--muted);font-size:.78rem">Tus datos de contacto (nombre, correo, rol) se incluyen automáticamente para que podamos responderte.</p>
+      <div style="margin-top:14px"><button class='p' id='btnSoporteEnviar' style="padding:12px 20px">Enviar</button></div>
+      <div class="mini-status" id="soporteStatus"></div>
+    </div>
+    <div id='soporteGracias' class='hidden' style="text-align:center;padding:20px 0">
+      <div style="font-size:2.2rem;margin-bottom:10px">✅</div>
+      <h4 style="margin:0 0 8px;color:var(--brand)">¡Gracias por tu mensaje!</h4>
+      <p style="margin:0;color:var(--muted);font-size:.9rem">Lo revisaremos pronto. Si dejaste tu correo, te responderemos ahí.</p>
+    </div>
+  </div>
+</div>
 <div class="admin-tabs hidden" id="adminTabs">
   <button class="p mini" id="tabPrices">💲 Precios</button>
   <button class="s mini" id="tabUsuarios">👥 Usuarios</button>
@@ -447,6 +482,17 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
       <button class="s mini" id="exportLogsTab">Exportar uso CSV</button>
     </div>
   </div>
+
+  <div class="admin-sub" id="soporteAdminSub">
+    <h4>💬 Reportes, sugerencias y calificaciones</h4>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Mensajes enviados por los usuarios desde el botón de soporte. Los reportes te permiten actuar rápido y mantener la aplicación mejorando con el uso real.</p>
+    <div class="inline-form">
+      <div><label>Filtrar por tipo</label><select id="soporteFiltroTipo"><option value="">Todos</option><option value="problema">Problemas</option><option value="sugerencia">Sugerencias</option><option value="calificacion">Calificaciones</option></select></div>
+      <div><label>Filtrar por estado</label><select id="soporteFiltroEstado"><option value="">Todos</option><option value="nuevo">Nuevo</option><option value="en_revision">En revisión</option><option value="resuelto">Resuelto</option><option value="descartado">Descartado</option></select></div>
+    </div>
+    <div id="soporteAdminList" style="margin-top:10px"></div>
+    <div class="mini-status" id="soporteAdminStatus"></div>
+  </div>
 </div>
 <div class='card admin-panel hidden' id='adminReglasPanel'>
   <h3>📊 Reglas de negocio</h3>
@@ -597,7 +643,9 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
     <div class="mini-status" id="vcStatus"></div>
   </div>
 </div>
-<div class='footer'><span id="footerDistribText">Herramienta para distribuidores autorizados.</span> Información de referencia comercial. Derechos reservados.<div class='admin-gate hidden' id='adminGate'><button class='s mini' id='adminLogin'>🔒 Acceso administrador</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Visible solo para correos administradores autorizados.</span></div><div class='admin-tools hidden' id='adminTools'><button class='s mini' id='exportUsers'>Exportar registros CSV</button><button class='s mini' id='exportLogs'>Exportar uso CSV</button><button class='s mini' id='adminLogout'>Bloquear descargas</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Descargas habilitadas para administrador validado.</span></div><div style="margin-top:10px;font-size:.74rem;color:#a9b4c2">© ListaLoop B2B — Propiedad intelectual exclusiva de Sergio Velásquez. Prohibida su copia, distribución o modificación sin autorización expresa. El uso por usuarios o empresas contratantes se rige por las condiciones contractuales autorizadas por Sergio Velásquez.<span style="float:right;opacity:.45">23:1</span></div></div>
+<div class='footer'><span id="footerDistribText">Herramienta para distribuidores autorizados.</span> Información de referencia comercial. Derechos reservados.
+  <div style="margin-top:10px"><button class='s mini' id='btnAbrirSoporte'>💬 Reportar un problema, sugerir una mejora o calificar la app</button></div>
+  <div class='admin-gate hidden' id='adminGate'><button class='s mini' id='adminLogin'>🔒 Acceso administrador</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Visible solo para correos administradores autorizados.</span></div><div class='admin-tools hidden' id='adminTools'><button class='s mini' id='exportUsers'>Exportar registros CSV</button><button class='s mini' id='exportLogs'>Exportar uso CSV</button><button class='s mini' id='adminLogout'>Bloquear descargas</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Descargas habilitadas para administrador validado.</span></div><div style="margin-top:10px;font-size:.74rem;color:#a9b4c2">© ListaLoop B2B — Propiedad intelectual exclusiva de Sergio Velásquez. Prohibida su copia, distribución o modificación sin autorización expresa. El uso por usuarios o empresas contratantes se rige por las condiciones contractuales autorizadas por Sergio Velásquez.<span style="float:right;opacity:.45">23:1</span></div></div>
 </div><div id='toast'>Copiado</div>
 <script>
 const CONFIG_FILE="cmx30_app_config.json";
@@ -1104,7 +1152,7 @@ async function showAdminTab(tab){
   if(!panels.prices)return;
   Object.keys(panels).forEach(k=>{if(panels[k])panels[k].classList.toggle('hidden',tab!==k);if(tabs[k])tabs[k].className=(tab===k?'p mini':'s mini');});
   if(tab==='settings'&&qs('settingsCompany'))qs('settingsCompany').value=SETTINGS.company_name||'';
-  if(tab==='usuarios'){renderAdminsList();renderOwnersList();renderAdminPdvList();renderDependientesList();renderVendDistList();await renderNivelesList();renderDistribuidoresList();loadCodigoVendedor();renderVendedoresList();}
+  if(tab==='usuarios'){renderAdminsList();renderOwnersList();renderAdminPdvList();renderDependientesList();renderVendDistList();await renderNivelesList();renderDistribuidoresList();loadCodigoVendedor();renderVendedoresList();renderSoporteAdminList();}
   if(tab==='reglas')initReglasNegocio();
   if(tab==='destacados')fillBadgeInputs();
 }
@@ -2052,6 +2100,134 @@ qs('btnSaveLimites').onclick=async()=>{
   Object.assign(SETTINGS,payload);
   setStatus('limitesStatus','✅ Límites actualizados. Aplican de inmediato para toda la plataforma.','ok');
 };
+// ===== Canal de soporte: reportar problema / sugerir mejora / calificar =====
+// Accesible para cualquier usuario (con o sin sesión, cualquier rol), desde
+// el botón del footer. El contexto (correo, rol, distribuidor, pantalla) se
+// toma automáticamente de CURRENT_USER para no pedirle al usuario datos que
+// la app ya conoce, y para que el administrador pueda actuar sin perseguirlo.
+let SOPORTE_TIPO_ACTUAL=null;
+let SOPORTE_CALIFICACION_ACTUAL=0;
+function abrirSoporte(){
+  qs('soporteOverlay').classList.remove('hidden');
+  qs('soporteTipoPicker').classList.remove('hidden');
+  qs('soporteFormWrap').classList.add('hidden');
+  qs('soporteGracias').classList.add('hidden');
+  SOPORTE_TIPO_ACTUAL=null;SOPORTE_CALIFICACION_ACTUAL=0;
+}
+function cerrarSoporte(){qs('soporteOverlay').classList.add('hidden');}
+function abrirFormularioSoporte(tipo){
+  SOPORTE_TIPO_ACTUAL=tipo;SOPORTE_CALIFICACION_ACTUAL=0;
+  qs('soporteTipoPicker').classList.add('hidden');
+  qs('soporteFormWrap').classList.remove('hidden');
+  qs('soporteStatus').className='mini-status';qs('soporteStatus').textContent='';
+  qs('soporteMensaje').value='';
+  const titulos={problema:'🐞 Reportar un problema',sugerencia:'💡 Sugerir una mejora',calificacion:'⭐ Calificar la aplicación'};
+  qs('soporteFormTitulo').textContent=titulos[tipo]||'';
+  qs('soporteEstrellasWrap').classList.toggle('hidden',tipo!=='calificacion');
+  qs('soporteMensajeWrap').querySelector('label').textContent=tipo==='calificacion'?'Cuéntanos más (opcional)':'Cuéntanos con detalle';
+  qs('soporteMensaje').required=tipo!=='calificacion';
+  pintarEstrellas(0);
+}
+function pintarEstrellas(valor){
+  SOPORTE_CALIFICACION_ACTUAL=valor;
+  qs('soporteEstrellasWrap').dataset.valor=valor;
+  qs('soporteEstrellasWrap').querySelectorAll('span').forEach(s=>{
+    s.textContent=Number(s.dataset.star)<=valor?'★':'☆';
+    s.style.color=Number(s.dataset.star)<=valor?'var(--brand2)':'inherit';
+  });
+}
+async function enviarSoporte(){
+  const tipo=SOPORTE_TIPO_ACTUAL;
+  if(!tipo)return;
+  const mensaje=qs('soporteMensaje').value.trim();
+  if(tipo==='calificacion'&&SOPORTE_CALIFICACION_ACTUAL<1){setStatus('soporteStatus','Selecciona una calificación de 1 a 5 estrellas.','err');return;}
+  if(tipo!=='calificacion'&&!mensaje){setStatus('soporteStatus','Cuéntanos brevemente qué pasó o qué sugieres.','err');return;}
+  setStatus('soporteStatus','Enviando…','info');
+  const pantallaActual=(()=>{
+    if(!qs('viewConsultar').classList.contains('hidden'))return 'Consultar';
+    if(!qs('viewCotizacion').classList.contains('hidden'))return 'Cotización';
+    if(!qs('viewDestacados').classList.contains('hidden'))return 'Destacados';
+    if(qs('viewMiEquipo')&&!qs('viewMiEquipo').classList.contains('hidden'))return 'Mi equipo';
+    return 'Registro/Acceso';
+  })();
+  const{error}=await sb.rpc('enviar_reporte_soporte',{
+    p_tipo:tipo,
+    p_nombre:CURRENT_USER?.name||null,
+    p_email:CURRENT_USER?.email||null,
+    p_telefono:CURRENT_USER?.phone||null,
+    p_rol:CURRENT_USER?.perfilRol||CURRENT_USER?.role||null,
+    p_distribuidor_nombre:CURRENT_USER?.distribuidorNombre||(CURRENT_USER?.esEmpresaContratante?(SETTINGS.company_name||null):null),
+    p_pantalla_actual:pantallaActual,
+    p_mensaje:mensaje||null,
+    p_calificacion:tipo==='calificacion'?SOPORTE_CALIFICACION_ACTUAL:null
+  });
+  if(error){setStatus('soporteStatus','No se pudo enviar: '+error.message,'err');return;}
+  qs('soporteFormWrap').classList.add('hidden');
+  qs('soporteGracias').classList.remove('hidden');
+}
+qs('btnAbrirSoporte').onclick=abrirSoporte;
+qs('btnCloseSoporte').onclick=cerrarSoporte;
+qs('soporteOverlay').addEventListener('click',e=>{if(e.target.id==='soporteOverlay')cerrarSoporte();});
+qs('btnSoporteProblema').onclick=()=>abrirFormularioSoporte('problema');
+qs('btnSoporteSugerencia').onclick=()=>abrirFormularioSoporte('sugerencia');
+qs('btnSoporteCalificacion').onclick=()=>abrirFormularioSoporte('calificacion');
+qs('btnSoporteVolver').onclick=()=>{qs('soporteFormWrap').classList.add('hidden');qs('soporteTipoPicker').classList.remove('hidden');};
+qs('btnSoporteEnviar').onclick=enviarSoporte;
+qs('soporteEstrellasWrap').querySelectorAll('span').forEach(s=>{s.onclick=()=>pintarEstrellas(Number(s.dataset.star));});
+
+// ---- Panel de gestión (Administrador / Superadministrador, en Ajustes Generales) ----
+async function renderSoporteAdminList(){
+  const el=qs('soporteAdminList');if(!el)return;
+  const tipo=qs('soporteFiltroTipo').value,estado=qs('soporteFiltroEstado').value;
+  let q=sb.from('reportes_soporte').select('*').order('created_at',{ascending:false});
+  if(tipo)q=q.eq('tipo',tipo);
+  if(estado)q=q.eq('estado',estado);
+  const{data,error}=await q;
+  if(error){el.innerHTML="<div class='empty'>No se pudo cargar (solo visible para Administrador).</div>";return;}
+  const filas=data||[];
+  if(!filas.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin reportes con este filtro.</div>";return;}
+  const iconos={problema:'🐞',sugerencia:'💡',calificacion:'⭐'};
+  const estados={nuevo:'Nuevo',en_revision:'En revisión',resuelto:'Resuelto',descartado:'Descartado'};
+  el.innerHTML=filas.map(r=>`
+    <div class="card" style="margin-bottom:10px;padding:14px">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px">
+        <div><b>${iconos[r.tipo]||''} ${r.tipo==='calificacion'?('★'.repeat(r.calificacion||0)+'☆'.repeat(5-(r.calificacion||0))):r.tipo}</b></div>
+        <span class="mono" style="font-size:.76rem;color:var(--muted)">${new Date(r.created_at).toLocaleString('es-CO')}</span>
+      </div>
+      ${r.mensaje?`<p style="margin:0 0 8px;font-size:.9rem">${r.mensaje.replace(/</g,'&lt;')}</p>`:''}
+      <div style="font-size:.78rem;color:var(--muted);margin-bottom:8px">
+        ${r.nombre||'Anónimo'} ${r.email?`· ${r.email}`:''} ${r.telefono?`· ${r.telefono}`:''}<br>
+        ${r.rol?`Rol: ${r.rol}`:''} ${r.distribuidor_nombre?`· ${r.distribuidor_nombre}`:''} ${r.pantalla_actual?`· Pantalla: ${r.pantalla_actual}`:''}
+      </div>
+      <div class="inline-form" style="margin:0">
+        <div><select class='soporte-estado-select' data-id='${r.id}'>
+          <option value='nuevo' ${r.estado==='nuevo'?'selected':''}>Nuevo</option>
+          <option value='en_revision' ${r.estado==='en_revision'?'selected':''}>En revisión</option>
+          <option value='resuelto' ${r.estado==='resuelto'?'selected':''}>Resuelto</option>
+          <option value='descartado' ${r.estado==='descartado'?'selected':''}>Descartado</option>
+        </select></div>
+        <div><button class='rm-btn soporte-eliminar' data-id='${r.id}'>✕ Eliminar</button></div>
+      </div>
+    </div>`).join('');
+  el.querySelectorAll('.soporte-estado-select').forEach(sel=>{
+    sel.onchange=async()=>{
+      const{error}=await sb.rpc('actualizar_reporte_soporte',{p_id:sel.dataset.id,p_estado:sel.value,p_actualizado_por:CURRENT_USER?.email||'admin'});
+      if(error){setStatus('soporteAdminStatus','Error: '+error.message,'err');return;}
+      setStatus('soporteAdminStatus','✅ Estado actualizado.','ok');
+    };
+  });
+  el.querySelectorAll('.soporte-eliminar').forEach(btn=>{
+    btn.onclick=async()=>{
+      if(!confirm('¿Eliminar este reporte definitivamente?'))return;
+      const{error}=await sb.from('reportes_soporte').delete().eq('id',btn.dataset.id);
+      if(error){setStatus('soporteAdminStatus','Error al eliminar: '+error.message,'err');return;}
+      await renderSoporteAdminList();
+    };
+  });
+}
+qs('soporteFiltroTipo').addEventListener('change',renderSoporteAdminList);
+qs('soporteFiltroEstado').addEventListener('change',renderSoporteAdminList);
+
 const savedUser=readJSON(USER_KEY,null);if(savedUser&&savedUser.consent)showApp(savedUser);else showRegister();
 init();
 </script></body></html>
