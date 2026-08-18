@@ -1266,8 +1266,11 @@ if(rolLower==='vendedor'){
   if(!user.codigoDistribuidor){qs('regMsg').textContent='Ingresa el código de distribuidor, o el código de vendedor de la empresa si no perteneces a un distribuidor.';return;}
   qs('regMsg').style.color='var(--muted)';qs('regMsg').textContent='Validando código…';
   // 1) ¿Es un código de distribuidor real? Se prueba primero porque es la ruta más común.
-  const{data:dist,error:distErr}=await conTimeout(sb.from('distribuidores').select('id,nombre').eq('codigo_distribuidor',user.codigoDistribuidor).eq('activo',true).maybeSingle());
+  // Se usa una RPC (no SELECT directo) porque la tabla distribuidores ya no
+  // tiene lectura pública: solo expone la búsqueda puntual por código.
+  const{data:distRows,error:distErr}=await conTimeout(sb.rpc('buscar_distribuidor_por_codigo',{p_codigo:user.codigoDistribuidor}));
   if(distErr){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent=distErr.message;return;}
+  const dist=distRows&&distRows[0]?distRows[0]:null;
   if(dist){
     const{data:perfil,error:perfilErr}=await conTimeout(sb.rpc('registrar_perfil_operativo',{p_email:user.email,p_rol:'vendedor',p_codigo_distribuidor:user.codigoDistribuidor,p_punto_venta:user.store||null,p_telefono:user.phone||null}));
     if(perfilErr){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Código de distribuidor no válido: '+perfilErr.message;return;}
@@ -1293,8 +1296,8 @@ if(rolLower==='vendedor'){
   const{data:perfil,error:perfilErr}=await conTimeout(sb.rpc('registrar_perfil_operativo',{p_email:user.email,p_rol:rolRpc,p_codigo_distribuidor:user.codigoDistribuidor,p_punto_venta:user.store||null,p_telefono:user.phone||null}));
   if(perfilErr){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Código de distribuidor no válido: '+perfilErr.message;return;}
   user.perfilRol=perfil.rol;user.distribuidorId=perfil.distribuidor_id;
-  const{data:dist}=await conTimeout(sb.from('distribuidores').select('nombre').eq('id',perfil.distribuidor_id).maybeSingle());
-  user.distribuidorNombre=dist?.nombre||'';
+  const{data:nombreDist}=await conTimeout(sb.rpc('obtener_nombre_distribuidor',{p_distribuidor_id:perfil.distribuidor_id}));
+  user.distribuidorNombre=nombreDist||'';
 }
 qs('regMsg').textContent='';
 const users=readJSON(USERS_KEY,[]);const idx=users.findIndex(u=>(u.email||'').toLowerCase()===user.email.toLowerCase()||(u.phone&&normalizeColombiaPhone(u.phone)===user.phone));if(idx>=0){user.registeredAt=users[idx].registeredAt;users[idx]={...users[idx],...user};}else users.push(user);writeJSON(USERS_KEY,users);writeJSON(USER_KEY,user);showApp(user);showToast('Acceso activado');}
@@ -1347,9 +1350,9 @@ async function loadRulesForUser(user=CURRENT_USER){
   NIVEL_ACTUAL_ID=null;MARGEN_CACHE=new Map();
   if(user?.esEmpresaContratante&&user?.nivelEmpresaId){NIVEL_ACTUAL_ID=user.nivelEmpresaId;return;}
   if(!user?.distribuidorId)return;
-  const{data:dist,error:distErr}=await sb.from('distribuidores').select('nivel_descuento_id').eq('id',user.distribuidorId).maybeSingle();
-  if(distErr||!dist?.nivel_descuento_id){console.warn('No se pudo resolver el nivel de descuento del distribuidor, se usa Nivel 1 por defecto.');return;}
-  NIVEL_ACTUAL_ID=dist.nivel_descuento_id;
+  const{data:nivelId,error:distErr}=await sb.rpc('obtener_nivel_distribuidor',{p_distribuidor_id:user.distribuidorId});
+  if(distErr||!nivelId){console.warn('No se pudo resolver el nivel de descuento del distribuidor, se usa Nivel 1 por defecto.');return;}
+  NIVEL_ACTUAL_ID=nivelId;
 }
 const find=q=>{q=normalize(q);if(!q)return null;if(byRef.has(q))return byRef.get(q);return DATA.find(x=>x.search.includes(q));};
 const sugg=q=>{q=normalize(q);if(!q)return[];return DATA.filter(x=>x.search.includes(q)).slice(0,8);};
