@@ -54,6 +54,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 @media(max-width:760px){.partner-box,.reg-grid{grid-template-columns:1fr}.partner-screen{align-items:flex-start}.partner-hero h1{font-size:1.5rem}.userbar{display:block}.userbar button{margin-top:8px}}
 
 @media(max-width:760px){.grid,.prices,.row{grid-template-columns:1fr}.hero h1{font-size:1.3rem}}
+.app-version-tag{display:inline-block;vertical-align:middle;font-size:.62em;font-weight:600;letter-spacing:.3px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:2px 10px;margin-left:8px;opacity:.9}
 .version-badge{display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid rgba(255,255,255,.3);border-radius:3px;padding:5px 12px;font-size:.76rem;margin-top:10px;letter-spacing:.2px}
 .version-badge.stale{background:transparent;color:#f0d68a;border-color:#f0d68a}
 .precios-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#eaf6ee;border:1px solid var(--ok);color:#1a5c33;border-radius:3px;padding:10px 14px;margin:10px 0;font-size:.86rem}
@@ -198,7 +199,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div class="userbar"><div>Acceso activo: <b id="activeUser">-</b><span id="activeRoleWrap"> · <span id="activeRole"></span></span><span id="activeCompanyWrap"> · <span id="activeCompany"></span></span></div><button class="linkbtn" id="changeUser">Cambiar usuario</button></div>
 <div class='hero'>
 <div id="logoWrap" class="logo-wrap hidden"><img id="companyLogo" alt="Logo empresa"></div>
-<h1 id='appName'>ListaLoop B2B</h1>
+<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v1.32.0</span></h1>
 <details id='heroDetails'>
 <summary>Ver información de la plataforma</summary>
 <p id='introText' style="margin-top:10px">Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.</p>
@@ -683,7 +684,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 </div>
 <div class='footer'><span id="footerDistribText">Herramienta para distribuidores autorizados.</span> Información de referencia comercial. Derechos reservados.
   <div style="margin-top:10px"><button class='s mini' id='btnAbrirSoporte'>💬 Reportar un problema, sugerir una mejora o calificar la app</button></div>
-  <div class='admin-gate hidden' id='adminGate'><button class='s mini' id='adminLogin'>🔒 Acceso administrador</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Visible solo para correos administradores autorizados.</span></div><div class='admin-tools hidden' id='adminTools'><button class='s mini' id='exportUsers'>Exportar registros CSV</button><button class='s mini' id='exportLogs'>Exportar uso CSV</button><button class='s mini' id='adminLogout'>Bloquear descargas</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Descargas habilitadas para administrador validado.</span></div><div style="margin-top:10px;font-size:.74rem;color:#a9b4c2">© ListaLoop B2B — Propiedad intelectual exclusiva de Sergio Velásquez. Prohibida su copia, distribución o modificación sin autorización expresa. El uso por usuarios o empresas contratantes se rige por las condiciones contractuales autorizadas por Sergio Velásquez.<span style="float:right;opacity:.6" id="appVersionTag">v1.32.0</span></div></div>
+  <div class='admin-gate hidden' id='adminGate'><button class='s mini' id='adminLogin'>🔒 Acceso administrador</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Visible solo para correos administradores autorizados.</span></div><div class='admin-tools hidden' id='adminTools'><button class='s mini' id='exportUsers'>Exportar registros CSV</button><button class='s mini' id='exportLogs'>Exportar uso CSV</button><button class='s mini' id='adminLogout'>Bloquear descargas</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Descargas habilitadas para administrador validado.</span></div><div style="margin-top:10px;font-size:.74rem;color:#a9b4c2">© ListaLoop B2B — Propiedad intelectual exclusiva de Sergio Velásquez. Prohibida su copia, distribución o modificación sin autorización expresa. El uso por usuarios o empresas contratantes se rige por las condiciones contractuales autorizadas por Sergio Velásquez.<span style="float:right;opacity:.45">23:1</span></div></div>
 </div><div id='toast'>Copiado</div>
 <script>
 const CONFIG_FILE="cmx30_app_config.json";
