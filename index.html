@@ -148,6 +148,8 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 <div id="registerScreen" class="partner-screen">
@@ -253,6 +255,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   <div class='summary-row' id='quoteCartTotals'></div>
   <div class='actions' style='margin-top:10px'>
     <button class='p mini' id='btnCopyMultiQuote'>Copiar cotización múltiple</button>
+    <button class='p mini' id='btnPdfMultiQuote'>📄 Generar PDF</button>
     <button class='s mini' id='btnClearQuoteCart'>Vaciar cotización</button>
   </div>
 </div>
@@ -291,6 +294,34 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
       <button class='s mini' id='btnCloseOverlay'>✕ Cerrar</button>
     </div>
     <div id='overlayContent'></div>
+  </div>
+</div>
+<div id='confirmOverlay' class='overlay-backdrop hidden'>
+  <div class='overlay-panel' style='max-width:420px'>
+    <h3 id='confirmTitulo' style='margin:0 0 10px;color:var(--brand)'>¿Confirmas esta acción?</h3>
+    <p id='confirmMensaje' style='margin:0 0 18px;white-space:pre-wrap'></p>
+    <div style='display:flex;gap:10px;justify-content:flex-end'>
+      <button class='s mini' id='btnConfirmCancelar' style='padding:10px 16px'>Cancelar</button>
+      <button class='p mini' id='btnConfirmAceptar' style='padding:10px 16px'>Confirmar</button>
+    </div>
+  </div>
+</div>
+<div id='pdfQuoteOverlay' class='overlay-backdrop hidden'>
+  <div class='overlay-panel'>
+    <div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:10px'>
+      <h3 style='margin:0;color:var(--brand)'>📄 Datos de la cotización</h3>
+      <button class='s mini' id='btnClosePdfQuote'>✕ Cerrar</button>
+    </div>
+    <p style="margin:0 0 14px;color:var(--muted);font-size:.86rem">Estos datos son opcionales y aparecen en el encabezado del PDF. Puedes generarlo sin completarlos.</p>
+    <div class="inline-form">
+      <div><label>Nombre del cliente</label><input id="pdfClienteNombre" placeholder="Ej: Almacén El Progreso"></div>
+      <div><label>Correo del cliente</label><input id="pdfClienteEmail" type="email" placeholder="cliente@correo.com"></div>
+      <div><label>Teléfono del cliente</label><input id="pdfClienteTelefono" placeholder="Ej: 3001234567"></div>
+      <div><label>Válida hasta</label><input id="pdfValidaHasta" type="date"></div>
+    </div>
+    <div style="margin-top:6px"><label>Notas u observaciones</label><textarea id="pdfNotas" rows="3" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:3px;font-size:.92rem;font-family:inherit" placeholder="Ej: Precios sujetos a disponibilidad de inventario."></textarea></div>
+    <div style="margin-top:14px"><button class='p' id='btnGenerarPdfFinal' style="padding:12px 20px">Generar PDF</button></div>
+    <div class="mini-status" id="pdfQuoteStatus"></div>
   </div>
 </div>
 <div id='soporteOverlay' class='overlay-backdrop hidden'>
@@ -663,7 +694,15 @@ sb.auth.onAuthStateChange((event)=>{
   if(event==='SIGNED_OUT'){updateAdminTools();}
 });
 let CURRENT_USER=null;
+// ===== HELPERS GENERALES (fecha/moneda/validación/localStorage) =====
 const qs=id=>document.getElementById(id);
+// Escapa HTML para cualquier dato que venga de la base de datos o de un usuario
+// antes de insertarlo vía innerHTML. Úsese SIEMPRE al interpolar texto libre
+// (nombres, descripciones, mensajes) dentro de template strings de render.
+function escapeHtml(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+// Retrasa la ejecución de fn hasta que pasen `ms` sin nuevas llamadas — evita
+// recalcular en cada tecla en inputs de búsqueda/filtro sobre catálogos grandes.
+function debounce(fn,ms=250){let t;return(...args)=>{clearTimeout(t);t=setTimeout(()=>fn(...args),ms);};}
 function readJSON(k,fallback){try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(fallback));}catch(e){return fallback;}}
 function writeJSON(k,v){localStorage.setItem(k,JSON.stringify(v));}
 function csvEscape(v){return '"'+String(v??'').replaceAll('"','""')+'"';}
@@ -681,13 +720,14 @@ async function reloadAdminEmails(){
   ADMIN_EMAILS=new Set((data||[]).map(x=>normalizeEmail(x.email)));
 }
 async function lockAdmin(){await sb.auth.signOut();await updateAdminTools();}
+// ===== PANEL ADMIN — USUARIOS (administradores, propietarios, PDV, vendedores, distribuidores) =====
 async function renderAdminsList(){
   const el=qs('adminsList');if(!el)return;
   const{data,error}=await sb.from('app_admins').select('*').order('added_at');
   if(error){el.innerHTML="<div class='empty' style='padding:8px 0'>No se pudo cargar la lista de administradores.</div>";return;}
   const admins=data||[];
   if(!admins.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin administradores registrados.</div>";return;}
-  el.innerHTML=`<table class='preview-table'><tr><th>Correo</th><th>Agregado por</th><th></th></tr>${admins.map(a=>`<tr><td class='mono'>${a.email}</td><td>${a.added_by||'-'}</td><td>${admins.length>1?`<button class='rm-btn' data-email='${a.email}'>✕</button>`:''}</td></tr>`).join('')}</table>`;
+  el.innerHTML=`<table class='preview-table'><tr><th>Correo</th><th>Agregado por</th><th></th></tr>${admins.map(a=>`<tr><td class='mono'>${escapeHtml(a.email)}</td><td>${escapeHtml(a.added_by||'-')}</td><td>${admins.length>1?`<button class='rm-btn' data-email='${escapeHtml(a.email)}'>✕</button>`:''}</td></tr>`).join('')}</table>`;
   el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeAdminEmail(btn.dataset.email);});
 }
 async function addAdminEmail(){
@@ -701,7 +741,7 @@ async function addAdminEmail(){
   await reloadAdminEmails();await renderAdminsList();
 }
 async function removeAdminEmail(email){
-  if(!confirm(`¿Quitar a ${email} como administrador?`))return;
+  if(!await confirmarModal(`¿Quitar a ${email} como administrador?`))return;
   const{error}=await sb.from('app_admins').delete().eq('email',email);
   if(error){showToast('Error al quitar: '+error.message);return;}
   await reloadAdminEmails();await renderAdminsList();showToast('Administrador removido');
@@ -714,7 +754,7 @@ async function renderOwnersList(){
   const owners=data||[];
   if(!owners.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin propietarios registrados.</div>";return;}
   el.innerHTML=`<table class='preview-table'><tr><th>Correo</th><th>Distribuidor</th><th>Estado</th><th></th></tr>${owners.map(o=>`<tr>
-    <td class='mono'>${o.email}</td><td>${o.distribuidores?.nombre||'-'}</td>
+    <td class='mono'>${escapeHtml(o.email)}</td><td>${escapeHtml(o.distribuidores?.nombre||'-')}</td>
     <td>${o.activo?"<span class='tag-good'>Activo</span>":"<span class='tag-low'>Bloqueado</span>"}</td>
     <td><button class='s mini toggle-btn' data-id='${o.id}' data-activo='${o.activo}'>${o.activo?'Bloquear':'Activar'}</button> <button class='rm-btn' data-id='${o.id}'>✕</button></td>
   </tr>`).join('')}</table>`;
@@ -722,7 +762,7 @@ async function renderOwnersList(){
   el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeOwner(btn.dataset.id);});
 }
 async function removeOwner(id){
-  if(!confirm('¿Quitar este propietario de distribuidor?'))return;
+  if(!await confirmarModal('¿Quitar este propietario de distribuidor?'))return;
   const{error}=await sb.from('perfiles_usuario').delete().eq('id',id);
   if(error){showToast('Error al quitar: '+error.message);return;}
   await renderOwnersList();showToast('Propietario removido');
@@ -741,7 +781,7 @@ async function renderAdminPdvList(){
   const admins=data||[];
   if(!admins.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin administradores PDV registrados todavía.</div>";return;}
   el.innerHTML=`<table class='preview-table'><tr><th>Correo</th><th>Distribuidor</th><th>Punto de venta</th><th>Estado</th><th></th></tr>${admins.map(a=>`<tr>
-    <td class='mono'>${a.email}</td><td>${a.distribuidores?.nombre||'-'}</td><td>${a.punto_venta||'-'}</td>
+    <td class='mono'>${escapeHtml(a.email)}</td><td>${escapeHtml(a.distribuidores?.nombre||'-')}</td><td>${escapeHtml(a.punto_venta||'-')}</td>
     <td>${a.activo?"<span class='tag-good'>Activo</span>":"<span class='tag-low'>Bloqueado</span>"}</td>
     <td><button class='s mini toggle-btn' data-id='${a.id}' data-activo='${a.activo}'>${a.activo?'Bloquear':'Activar'}</button> <button class='rm-btn' data-id='${a.id}'>✕</button></td>
   </tr>`).join('')}</table>`;
@@ -749,7 +789,7 @@ async function renderAdminPdvList(){
   el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeAdminPdv(btn.dataset.id);});
 }
 async function removeAdminPdv(id){
-  if(!confirm('¿Quitar este administrador PDV? Podrá volver a registrarse con el código de distribuidor si lo necesita.'))return;
+  if(!await confirmarModal('¿Quitar este administrador PDV? Podrá volver a registrarse con el código de distribuidor si lo necesita.'))return;
   const{error}=await sb.from('perfiles_usuario').delete().eq('id',id);
   if(error){showToast('Error al quitar: '+error.message);return;}
   await renderAdminPdvList();showToast('Administrador PDV removido');
@@ -762,7 +802,7 @@ async function renderDependientesList(){
   const deps=data||[];
   if(!deps.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin dependientes PDV registrados todavía.</div>";return;}
   el.innerHTML=`<table class='preview-table'><tr><th>Correo</th><th>Teléfono</th><th>Distribuidor</th><th>Punto de venta</th><th>Estado</th><th></th></tr>${deps.map(d=>`<tr>
-    <td class='mono'>${d.email}</td><td>${d.telefono||'-'}</td><td>${d.distribuidores?.nombre||'-'}</td><td>${d.punto_venta||'-'}</td>
+    <td class='mono'>${escapeHtml(d.email)}</td><td>${escapeHtml(d.telefono||'-')}</td><td>${escapeHtml(d.distribuidores?.nombre||'-')}</td><td>${escapeHtml(d.punto_venta||'-')}</td>
     <td>${d.activo?"<span class='tag-good'>Activo</span>":"<span class='tag-low'>Bloqueado</span>"}</td>
     <td><button class='s mini toggle-btn' data-id='${d.id}' data-activo='${d.activo}'>${d.activo?'Bloquear':'Activar'}</button> <button class='rm-btn' data-id='${d.id}'>✕</button></td>
   </tr>`).join('')}</table>`;
@@ -770,7 +810,7 @@ async function renderDependientesList(){
   el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeDependiente(btn.dataset.id);});
 }
 async function removeDependiente(id){
-  if(!confirm('¿Quitar este dependiente PDV? Podrá volver a registrarse con el código de distribuidor si lo necesita.'))return;
+  if(!await confirmarModal('¿Quitar este dependiente PDV? Podrá volver a registrarse con el código de distribuidor si lo necesita.'))return;
   const{error}=await sb.from('perfiles_usuario').delete().eq('id',id);
   if(error){showToast('Error al quitar: '+error.message);return;}
   await renderDependientesList();showToast('Dependiente PDV removido');
@@ -783,7 +823,7 @@ async function renderVendDistList(){
   const vend=data||[];
   if(!vend.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin vendedores de distribuidor registrados todavía.</div>";return;}
   el.innerHTML=`<table class='preview-table'><tr><th>Correo</th><th>Teléfono</th><th>Distribuidor</th><th>Estado</th><th></th></tr>${vend.map(v=>`<tr>
-    <td class='mono'>${v.email}</td><td>${v.telefono||'-'}</td><td>${v.distribuidores?.nombre||'-'}</td>
+    <td class='mono'>${escapeHtml(v.email)}</td><td>${escapeHtml(v.telefono||'-')}</td><td>${escapeHtml(v.distribuidores?.nombre||'-')}</td>
     <td>${v.activo?"<span class='tag-good'>Activo</span>":"<span class='tag-low'>Bloqueado</span>"}</td>
     <td><button class='s mini toggle-btn' data-id='${v.id}' data-activo='${v.activo}'>${v.activo?'Bloquear':'Activar'}</button> <button class='rm-btn' data-id='${v.id}'>✕</button></td>
   </tr>`).join('')}</table>`;
@@ -791,12 +831,12 @@ async function renderVendDistList(){
   el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeVendDist(btn.dataset.id);});
 }
 async function removeVendDist(id){
-  if(!confirm('¿Quitar este vendedor de distribuidor?'))return;
+  if(!await confirmarModal('¿Quitar este vendedor de distribuidor?'))return;
   const{error}=await sb.from('perfiles_usuario').delete().eq('id',id);
   if(error){showToast('Error al quitar: '+error.message);return;}
   await renderVendDistList();showToast('Vendedor removido');
 }
-// ---- Reglas de negocio: Niveles de descuento ----
+// ===== PANEL ADMIN — REGLAS DE NEGOCIO (niveles de descuento, márgenes por gama) =====
 let NIVELES_CACHE=[];
 async function renderNivelesList(){
   const el=qs('nivelesList');if(!el)return;
@@ -809,7 +849,7 @@ async function renderNivelesList(){
     const esProtegido=n.nombre==='Nivel 1';
     const nombreInput=esProtegido
       ?`<input value='Nivel 1' readonly title='Nivel base: nombre fijo, sin eliminar. Valores editables.' style='padding:9px 8px;border:1px solid #e5e9ef;border-radius:10px;min-width:90px;max-width:100%;background:#f4f6f8;color:var(--muted)'>`
-      :`<input class='nivel-edit-nombre' data-id='${n.id}' data-field='nombre' value='${(n.nombre||'').replace(/'/g,"&#39;")}' style='padding:9px 8px;border:1px solid #cfd8e3;border-radius:10px;min-width:90px;max-width:100%'>`;
+      :`<input class='nivel-edit-nombre' data-id='${n.id}' data-field='nombre' value='${escapeHtml(n.nombre||'')}' style='padding:9px 8px;border:1px solid #cfd8e3;border-radius:10px;min-width:90px;max-width:100%'>`;
     const ajusteGeneralCell=n.tipo==='ajuste'
       ?`<input class='nivel-edit-general' type='number' step='0.01' data-id='${n.id}' value='${n.ajuste_general_pct!=null?(Number(n.ajuste_general_pct)*100).toFixed(2):''}' placeholder='Ej: 5' style='padding:9px 8px;border:1px solid #cfd8e3;border-radius:10px;min-width:70px;max-width:100%'>`
       :'-';
@@ -817,7 +857,7 @@ async function renderNivelesList(){
     return `<tr>
     <td>${nombreInput}</td>
     <td>${ajusteGeneralCell}</td>
-    <td><input class='nivel-edit-desc' data-id='${n.id}' data-field='descripcion' value='${(n.descripcion||'').replace(/'/g,"&#39;")}' style='padding:6px 8px;border:1px solid #cfd8e3;border-radius:10px;width:100%'></td>
+    <td><input class='nivel-edit-desc' data-id='${n.id}' data-field='descripcion' value='${escapeHtml(n.descripcion||'')}' style='padding:6px 8px;border:1px solid #cfd8e3;border-radius:10px;width:100%'></td>
     <td><input type='checkbox' class='nivel-edit-activo' data-id='${n.id}' ${n.activo?'checked':''}></td>
     <td>${rmBtn}</td>
   </tr>`;
@@ -841,7 +881,7 @@ async function updateNivelCampo(id,campo,valor){
 }
 function fillNivelSelects(niveles){
   const selReglas=qs('reglaNivelSelect');
-  const opts=niveles.map(n=>`<option value='${n.id}'>${n.nombre}</option>`).join('');
+  const opts=niveles.map(n=>`<option value='${n.id}'>${escapeHtml(n.nombre)}</option>`).join('');
   if(selReglas){const prev=selReglas.value;selReglas.innerHTML=opts;if(prev)selReglas.value=prev;selReglas.onchange=onReglaNivelChange;}
   if(selReglas&&selReglas.value)onReglaNivelChange();
 }
@@ -881,7 +921,7 @@ async function addNivel(){
 async function removeNivel(id){
   const nivel=NIVELES_CACHE.find(n=>n.id===id);
   if(nivel?.nombre==='Nivel 1'){showToast('Nivel 1 no se puede eliminar: es la base del sistema.');return;}
-  if(!confirm('¿Eliminar este nivel de descuento? También se eliminarán sus reglas/ajustes. Si otro nivel tipo Ajuste depende de este, quedará sin poder calcular.'))return;
+  if(!await confirmarModal('¿Eliminar este nivel de descuento? También se eliminarán sus reglas/ajustes. Si otro nivel tipo Ajuste depende de este, quedará sin poder calcular.'))return;
   const{error}=await sb.from('niveles_descuento').delete().eq('id',id);
   if(error){showToast('Error al quitar: '+error.message);return;}
   await renderNivelesList();
@@ -922,8 +962,8 @@ async function renderReglasList(){
       const dataId=r?r.id:'';
       const dataGama=r?'':g;
       return `<tr>
-      <td>${g}</td>
-      <td><input class='regla-edit-margen-base' type='number' step='0.01' data-id='${dataId}' data-gama='${dataGama}' value='${valor.toFixed(2)}' style='padding:9px 8px;border:1px solid #cfd8e3;border-radius:10px;min-width:70px;max-width:100%'></td>
+      <td>${escapeHtml(g)}</td>
+      <td><input class='regla-edit-margen-base' type='number' step='0.01' data-id='${dataId}' data-gama='${escapeHtml(dataGama)}' value='${valor.toFixed(2)}' style='padding:9px 8px;border:1px solid #cfd8e3;border-radius:10px;min-width:70px;max-width:100%'></td>
     </tr>`;
     }).join('')}</table>`;
     el.querySelectorAll('input.regla-edit-margen-base').forEach(inp=>{inp.onblur=async()=>{
@@ -953,8 +993,8 @@ async function renderReglasList(){
     const texto=r.margen<=0?"<span class='tag-low'>No disponible</span>":`${(r.margen*100).toFixed(2)}%`;
     const btn=exc
       ?`<button class='rm-btn' data-id='${exc.id}' title='Quitar excepción'>✕ excepción</button>`
-      :`<button class='mini exc-btn' data-gama='${r.gama}' style='padding:4px 10px;font-size:.76rem'>+ excepción</button>`;
-    return `<tr><td>${r.gama}${exc?" <span style='color:var(--muted);font-size:.75rem'>(excepción)</span>":''}</td><td>${texto}</td><td>${btn}</td></tr>`;
+      :`<button class='mini exc-btn' data-gama='${escapeHtml(r.gama)}' style='padding:4px 10px;font-size:.76rem'>+ excepción</button>`;
+    return `<tr><td>${escapeHtml(r.gama)}${exc?" <span style='color:var(--muted);font-size:.75rem'>(excepción)</span>":''}</td><td>${texto}</td><td>${btn}</td></tr>`;
   }).join('')}</table>`;
   el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeRegla(btn.dataset.id);});
   el.querySelectorAll('button.exc-btn').forEach(btn=>{btn.onclick=()=>{
@@ -982,7 +1022,7 @@ async function addRegla(){
   await renderReglasList();
 }
 async function removeRegla(id){
-  if(!confirm('¿Eliminar esta excepción? La gama volverá a usar el ajuste general.'))return;
+  if(!await confirmarModal('¿Eliminar esta excepción? La gama volverá a usar el ajuste general.'))return;
   const{error}=await sb.from('niveles_descuento_reglas').delete().eq('id',id);
   if(error){showToast('Error al quitar: '+error.message);return;}
   await renderReglasList();showToast('Regla eliminada');
@@ -996,10 +1036,10 @@ async function renderDistribuidoresList(){
   if(!dist.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin distribuidores creados.</div>";return;}
   const{data:nivelesData}=await sb.from('niveles_descuento').select('id,nombre').order('nombre');
   const niveles=nivelesData||[];
-  const nivelOptions=(selectedId)=>niveles.map(n=>`<option value='${n.id}' ${n.id===selectedId?'selected':''}>${n.nombre}</option>`).join('');
+  const nivelOptions=(selectedId)=>niveles.map(n=>`<option value='${n.id}' ${n.id===selectedId?'selected':''}>${escapeHtml(n.nombre)}</option>`).join('');
   el.innerHTML=`<table class='preview-table'><tr><th>Distribuidor</th><th>Código</th><th>Nivel</th><th>Activo</th><th></th></tr>${dist.map(d=>`<tr>
-    <td><input class='dist-edit-nombre' data-id='${d.id}' value='${(d.nombre||'').replace(/'/g,"&#39;")}' style='padding:9px 8px;border:1px solid #cfd8e3;border-radius:10px;min-width:120px;max-width:100%'></td>
-    <td><input class='dist-edit-codigo' data-id='${d.id}' value='${(d.codigo_distribuidor||'').replace(/'/g,"&#39;")}' style='padding:9px 8px;border:1px solid #cfd8e3;border-radius:10px;min-width:90px;max-width:100%' autocomplete='off'></td>
+    <td><input class='dist-edit-nombre' data-id='${d.id}' value='${escapeHtml(d.nombre||'')}' style='padding:9px 8px;border:1px solid #cfd8e3;border-radius:10px;min-width:120px;max-width:100%'></td>
+    <td><input class='dist-edit-codigo' data-id='${d.id}' value='${escapeHtml(d.codigo_distribuidor||'')}' style='padding:9px 8px;border:1px solid #cfd8e3;border-radius:10px;min-width:90px;max-width:100%' autocomplete='off'></td>
     <td><select class='dist-nivel-select' data-id='${d.id}' style='padding:6px 8px;border:1px solid #cfd8e3;border-radius:10px'>${nivelOptions(d.nivel_descuento_id)}</select></td>
     <td><input type='checkbox' class='dist-edit-activo' data-id='${d.id}' ${d.activo?'checked':''}></td>
     <td><button class='rm-btn' data-id='${d.id}'>✕</button></td>
@@ -1050,7 +1090,7 @@ async function addDistribuidor(){
   await renderDistribuidoresList();
 }
 async function removeDistribuidor(id){
-  if(!confirm('¿Eliminar este distribuidor? Sus dependientes y administradores PDV asociados quedarán sin distribuidor.'))return;
+  if(!await confirmarModal('¿Eliminar este distribuidor? Sus dependientes y administradores PDV asociados quedarán sin distribuidor.'))return;
   const{error}=await sb.from('distribuidores').delete().eq('id',id);
   if(error){showToast('Error al quitar: '+error.message);return;}
   await renderDistribuidoresList();showToast('Distribuidor eliminado');
@@ -1058,7 +1098,7 @@ async function removeDistribuidor(id){
 // ---- Vendedores de la empresa contratante (no asociados a un distribuidor) ----
 function fillNivelVendedorEmpresaSelect(nivelActualId){
   const sel=qs('nivelVendedorEmpresa');if(!sel)return;
-  sel.innerHTML=NIVELES_CACHE.map(n=>`<option value='${n.id}'>${n.nombre}</option>`).join('');
+  sel.innerHTML=NIVELES_CACHE.map(n=>`<option value='${n.id}'>${escapeHtml(n.nombre)}</option>`).join('');
   if(nivelActualId)sel.value=nivelActualId;
 }
 async function loadCodigoVendedor(){
@@ -1085,9 +1125,9 @@ async function renderVendedoresList(){
   const vend=data||[];
   if(!vend.length){el.innerHTML="<div class='empty' style='padding:8px 0'>Sin vendedores registrados.</div>";return;}
   el.innerHTML=`<table class='preview-table'><tr><th>Nombre</th><th>Correo</th><th>Celular</th><th>Estado</th><th></th></tr>${vend.map(v=>`<tr>
-    <td>${v.nombre} ${v.apellido}</td>
-    <td class='mono'>${v.email}</td>
-    <td>${v.telefono}</td>
+    <td>${escapeHtml(v.nombre)} ${escapeHtml(v.apellido)}</td>
+    <td class='mono'>${escapeHtml(v.email)}</td>
+    <td>${escapeHtml(v.telefono)}</td>
     <td>${v.activo?"<span class='tag-good'>Activo</span>":"<span class='tag-low'>Bloqueado</span>"}</td>
     <td><button class='s mini toggle-btn' data-id='${v.id}' data-activo='${v.activo}'>${v.activo?'Bloquear':'Activar'}</button> <button class='rm-btn' data-id='${v.id}'>✕</button></td>
   </tr>`).join('')}</table>`;
@@ -1118,7 +1158,7 @@ async function toggleVendedor(id,activoActual){
   await renderVendedoresList();showToast(activoActual?'Vendedor bloqueado':'Vendedor activado');
 }
 async function removeVendedor(id){
-  if(!confirm('¿Eliminar este vendedor?'))return;
+  if(!await confirmarModal('¿Eliminar este vendedor?'))return;
   const{error}=await sb.from('vendedores_empresa').delete().eq('id',id);
   if(error){showToast('Error al quitar: '+error.message);return;}
   await renderVendedoresList();showToast('Vendedor eliminado');
@@ -1235,12 +1275,13 @@ async function renderMiEquipo(){
     await renderMiEquipo();
   };});
   document.querySelectorAll('#viewMiEquipo button.eq-rm').forEach(btn=>{btn.onclick=async()=>{
-    if(!confirm('¿Quitar a este miembro de tu equipo?'))return;
+    if(!await confirmarModal('¿Quitar a este miembro de tu equipo?'))return;
     const{error}=await sb.rpc('eliminar_miembro_equipo',{p_email_propietario:emailProp,p_codigo_distribuidor:codigoProp,p_id_miembro:btn.dataset.id});
     if(error){showToast('Error al quitar: '+error.message);return;}
     await renderMiEquipo();showToast('Removido');
   };});
 }
+// ===== REGISTRO Y ACCESO (login, activación de cuenta, sesión) =====
 function showApp(user){
   CURRENT_USER=user;qs('registerScreen').classList.add('hidden');qs('appScreen').classList.remove('hidden');
   qs('activeUser').textContent=user.name||'-';
@@ -1391,6 +1432,7 @@ async function precargarMargen(gama){
   MARGEN_CACHE.set(key,val);
   return val;
 }
+// ===== COTIZADOR (consulta de precio, margen, carrito de cotización) =====
 // Carga el Nivel de descuento asignado al distribuidor del usuario actual.
 // Si no hay distribuidor/perfil, conserva el comportamiento por defecto
 // (RULES cargado de margin_rules vía Nivel 1, sin romper nada).
@@ -1405,7 +1447,7 @@ async function loadRulesForUser(user=CURRENT_USER){
 const find=q=>{q=normalize(q);if(!q)return null;if(byRef.has(q))return byRef.get(q);return DATA.find(x=>x.search.includes(q));};
 const sugg=q=>{q=normalize(q);if(!q)return[];return DATA.filter(x=>x.search.includes(q)).slice(0,8);};
 function showToast(msg){toast.textContent=msg;toast.style.display='block';setTimeout(()=>toast.style.display='none',1500);}
-function showS(){const items=sugg(ref.value);if(!ref.value||!items.length){box.style.display='none';box.innerHTML='';return;}box.innerHTML=items.map(x=>`<div class='it' data-r='${x.referencia}'><b>${x.referencia}</b> — ${x.descripcion}</div>`).join('');box.style.display='block';[...box.querySelectorAll('.it')].forEach(el=>el.onclick=()=>{ref.value=el.dataset.r;box.style.display='none';calc();});}
+function showS(){const items=sugg(ref.value);if(!ref.value||!items.length){box.style.display='none';box.innerHTML='';return;}box.innerHTML=items.map(x=>`<div class='it' data-r='${escapeHtml(x.referencia)}'><b>${escapeHtml(x.referencia)}</b> — ${escapeHtml(x.descripcion)}</div>`).join('');box.style.display='block';[...box.querySelectorAll('.it')].forEach(el=>el.onclick=()=>{ref.value=el.dataset.r;box.style.display='none';calc();});}
 function badge(ds){if(ds>.35)return["badge danger","Descuento en sala muy alto: revisar política comercial"];if(ds>.30)return["badge warn","Descuento en sala alto: revisar política comercial"];return["badge ok","Consulta válida"];}
 function mTag(m){if(m>=.20)return"<span class='tag-good'>Margen alto</span>";if(m>=.15)return"<span class='tag-mid'>Margen medio</span>";return"<span class='tag-low'>Sin margen</span>";}
 // Restringido cuando el margen resuelto para esa gama en el Nivel del
@@ -1439,7 +1481,7 @@ async function renderProductMedia(referencia){
 async function calc(){const item=find(ref.value);if(!item){r.innerHTML="<div class='badge warn'>Referencia no encontrada</div><div class='empty'>Revisa el código o selecciona una sugerencia.</div>";copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;qs('mediaCard').classList.add('hidden');qs('suggestedCard').classList.add('hidden');qs('relatedCard').classList.add('hidden');qs('stockCard').classList.add('hidden');SUGGESTED_FOR_LAST=[];RELATED_FOR_LAST=new Map();renderExplore();return;}
 logUsage(item);
 await precargarMargen(item.gama);
-if(await isRestricted(item.gama)){copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;qs('mediaCard').classList.add('hidden');qs('suggestedCard').classList.add('hidden');qs('relatedCard').classList.add('hidden');qs('stockCard').classList.add('hidden');SUGGESTED_FOR_LAST=[];RELATED_FOR_LAST=new Map();renderExplore();r.innerHTML=`<div class='badge warn'>No disponible</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='empty'>${CONFIG.restricted_message||'Producto no disponible para cotización en este canal.'}</div>`;return;}
+if(await isRestricted(item.gama)){copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;qs('mediaCard').classList.add('hidden');qs('suggestedCard').classList.add('hidden');qs('relatedCard').classList.add('hidden');qs('stockCard').classList.add('hidden');SUGGESTED_FOR_LAST=[];RELATED_FOR_LAST=new Map();renderExplore();r.innerHTML=`<div class='badge warn'>No disponible</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${escapeHtml(item.referencia)}</div></div><div class='row'><div class='k'>Descripción</div><div>${escapeHtml(item.descripcion)}</div></div><div class='row'><div class='k'>Gama</div><div>${escapeHtml(item.gama)}</div></div><div class='empty'>${escapeHtml(CONFIG.restricted_message||'Producto no disponible para cotización en este canal.')}</div>`;return;}
 lastItem=item;
 renderPriceCard();
 }
@@ -1481,7 +1523,7 @@ Fecha cálculo: ${dt}`;
   const priceBox=(label,val,extraCls)=>`<div class='price${extraCls?(' '+extraCls):''}'><div class='t'>${label} <span style="font-weight:400;font-size:.7rem">(unitario)</span></div><div class='v'>${money(val)}</div><div class='qty-total'>Cant. ${qty} · Total: ${money(val*qty)}</div></div>`;
   const pvdBlocks=canMargin?priceBox('PVD con IVA',pvdI,'hl')+priceBox('PVD sin IVA',pvd,'hl')+priceBox('Esto es lo que se puede ganar el distribuidor',gain,'gain'):'';
   const margenRow=canMargin?`<div class='row'><div class='k'>Margen Distribuidor</div><div>${(m*100).toFixed(0)}% ${mTag(m)}</div></div>`:'';
-  r.innerHTML=`<div class='${bc}'>${bt}</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><div class='row'><div class='k'>Producto</div><div>${item.producto}</div></div><div class='row'><div class='k'>Activo</div><div>${item.activo?'Sí':'No'}</div></div><div class='row'><div class='k'>Descuento en Sala</div><div>${Number(sala.value||0).toFixed(1)}%</div></div><div class='row'><div class='k'>Cantidad</div><div>${qty}</div></div>${margenRow}<div class='row'><div class='k'>Fecha y hora del cálculo</div><div>${dt}</div></div><p class='unit-note'>Los valores de cada casilla son por unidad; el total considera la cantidad indicada arriba.</p><div class='prices'>${priceBox('PVP con IVA',pvpI)}${priceBox('PVP sin IVA',pvp)}${priceBox('PVP con IVA dto SALA',pvpSI)}${priceBox('PVP sin IVA dto SALA',pvpS)}${pvdBlocks}</div>`;renderProductMedia(item.referencia);renderSuggestedProducts(item.referencia);renderRelatedProducts(item.referencia);renderStockInfo(item.referencia);
+  r.innerHTML=`<div class='${bc}'>${bt}</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${escapeHtml(item.referencia)}</div></div><div class='row'><div class='k'>Descripción</div><div>${escapeHtml(item.descripcion)}</div></div><div class='row'><div class='k'>Gama</div><div>${escapeHtml(item.gama)}</div></div><div class='row'><div class='k'>Producto</div><div>${escapeHtml(item.producto)}</div></div><div class='row'><div class='k'>Activo</div><div>${item.activo?'Sí':'No'}</div></div><div class='row'><div class='k'>Descuento en Sala</div><div>${Number(sala.value||0).toFixed(1)}%</div></div><div class='row'><div class='k'>Cantidad</div><div>${qty}</div></div>${margenRow}<div class='row'><div class='k'>Fecha y hora del cálculo</div><div>${dt}</div></div><p class='unit-note'>Los valores de cada casilla son por unidad; el total considera la cantidad indicada arriba.</p><div class='prices'>${priceBox('PVP con IVA',pvpI)}${priceBox('PVP sin IVA',pvp)}${priceBox('PVP con IVA dto SALA',pvpSI)}${priceBox('PVP sin IVA dto SALA',pvpS)}${pvdBlocks}</div>`;renderProductMedia(item.referencia);renderSuggestedProducts(item.referencia);renderRelatedProducts(item.referencia);renderStockInfo(item.referencia);
 }
 function ensureQuoteSession(){if(!QUOTE_SESSION_ID)QUOTE_SESSION_ID=crypto.randomUUID();return QUOTE_SESSION_ID;}
 function logQuoteItem(referencia,cantidad){
@@ -1525,8 +1567,8 @@ function renderQuoteCart(){
     totalPvp+=c.subtotalPvp;totalPvd+=c.subtotalPvd;
     const warn=stockWarningFor(line.referencia);
     return`<tr>
-      <td class='mono'>${c.item.referencia}</td>
-      <td>${c.item.descripcion}${warn?`<div style="color:var(--danger);font-size:.76rem;margin-top:2px">⚠️ ${warn}</div>`:''}</td>
+      <td class='mono'>${escapeHtml(c.item.referencia)}</td>
+      <td>${escapeHtml(c.item.descripcion)}${warn?`<div style="color:var(--danger);font-size:.76rem;margin-top:2px">⚠️ ${escapeHtml(warn)}</div>`:''}</td>
       <td><input class='qty-input' type='number' min='1' step='1' value='${line.cantidad}' data-i='${i}' data-f='cantidad'></td>
       <td><input class='qty-input' type='number' min='0' step='0.1' value='${line.descuento}' data-i='${i}' data-f='descuento'></td>
       <td>${money(c.pvpSI)}</td>
@@ -1574,13 +1616,146 @@ function copyMultiQuote(){
   navigator.clipboard.writeText(buildMultiQuoteText()).then(()=>showToast('Cotización múltiple copiada')).catch(()=>{});
 }
 function clearQuoteCart(){QUOTE_ITEMS=[];QUOTE_SESSION_ID=null;renderQuoteCart();}
+function abrirModalPdfCotizacion(){
+  if(!QUOTE_ITEMS.length){showToast('La cotización está vacía');return;}
+  const st=qs('pdfQuoteStatus');if(st){st.textContent='';st.className='mini-status';}
+  qs('pdfQuoteOverlay').classList.remove('hidden');
+}
+function cerrarModalPdfCotizacion(){qs('pdfQuoteOverlay').classList.add('hidden');}
+async function imagenComoDataURL(url){
+  try{
+    const resp=await fetch(url);
+    if(!resp.ok)return null;
+    const blob=await resp.blob();
+    return await new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onloadend=()=>resolve(reader.result);
+      reader.onerror=reject;
+      reader.readAsDataURL(blob);
+    });
+  }catch(e){console.warn('No se pudo cargar el logo para el PDF:',e);return null;}
+}
+async function generarPdfCotizacion(){
+  if(!QUOTE_ITEMS.length){showToast('La cotización está vacía');return;}
+  const btn=qs('btnGenerarPdfFinal');
+  const st=qs('pdfQuoteStatus');
+  if(btn)btn.disabled=true;
+  if(st){st.textContent='Generando PDF…';st.className='mini-status';}
+  try{
+    const canMargin=canSeeMargin();
+    const empresaQuote=(SETTINGS.company_name||'').trim();
+    const cliente=(qs('pdfClienteNombre')?.value||'').trim();
+    const clienteEmail=(qs('pdfClienteEmail')?.value||'').trim();
+    const clienteTelefono=(qs('pdfClienteTelefono')?.value||'').trim();
+    const validaHasta=(qs('pdfValidaHasta')?.value||'').trim();
+    const notas=(qs('pdfNotas')?.value||'').trim();
+
+    const { jsPDF }=window.jspdf;
+    const doc=new jsPDF({unit:'pt',format:'letter'});
+    const pageW=doc.internal.pageSize.getWidth();
+    const marginX=40;
+    let y=40;
+
+    let logoDataUrl=null;
+    if(SETTINGS.logo_url){logoDataUrl=await imagenComoDataURL(SETTINGS.logo_url);}
+    if(logoDataUrl){
+      try{
+        const imgProps=doc.getImageProperties(logoDataUrl);
+        const maxW=110,maxH=50;
+        let w=imgProps.width,h=imgProps.height;
+        const ratio=Math.min(maxW/w,maxH/h);
+        w=w*ratio;h=h*ratio;
+        doc.addImage(logoDataUrl,imgProps.fileType||'PNG',marginX,y,w,h);
+      }catch(e){console.warn('No se pudo insertar el logo en el PDF:',e);}
+    }
+
+    doc.setFont('helvetica','bold');doc.setFontSize(16);
+    doc.text(empresaQuote?empresaQuote.toUpperCase():'COTIZACIÓN',pageW-marginX,y+14,{align:'right'});
+    doc.setFont('helvetica','normal');doc.setFontSize(10);
+    doc.setTextColor(90);
+    doc.text(`Cotización generada: ${now()}`,pageW-marginX,y+30,{align:'right'});
+    if(validaHasta)doc.text(`Válida hasta: ${validaHasta}`,pageW-marginX,y+44,{align:'right'});
+    doc.setTextColor(0);
+    y+=70;
+
+    doc.setDrawColor(210);doc.line(marginX,y,pageW-marginX,y);
+    y+=18;
+
+    if(cliente||clienteEmail||clienteTelefono){
+      doc.setFont('helvetica','bold');doc.setFontSize(11);
+      doc.text('Cliente',marginX,y);y+=15;
+      doc.setFont('helvetica','normal');doc.setFontSize(10);
+      if(cliente){doc.text(`Nombre: ${cliente}`,marginX,y);y+=14;}
+      if(clienteEmail){doc.text(`Correo: ${clienteEmail}`,marginX,y);y+=14;}
+      if(clienteTelefono){doc.text(`Teléfono: ${clienteTelefono}`,marginX,y);y+=14;}
+      y+=8;
+    }
+
+    const head=canMargin
+      ?[['Ref','Descripción','Cant.','Dto %','PVP unit','Subtotal PVP','Subtotal PVD','Ganancia']]
+      :[['Ref','Descripción','Cant.','Dto %','PVP unit','Subtotal PVP']];
+    let totalPvp=0,totalPvd=0;
+    const body=QUOTE_ITEMS.map(line=>{
+      const c=quoteLineCalc(line);if(!c)return null;
+      totalPvp+=c.subtotalPvp;totalPvd+=c.subtotalPvd;
+      const row=[c.item.referencia,c.item.descripcion,String(line.cantidad),line.descuento?Number(line.descuento).toFixed(1):'0',money(c.pvpSI),money(c.subtotalPvp)];
+      if(canMargin)row.push(money(c.subtotalPvd),money(c.gainLine));
+      return row;
+    }).filter(Boolean);
+
+    if(typeof doc.autoTable==='function'){
+      doc.autoTable({startY:y,head,body,margin:{left:marginX,right:marginX},styles:{fontSize:8.5,cellPadding:5},headStyles:{fillColor:[18,58,99],textColor:255},columnStyles:{1:{cellWidth:'auto'}}});
+      y=doc.lastAutoTable.finalY+18;
+    }else{
+      doc.setFont('helvetica','bold');doc.setFontSize(9);
+      doc.text(head[0].join('  |  '),marginX,y);y+=14;
+      doc.setFont('helvetica','normal');
+      body.forEach(row=>{
+        const txt=row.join('  |  ');
+        const split=doc.splitTextToSize(txt,pageW-marginX*2);
+        doc.text(split,marginX,y);y+=14*split.length;
+      });
+      y+=10;
+    }
+
+    if(y>doc.internal.pageSize.getHeight()-120){doc.addPage();y=40;}
+    doc.setDrawColor(210);doc.line(marginX,y,pageW-marginX,y);y+=18;
+    doc.setFont('helvetica','bold');doc.setFontSize(11);
+    doc.text(`TOTAL GENERAL PVP: ${money(totalPvp)}`,pageW-marginX,y,{align:'right'});y+=16;
+    if(canMargin){
+      doc.text(`TOTAL GENERAL PVD: ${money(totalPvd)}`,pageW-marginX,y,{align:'right'});y+=16;
+      doc.text(`Ganancia total estimada: ${money(totalPvp-totalPvd)}`,pageW-marginX,y,{align:'right'});y+=16;
+    }
+
+    if(notas){
+      y+=10;
+      if(y>doc.internal.pageSize.getHeight()-80){doc.addPage();y=40;}
+      doc.setFont('helvetica','bold');doc.setFontSize(10);
+      doc.text('Notas',marginX,y);y+=14;
+      doc.setFont('helvetica','normal');doc.setFontSize(9.5);
+      const notasSplit=doc.splitTextToSize(notas,pageW-marginX*2);
+      doc.text(notasSplit,marginX,y);
+    }
+
+    const fileSafeEmpresa=(cliente||empresaQuote||'cotizacion').toString().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-zA-Z0-9]+/g,'_').slice(0,40);
+    doc.save(`Cotizacion_${fileSafeEmpresa}_${new Date().toISOString().slice(0,10)}.pdf`);
+    if(st){st.textContent='PDF generado correctamente.';st.className='mini-status ok';}
+    showToast('Cotización PDF generada');
+    setTimeout(()=>{cerrarModalPdfCotizacion();},900);
+  }catch(err){
+    console.error('Error generando PDF de cotización:',err);
+    if(st){st.textContent='No se pudo generar el PDF. Intenta de nuevo.';st.className='mini-status err';}
+  }finally{
+    if(btn)btn.disabled=false;
+  }
+}
 function wireRefAutocomplete(inputId,boxId){
   const inp=qs(inputId),box=qs(boxId);
   if(!inp||!box)return;
   inp.addEventListener('input',()=>{
     const items=sugg(inp.value);
     if(!inp.value||!items.length){box.style.display='none';box.innerHTML='';return;}
-    box.innerHTML=items.map(x=>`<div class='it' data-r='${x.referencia}'><b>${x.referencia}</b> — ${x.descripcion}</div>`).join('');
+    box.innerHTML=items.map(x=>`<div class='it' data-r='${escapeHtml(x.referencia)}'><b>${escapeHtml(x.referencia)}</b> — ${escapeHtml(x.descripcion)}</div>`).join('');
     box.style.display='block';
     [...box.querySelectorAll('.it')].forEach(el=>el.onclick=()=>{inp.value=el.dataset.r;box.style.display='none';});
   });
@@ -1591,8 +1766,8 @@ function populateExploreFilters(){
   const gamaSel=qs('exploreGama'),prodSel=qs('exploreProducto');
   if(!gamaSel||!prodSel)return;
   const gamaPrev=gamaSel.value,prodPrev=prodSel.value;
-  gamaSel.innerHTML=`<option value=''>Todas las gamas</option>`+uniqueSortedValues('gama').map(g=>`<option value='${g}'>${g}</option>`).join('');
-  prodSel.innerHTML=`<option value=''>Todos los productos</option>`+uniqueSortedValues('producto').map(p=>`<option value='${p}'>${p}</option>`).join('');
+  gamaSel.innerHTML=`<option value=''>Todas las gamas</option>`+uniqueSortedValues('gama').map(g=>`<option value='${escapeHtml(g)}'>${escapeHtml(g)}</option>`).join('');
+  prodSel.innerHTML=`<option value=''>Todos los productos</option>`+uniqueSortedValues('producto').map(p=>`<option value='${escapeHtml(p)}'>${escapeHtml(p)}</option>`).join('');
   gamaSel.value=gamaPrev;prodSel.value=prodPrev;
 }
 function getExploreList(){
@@ -1619,6 +1794,7 @@ function getExploreList(){
   }
   return list;
 }
+// ===== EXPLORADOR DE CATÁLOGO (filtros, paginación, tabla completa) =====
 function renderExplore(){
   const wrap=qs('exploreTableWrap'),pageInfo=qs('explorePageInfo'),prevBtn=qs('explorePrev'),nextBtn=qs('exploreNext'),sortSel=qs('exploreSort');
   if(!wrap)return;
@@ -1646,7 +1822,7 @@ function renderExplore(){
   const pageItems=list.slice(start,start+EXPLORE_PAGE_SIZE);
   if(!pageItems.length){wrap.innerHTML="<div class='empty'>No hay productos que coincidan con los filtros seleccionados.</div>";}
   else{
-    wrap.innerHTML=`<table class='explore-table'><tr><th>Referencia</th><th>Descripción</th><th>Gama</th><th>PVP con IVA</th></tr>${pageItems.map(x=>`<tr class='explore-row' data-ref='${x.referencia}'><td class='mono'>${x.referencia}</td><td>${x.descripcion}</td><td>${x.gama}</td><td>${money(Number(x.c01||0))}</td></tr>`).join('')}</table>`;
+    wrap.innerHTML=`<table class='explore-table'><tr><th>Referencia</th><th>Descripción</th><th>Gama</th><th>PVP con IVA</th></tr>${pageItems.map(x=>`<tr class='explore-row' data-ref='${escapeHtml(x.referencia)}'><td class='mono'>${escapeHtml(x.referencia)}</td><td>${escapeHtml(x.descripcion)}</td><td>${escapeHtml(x.gama)}</td><td>${money(Number(x.c01||0))}</td></tr>`).join('')}</table>`;
     wrap.querySelectorAll('.explore-row').forEach(row=>{row.onclick=()=>{ref.value=row.dataset.ref;box.style.display='none';calc();wrap.scrollIntoView({behavior:'smooth',block:'nearest'});r.scrollIntoView({behavior:'smooth',block:'start'});};});
   }
   if(pageInfo)pageInfo.textContent=`Página ${EXPLORE_PAGE} de ${totalPages} · ${list.length} producto${list.length===1?'':'s'}`;
@@ -1680,7 +1856,7 @@ function renderDestacadosAdmin(){
     if(!items.length){el.innerHTML="<div class='empty' style='padding:10px'>Sin productos en este bloque.</div>";return;}
     el.innerHTML=`<table class='preview-table'><tr><th>Ref</th><th>Producto</th><th>Orden</th>${bloque==='oferta'?'<th>Descuento</th>':''}<th></th></tr>${items.map(it=>{
       const prod=byRef.get(normalize(it.referencia));
-      return`<tr><td class='mono'>${it.referencia}</td><td>${prod?prod.descripcion:'<span style="color:var(--danger)">referencia no encontrada/inactiva</span>'}</td><td>${it.orden}</td>${bloque==='oferta'?`<td>${it.descuento_valor??'-'}</td>`:''}<td><button class='rm-btn' data-id='${it.id}'>✕</button></td></tr>`;
+      return`<tr><td class='mono'>${escapeHtml(it.referencia)}</td><td>${prod?escapeHtml(prod.descripcion):'<span style="color:var(--danger)">referencia no encontrada/inactiva</span>'}</td><td>${it.orden}</td>${bloque==='oferta'?`<td>${it.descuento_valor??'-'}</td>`:''}<td><button class='rm-btn' data-id='${it.id}'>✕</button></td></tr>`;
     }).join('')}</table>`;
     el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeDestacado(Number(btn.dataset.id));});
   });
@@ -1710,7 +1886,7 @@ function renderVentaCruzadaAdmin(){
   if(!items.length){el.innerHTML="<div class='empty' style='padding:10px'>Sin sugerencias definidas todavía.</div>";return;}
   el.innerHTML=`<table class='preview-table'><tr><th>Si consultan</th><th>Sugerir</th><th>Orden</th><th></th></tr>${items.map(it=>{
     const disp=byRef.get(normalize(it.referencia_disparadora)),sug=byRef.get(normalize(it.referencia));
-    return`<tr><td class='mono'>${it.referencia_disparadora}${disp?` — ${disp.descripcion}`:' <span style="color:var(--danger)">no encontrada</span>'}</td><td class='mono'>${it.referencia}${sug?` — ${sug.descripcion}`:' <span style="color:var(--danger)">no encontrada</span>'}</td><td>${it.orden}</td><td><button class='rm-btn' data-id='${it.id}'>✕</button></td></tr>`;
+    return`<tr><td class='mono'>${escapeHtml(it.referencia_disparadora)}${disp?` — ${escapeHtml(disp.descripcion)}`:' <span style="color:var(--danger)">no encontrada</span>'}</td><td class='mono'>${escapeHtml(it.referencia)}${sug?` — ${escapeHtml(sug.descripcion)}`:' <span style="color:var(--danger)">no encontrada</span>'}</td><td>${it.orden}</td><td><button class='rm-btn' data-id='${it.id}'>✕</button></td></tr>`;
   }).join('')}</table>`;
   el.querySelectorAll('button.rm-btn').forEach(btn=>{btn.onclick=()=>removeDestacado(Number(btn.dataset.id));});
 }
@@ -1821,14 +1997,14 @@ function analyzeStockCSV(){
     });
     PENDING_STOCK_ROWS=valid.length?valid:null;
     const preview=qs('stockCsvPreview');
-    preview.innerHTML=`<div class='mini-status ${invalid.length?'err':'ok'}'>${valid.length} fila(s) válidas${invalid.length?`, ${invalid.length} con error`:''}.</div>${valid.length?`<div class='actions' style='margin-top:8px'><button class='p mini' id='btnApplyStockCSV' style='padding:12px 16px'>Aplicar ${valid.length} actualizaciones</button></div>`:''}${invalid.length?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--danger);font-size:.84rem">Ver filas con error</summary><table class="preview-table"><tr><th>Fila</th><th>Problema</th></tr>${invalid.slice(0,30).map(x=>`<tr><td>${x.row}</td><td>${x.errs}</td></tr>`).join('')}</table>${invalid.length>30?`<div style="font-size:.8rem;color:var(--muted);margin-top:4px">Mostrando 30 de ${invalid.length}</div>`:''}</details>`:''}`;
+    preview.innerHTML=`<div class='mini-status ${invalid.length?'err':'ok'}'>${valid.length} fila(s) válidas${invalid.length?`, ${invalid.length} con error`:''}.</div>${valid.length?`<div class='actions' style='margin-top:8px'><button class='p mini' id='btnApplyStockCSV' style='padding:12px 16px'>Aplicar ${valid.length} actualizaciones</button></div>`:''}${invalid.length?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--danger);font-size:.84rem">Ver filas con error</summary><table class="preview-table"><tr><th>Fila</th><th>Problema</th></tr>${invalid.slice(0,30).map(x=>`<tr><td>${x.row}</td><td>${escapeHtml(x.errs)}</td></tr>`).join('')}</table>${invalid.length>30?`<div style="font-size:.8rem;color:var(--muted);margin-top:4px">Mostrando 30 de ${invalid.length}</div>`:''}</details>`:''}`;
     if(valid.length)qs('btnApplyStockCSV').onclick=applyStockCSV;
   }});
 }
 async function applyStockCSV(){
   if(!PENDING_STOCK_ROWS||!PENDING_STOCK_ROWS.length)return;
-  const confirmMsg=`Vas a actualizar la disponibilidad de ${PENDING_STOCK_ROWS.length} referencias.\n\nEsto no afecta precios ni el resto del catálogo, solo la información de disponibilidad de esas referencias.\n\n¿Confirmas?`;
-  if(!confirm(confirmMsg))return;
+  const confirmMsg=`Vas a actualizar la disponibilidad de ${PENDING_STOCK_ROWS.length} referencias.\n\nEsto no afecta precios ni el resto del catálogo, solo la información de disponibilidad de esas referencias.`;
+  if(!await confirmarModal(confirmMsg))return;
   setStatus('stockBulkStatus','Aplicando actualizaciones…','info');
   const{error}=await sb.from('producto_disponibilidad').upsert(PENDING_STOCK_ROWS,{onConflict:'referencia'});
   if(error){setStatus('stockBulkStatus','Error al guardar: '+error.message,'err');return;}
@@ -1885,8 +2061,9 @@ function renderDestCard(it,bloque){
   if(bloque==='oferta'&&it.descuento_valor){
     discountHtml=SETTINGS.catalogo_oferta_formato==='absoluto'?`<div class='dest-discount'>-${money(it.descuento_valor)}</div>`:`<div class='dest-discount'>-${Number(it.descuento_valor).toFixed(0)}%</div>`;
   }
-  return`<div class='dest-card' data-ref='${prod.referencia}' data-bloque='${bloque}'>${destBadgeHtml(badgeText,badgeCls)}${img?`<img src='${img}' alt='${prod.referencia}'>`:`<div class='ph'>📦</div>`}<div class='dest-name'>${prod.descripcion}</div><div class='dest-ref'>${prod.referencia}</div>${discountHtml}</div>`;
+  return`<div class='dest-card' data-ref='${escapeHtml(prod.referencia)}' data-bloque='${bloque}'>${destBadgeHtml(badgeText,badgeCls)}${img?`<img src='${img}' alt='${escapeHtml(prod.referencia)}'>`:`<div class='ph'>📦</div>`}<div class='dest-name'>${escapeHtml(prod.descripcion)}</div><div class='dest-ref'>${escapeHtml(prod.referencia)}</div>${discountHtml}</div>`;
 }
+// ===== DESTACADOS (Foco, Best Sellers, Ofertas — pestaña pública de catálogo comercial) =====
 function renderDestacados(){
   if(qs('focoBadgeLabel'))qs('focoBadgeLabel').textContent=SETTINGS.catalogo_foco_badge||'Foco';
   if(qs('bsBadgeLabel'))qs('bsBadgeLabel').textContent=SETTINGS.catalogo_bestseller_badge||'Best Sellers';
@@ -1918,10 +2095,45 @@ function openDestOverlay(referencia,bloque){
     const precioOferta=pvpI*(1-prefillDescuento/100);
     ofertaHtml=`<div class='price gain' style='margin-top:10px'><div class='t'>${SETTINGS.catalogo_oferta_badge||'Oferta'}</div><div class='v'>${money(precioOferta)} <span style='text-decoration:line-through;color:var(--muted);font-size:.85rem;font-weight:400'>${money(pvpI)}</span></div><div class='qty-total'>Descuento en Sala aplicado: ${prefillDescuento.toFixed(1)}% (editable abajo)</div></div>`;
   }
-  content.innerHTML=`<div class='row'><div class='k'>Referencia</div><div class='mono'>${item.referencia}</div></div><div class='row'><div class='k'>Descripción</div><div>${item.descripcion}</div></div><div class='row'><div class='k'>Gama</div><div>${item.gama}</div></div><p class='unit-note'>Precios por unidad.</p><div class='prices'><div class='price'><div class='t'>PVP con IVA</div><div class='v'>${money(pvpI)}</div></div><div class='price'><div class='t'>PVP sin IVA</div><div class='v'>${money(pvp)}</div></div></div>${ofertaHtml}<div class='inline-form' style='margin-top:14px'><div><label>Cantidad</label><input id='ovCantidad' type='number' value='1' min='1' step='1'></div><div><label>Descuento en Sala (%)</label><input id='ovDescuento' type='number' value='${prefillDescuento.toFixed(1)}' step='0.1'></div><div><button class='p mini' id='btnAddFromOverlay' style='padding:12px 16px'>🛒 Agregar a cotización</button></div></div>`;
+  content.innerHTML=`<div class='row'><div class='k'>Referencia</div><div class='mono'>${escapeHtml(item.referencia)}</div></div><div class='row'><div class='k'>Descripción</div><div>${escapeHtml(item.descripcion)}</div></div><div class='row'><div class='k'>Gama</div><div>${escapeHtml(item.gama)}</div></div><p class='unit-note'>Precios por unidad.</p><div class='prices'><div class='price'><div class='t'>PVP con IVA</div><div class='v'>${money(pvpI)}</div></div><div class='price'><div class='t'>PVP sin IVA</div><div class='v'>${money(pvp)}</div></div></div>${ofertaHtml}<div class='inline-form' style='margin-top:14px'><div><label>Cantidad</label><input id='ovCantidad' type='number' value='1' min='1' step='1'></div><div><label>Descuento en Sala (%)</label><input id='ovDescuento' type='number' value='${prefillDescuento.toFixed(1)}' step='0.1'></div><div><button class='p mini' id='btnAddFromOverlay' style='padding:12px 16px'>🛒 Agregar a cotización</button></div></div>`;
   qs('btnAddFromOverlay').onclick=()=>{pushToQuote(item.referencia,qs('ovCantidad').value,qs('ovDescuento').value);showToast('Agregado a la cotización');};
   overlay.classList.remove('hidden');
+  focusFirstInOverlay(overlay);
 }
+// Accesibilidad de teclado para overlays: Escape cierra el modal visible,
+// y al abrir uno se mueve el foco a su primer elemento interactivo.
+function focusFirstInOverlay(overlay){
+  if(!overlay)return;
+  const focusable=overlay.querySelector('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+  if(focusable)setTimeout(()=>focusable.focus(),0);
+}
+// Modal de confirmación reutilizable, reemplaza al confirm() nativo del navegador
+// para mantener el mismo estilo visual del resto de la app. Uso: await confirmarModal('¿Seguro?')
+let _confirmResolve=null;
+function confirmarModal(mensaje,titulo='¿Confirmas esta acción?'){
+  qs('confirmTitulo').textContent=titulo;
+  qs('confirmMensaje').textContent=mensaje;
+  qs('confirmOverlay').classList.remove('hidden');
+  focusFirstInOverlay(qs('confirmOverlay'));
+  return new Promise(resolve=>{_confirmResolve=resolve;});
+}
+function _cerrarConfirmModal(resultado){
+  qs('confirmOverlay').classList.add('hidden');
+  if(_confirmResolve){_confirmResolve(resultado);_confirmResolve=null;}
+}
+qs('btnConfirmAceptar').onclick=()=>_cerrarConfirmModal(true);
+qs('btnConfirmCancelar').onclick=()=>_cerrarConfirmModal(false);
+qs('confirmOverlay').addEventListener('click',e=>{if(e.target.id==='confirmOverlay')_cerrarConfirmModal(false);});
+document.addEventListener('keydown',(e)=>{
+  if(e.key!=='Escape')return;
+  const abiertos=[...document.querySelectorAll('.overlay-backdrop')].filter(el=>!el.classList.contains('hidden'));
+  if(!abiertos.length)return;
+  const ultimo=abiertos[abiertos.length-1];
+  if(ultimo.id==='confirmOverlay')_cerrarConfirmModal(false);
+  else if(ultimo.id==='destOverlay')closeDestOverlay();
+  else if(ultimo.id==='soporteOverlay')cerrarSoporte();
+  else ultimo.classList.add('hidden');
+});
 function setStatus(id,msg,type){const el=qs(id);if(!el)return;el.className='mini-status '+type;el.textContent=msg;}
 qs('mediaTipo').addEventListener('change',()=>{const isVideo=qs('mediaTipo').value==='video';qs('mediaFileWrap').classList.toggle('hidden',isVideo);qs('mediaUrlWrap').classList.toggle('hidden',!isVideo);});
 
@@ -1954,7 +2166,7 @@ async function uploadMedia(){
 function updateCurrentPriceDisplay(){const el=qs('editCurrentPrice');if(!el)return;const refv=normalize(qs('editRef').value);const item=byRef.get(refv);if(!item){el.textContent='';return;}const current=Number(item.c01||0);let txt=`Precio actual: ${money(current)}`;const newRaw=qs('editPrice').value;if(newRaw!==''){const newPrice=Number(newRaw);if(!isNaN(newPrice)&&current>0){const delta=((newPrice-current)/current)*100;const sign=delta>=0?'+':'';txt+=` · Cambio: ${sign}${delta.toFixed(1)}%`;if(Math.abs(delta)>20)txt+=' ⚠️ Supera el 20%, pedirá confirmación';}}el.textContent=txt;}
 async function updateSinglePrice(){const ref=normalize(qs('editRef').value);const priceRaw=qs('editPrice').value;const price=Number(priceRaw);if(!ref){setStatus('singleStatus','Ingresa una referencia.','err');return;}if(!priceRaw||isNaN(price)||price<=0){setStatus('singleStatus','Ingresa un precio numérico válido mayor a 0.','err');return;}
 const currentItem=byRef.get(ref);
-if(currentItem){const current=Number(currentItem.c01||0);if(current>0){const delta=((price-current)/current)*100;if(Math.abs(delta)>20){const tipo=delta>=0?'incremento':'decremento';const ok=confirm(`Este cambio representa un ${tipo} de ${Math.abs(delta).toFixed(1)}% sobre el precio actual (${money(current)} → ${money(price)}).\n\nEsto supera el límite normal de 20%. ¿Confirmas que quieres aplicar este cambio?`);if(!ok){setStatus('singleStatus','Cambio cancelado: el incremento/decremento superaba el 20% y no fue confirmado.','err');return;}}}}
+if(currentItem){const current=Number(currentItem.c01||0);if(current>0){const delta=((price-current)/current)*100;if(Math.abs(delta)>20){const tipo=delta>=0?'incremento':'decremento';const ok=await confirmarModal(`Este cambio representa un ${tipo} de ${Math.abs(delta).toFixed(1)}% sobre el precio actual (${money(current)} → ${money(price)}).\n\nEsto supera el límite normal de 20%.`);if(!ok){setStatus('singleStatus','Cambio cancelado: el incremento/decremento superaba el 20% y no fue confirmado.','err');return;}}}}
 setStatus('singleStatus','Actualizando…','info');
 const{data,error}=await sb.from('productos').update({c01:price,updated_by:CURRENT_USER?.email||'admin'}).eq('referencia',ref).select();
 if(error){setStatus('singleStatus','Error al actualizar: '+error.message,'err');return;}
@@ -1986,7 +2198,7 @@ Papa.parse(file,{header:true,skipEmptyLines:true,complete:function(results){
     <div class="summary-chip"><b>${dupes.length}</b>Referencias duplicadas en el archivo (se ignoran, se usa la primera)</div>
     <div class="summary-chip"><b>${currentActiveCount}</b>Productos activos hoy (referencia)</div>
   </div>
-  ${invalid.length?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--danger);font-size:.84rem">Ver filas con error</summary><table class="preview-table"><tr><th>Fila</th><th>Problema</th></tr>${invalid.slice(0,30).map(x=>`<tr><td>${x.row}</td><td>${x.errs}</td></tr>`).join('')}</table>${invalid.length>30?`<div style="font-size:.8rem;color:var(--muted);margin-top:4px">Mostrando 30 de ${invalid.length}</div>`:''}</details>`:''}
+  ${invalid.length?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--danger);font-size:.84rem">Ver filas con error</summary><table class="preview-table"><tr><th>Fila</th><th>Problema</th></tr>${invalid.slice(0,30).map(x=>`<tr><td>${x.row}</td><td>${escapeHtml(x.errs)}</td></tr>`).join('')}</table>${invalid.length>30?`<div style="font-size:.8rem;color:var(--muted);margin-top:4px">Mostrando 30 de ${invalid.length}</div>`:''}</details>`:''}
   <div class="mini-status info" style="display:block;margin-top:10px">⚠️ Al confirmar: los <b>${valid.length}</b> productos del archivo quedarán activos y con el precio de este archivo. Todos los demás productos que existan hoy en la base y NO estén en este archivo quedarán marcados <b>inactivos</b> (no se borran).</div>
   <div class="actions" style="margin-top:10px"><button class="p mini" id="btnApplyBulk">Confirmar y aplicar carga masiva</button></div>`;
   qs('csvPreview').innerHTML=previewHtml;
@@ -1995,8 +2207,8 @@ Papa.parse(file,{header:true,skipEmptyLines:true,complete:function(results){
 }});}
 
 async function applyBulkUpload(){if(!PENDING_BULK_ROWS||!PENDING_BULK_ROWS.length){setStatus('bulkStatus','No hay datos analizados para aplicar.','err');return;}
-const confirmMsg=`Vas a reemplazar la lista de precios activa:\n\n- ${PENDING_BULK_ROWS.length} productos quedarán activos con precios de este archivo\n- Todo lo demás quedará INACTIVO (no se borra, solo deja de aparecer en el buscador)\n\n¿Confirmas que quieres aplicar este cambio para TODOS los usuarios ahora?`;
-if(!confirm(confirmMsg))return;
+const confirmMsg=`Vas a reemplazar la lista de precios activa:\n\n- ${PENDING_BULK_ROWS.length} productos quedarán activos con precios de este archivo\n- Todo lo demás quedará INACTIVO (no se borra, solo deja de aparecer en el buscador)\n\nEsto aplica para TODOS los usuarios de inmediato.`;
+if(!await confirmarModal(confirmMsg))return;
 setStatus('bulkStatus','Paso 1/2: desactivando lista anterior…','info');
 const{error:deErr}=await sb.from('productos').update({activo:false,updated_by:CURRENT_USER?.email||'admin'}).not('referencia','is',null);
 if(deErr){setStatus('bulkStatus','Error al desactivar lista anterior: '+deErr.message,'err');return;}
@@ -2048,7 +2260,7 @@ renderDestacadosAdmin();renderVentaCruzadaAdmin();renderDestacados();
 populateExploreFilters();EXPLORE_PAGE=1;renderExplore();
 r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";}catch(err){console.error(err);r.innerHTML="<div class='badge danger'>Error de carga</div><div class='empty'>No fue posible conectar con la base de precios (Supabase). Intenta recargar la página; si el error persiste, contacta a soporte.</div>";renderVersionBadge(null);}}
 document.getElementById('calc').onclick=calc;document.getElementById('clear').onclick=()=>{ref.value='';sala.value='0';if(cant)cant.value='1';box.style.display='none';copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";qs('mediaCard').classList.add('hidden');qs('suggestedCard').classList.add('hidden');qs('relatedCard').classList.add('hidden');qs('stockCard').classList.add('hidden');SUGGESTED_FOR_LAST=[];RELATED_FOR_LAST=new Map();renderExplore();ref.focus();};
-ref.addEventListener('input',showS);ref.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});sala.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});document.addEventListener('click',e=>{if(!box.contains(e.target)&&e.target!==ref)box.style.display='none';});
+ref.addEventListener('input',debounce(showS,200));ref.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});sala.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});document.addEventListener('click',e=>{if(!box.contains(e.target)&&e.target!==ref)box.style.display='none';});
 if(cant)cant.addEventListener('input',()=>{if(lastItem)renderPriceCard();});
 copy.onclick=async()=>{if(!lastCopy)return;try{await navigator.clipboard.writeText(lastCopy);showToast('Resultado copiado');}catch(e){}};quote.onclick=async()=>{if(!lastQuote)return;try{await navigator.clipboard.writeText(lastQuote);showToast('Cotización copiada');}catch(e){}};
 qs('activateAccess').onclick=activate;qs('loginPasswordBtn').onclick=loginConPassword;qs('regEmail').onblur=checkEmailRole;
@@ -2058,6 +2270,7 @@ qs('stockTipo').addEventListener('change',toggleStockFields);toggleStockFields()
 qs('btnUpdateStock').onclick=updateStockManual;
 qs('btnAnalyzeStockCSV').onclick=analyzeStockCSV;
 qs('addToQuote').onclick=addToQuote;qs('btnCopyMultiQuote').onclick=copyMultiQuote;qs('btnClearQuoteCart').onclick=clearQuoteCart;
+qs('btnPdfMultiQuote').onclick=abrirModalPdfCotizacion;qs('btnClosePdfQuote').onclick=cerrarModalPdfCotizacion;qs('pdfQuoteOverlay').addEventListener('click',e=>{if(e.target.id==='pdfQuoteOverlay')cerrarModalPdfCotizacion();});qs('btnGenerarPdfFinal').onclick=generarPdfCotizacion;
 qs('navConsultar').onclick=()=>showMainTab('consultar');qs('navCotizacion').onclick=()=>showMainTab('cotizacion');qs('navDestacados').onclick=()=>showMainTab('destacados');qs('navMiEquipo').onclick=()=>showMainTab('miequipo');
 qs('exploreVista').addEventListener('change',()=>{EXPLORE_PAGE=1;renderExplore();});
 qs('exploreGama').addEventListener('change',()=>{EXPLORE_PAGE=1;renderExplore();});
@@ -2113,6 +2326,7 @@ function abrirSoporte(){
   qs('soporteFormWrap').classList.add('hidden');
   qs('soporteGracias').classList.add('hidden');
   SOPORTE_TIPO_ACTUAL=null;SOPORTE_CALIFICACION_ACTUAL=0;
+  focusFirstInOverlay(qs('soporteOverlay'));
 }
 function cerrarSoporte(){qs('soporteOverlay').classList.add('hidden');}
 function abrirFormularioSoporte(tipo){
@@ -2127,6 +2341,7 @@ function abrirFormularioSoporte(tipo){
   qs('soporteMensajeWrap').querySelector('label').textContent=tipo==='calificacion'?'Cuéntanos más (opcional)':'Cuéntanos con detalle';
   qs('soporteMensaje').required=tipo!=='calificacion';
   pintarEstrellas(0);
+  setTimeout(()=>{(tipo==='calificacion'?qs('soporteEstrellasWrap').querySelector('span'):qs('soporteMensaje'))?.focus();},0);
 }
 function pintarEstrellas(valor){
   SOPORTE_CALIFICACION_ACTUAL=valor;
@@ -2191,13 +2406,13 @@ async function renderSoporteAdminList(){
   el.innerHTML=filas.map(r=>`
     <div class="card" style="margin-bottom:10px;padding:14px">
       <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px">
-        <div><b>${iconos[r.tipo]||''} ${r.tipo==='calificacion'?('★'.repeat(r.calificacion||0)+'☆'.repeat(5-(r.calificacion||0))):r.tipo}</b></div>
+        <div><b>${iconos[r.tipo]||''} ${r.tipo==='calificacion'?('★'.repeat(r.calificacion||0)+'☆'.repeat(5-(r.calificacion||0))):escapeHtml(r.tipo)}</b></div>
         <span class="mono" style="font-size:.76rem;color:var(--muted)">${new Date(r.created_at).toLocaleString('es-CO')}</span>
       </div>
-      ${r.mensaje?`<p style="margin:0 0 8px;font-size:.9rem">${r.mensaje.replace(/</g,'&lt;')}</p>`:''}
+      ${r.mensaje?`<p style="margin:0 0 8px;font-size:.9rem">${escapeHtml(r.mensaje)}</p>`:''}
       <div style="font-size:.78rem;color:var(--muted);margin-bottom:8px">
-        ${r.nombre||'Anónimo'} ${r.email?`· ${r.email}`:''} ${r.telefono?`· ${r.telefono}`:''}<br>
-        ${r.rol?`Rol: ${r.rol}`:''} ${r.distribuidor_nombre?`· ${r.distribuidor_nombre}`:''} ${r.pantalla_actual?`· Pantalla: ${r.pantalla_actual}`:''}
+        ${escapeHtml(r.nombre||'Anónimo')} ${r.email?`· ${escapeHtml(r.email)}`:''} ${r.telefono?`· ${escapeHtml(r.telefono)}`:''}<br>
+        ${r.rol?`Rol: ${escapeHtml(r.rol)}`:''} ${r.distribuidor_nombre?`· ${escapeHtml(r.distribuidor_nombre)}`:''} ${r.pantalla_actual?`· Pantalla: ${escapeHtml(r.pantalla_actual)}`:''}
       </div>
       <div class="inline-form" style="margin:0">
         <div><select class='soporte-estado-select' data-id='${r.id}'>
@@ -2218,7 +2433,7 @@ async function renderSoporteAdminList(){
   });
   el.querySelectorAll('.soporte-eliminar').forEach(btn=>{
     btn.onclick=async()=>{
-      if(!confirm('¿Eliminar este reporte definitivamente?'))return;
+      if(!await confirmarModal('¿Eliminar este reporte definitivamente?'))return;
       const{error}=await sb.from('reportes_soporte').delete().eq('id',btn.dataset.id);
       if(error){setStatus('soporteAdminStatus','Error al eliminar: '+error.message,'err');return;}
       await renderSoporteAdminList();
