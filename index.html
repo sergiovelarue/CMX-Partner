@@ -56,6 +56,9 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 @media(max-width:760px){.grid,.prices,.row{grid-template-columns:1fr}.hero h1{font-size:1.3rem}}
 .version-badge{display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid rgba(255,255,255,.3);border-radius:3px;padding:5px 12px;font-size:.76rem;margin-top:10px;letter-spacing:.2px}
 .version-badge.stale{background:transparent;color:#f0d68a;border-color:#f0d68a}
+.precios-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#eaf6ee;border:1px solid var(--ok);color:#1a5c33;border-radius:3px;padding:10px 14px;margin:10px 0;font-size:.86rem}
+.precios-banner button{background:transparent;border:none;color:#1a5c33;font-size:1rem;cursor:pointer;line-height:1;padding:2px 4px}
+.precios-banner button:hover{opacity:.7}
 .admin-login-box{display:none;gap:8px;margin-top:8px}
 .admin-login-box input{padding:10px 12px;font-size:.9rem}
 .admin-panel{border:1px solid var(--brand2);background:var(--card)}
@@ -204,6 +207,10 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <small id='waNote'></small>
 </details>
 <div style="margin-top:10px"><span class="version-badge" id="versionBadge">Verificando lista de precios vigente…</span></div>
+</div>
+<div id="preciosBanner" class="precios-banner hidden">
+  <span id="preciosBannerText">💰 Los precios se actualizaron recientemente. Algunos productos pueden tener nuevo valor.</span>
+  <button id="btnCerrarPreciosBanner" aria-label="Cerrar aviso">✕</button>
 </div>
 <div class='main-tabs' id='mainTabs'>
   <button class='p mini main-tab-btn' id='navConsultar'>🔍 Consultar</button>
@@ -676,7 +683,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 </div>
 <div class='footer'><span id="footerDistribText">Herramienta para distribuidores autorizados.</span> Información de referencia comercial. Derechos reservados.
   <div style="margin-top:10px"><button class='s mini' id='btnAbrirSoporte'>💬 Reportar un problema, sugerir una mejora o calificar la app</button></div>
-  <div class='admin-gate hidden' id='adminGate'><button class='s mini' id='adminLogin'>🔒 Acceso administrador</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Visible solo para correos administradores autorizados.</span></div><div class='admin-tools hidden' id='adminTools'><button class='s mini' id='exportUsers'>Exportar registros CSV</button><button class='s mini' id='exportLogs'>Exportar uso CSV</button><button class='s mini' id='adminLogout'>Bloquear descargas</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Descargas habilitadas para administrador validado.</span></div><div style="margin-top:10px;font-size:.74rem;color:#a9b4c2">© ListaLoop B2B — Propiedad intelectual exclusiva de Sergio Velásquez. Prohibida su copia, distribución o modificación sin autorización expresa. El uso por usuarios o empresas contratantes se rige por las condiciones contractuales autorizadas por Sergio Velásquez.<span style="float:right;opacity:.6" id="appVersionTag">v1.30.0</span></div></div>
+  <div class='admin-gate hidden' id='adminGate'><button class='s mini' id='adminLogin'>🔒 Acceso administrador</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Visible solo para correos administradores autorizados.</span></div><div class='admin-tools hidden' id='adminTools'><button class='s mini' id='exportUsers'>Exportar registros CSV</button><button class='s mini' id='exportLogs'>Exportar uso CSV</button><button class='s mini' id='adminLogout'>Bloquear descargas</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Descargas habilitadas para administrador validado.</span></div><div style="margin-top:10px;font-size:.74rem;color:#a9b4c2">© ListaLoop B2B — Propiedad intelectual exclusiva de Sergio Velásquez. Prohibida su copia, distribución o modificación sin autorización expresa. El uso por usuarios o empresas contratantes se rige por las condiciones contractuales autorizadas por Sergio Velásquez.<span style="float:right;opacity:.6" id="appVersionTag">v1.32.0</span></div></div>
 </div><div id='toast'>Copiado</div>
 <script>
 const CONFIG_FILE="cmx30_app_config.json";
@@ -2215,11 +2222,35 @@ if(deErr){setStatus('bulkStatus','Error al desactivar lista anterior: '+deErr.me
 setStatus('bulkStatus','Paso 2/2: cargando '+PENDING_BULK_ROWS.length+' productos…','info');
 const{error:upErr}=await sb.from('productos').upsert(PENDING_BULK_ROWS,{onConflict:'referencia'});
 if(upErr){setStatus('bulkStatus','Error al cargar productos nuevos: '+upErr.message+'. La lista anterior quedó desactivada — avisa para revisar antes de que los usuarios consulten precios.','err');return;}
+const origenLista=qs('uploadOrigen')?.value?.trim()||'';
+try{await sb.rpc('registrar_actualizacion_masiva_precios',{p_cantidad:PENDING_BULK_ROWS.length,p_origen:origenLista,p_updated_by:CURRENT_USER?.email||'admin'});}catch(notifErr){console.warn('No se pudo registrar la notificación de cambio de precios:',notifErr);}
 setStatus('bulkStatus','✅ Lista de precios actualizada correctamente. Recargando base…','ok');
 PENDING_BULK_ROWS=null;qs('csvPreview').innerHTML='';qs('csvFile').value='';
 await init();showToast('Lista de precios actualizada');}
 
 function renderVersionBadge(fecha){const el=qs('versionBadge');if(!el)return;if(!fecha){el.textContent='No fue posible verificar la fecha de la lista de precios';el.classList.add('stale');return;}const dt=new Intl.DateTimeFormat('es-CO',{dateStyle:'medium',timeStyle:'short'}).format(new Date(fecha));el.textContent=`Lista de precios vigente actualizada: ${dt}`;const hoursSince=(Date.now()-new Date(fecha).getTime())/36e5;el.classList.toggle('stale',hoursSince>24*30);}
+const PRECIOS_BANNER_VISTO_KEY='listaloop_precios_banner_visto';
+async function checkPreciosBanner(){
+  try{
+    const{data,error}=await sb.from('notificaciones_precio').select('id,created_at,cantidad_referencias,origen').order('created_at',{ascending:false}).limit(1);
+    if(error||!data||!data.length)return;
+    const ultima=data[0];
+    const visto=localStorage.getItem(PRECIOS_BANNER_VISTO_KEY);
+    if(visto===ultima.id)return;
+    const banner=qs('preciosBanner');const txt=qs('preciosBannerText');
+    if(!banner||!txt)return;
+    const dt=new Intl.DateTimeFormat('es-CO',{dateStyle:'medium',timeStyle:'short'}).format(new Date(ultima.created_at));
+    txt.textContent=`💰 Los precios se actualizaron el ${dt}${ultima.origen?` (${escapeHtml(ultima.origen)})`:''}. Algunos productos pueden tener nuevo valor.`;
+    banner.classList.remove('hidden');
+    banner.dataset.notifId=ultima.id;
+  }catch(e){console.warn('No se pudo verificar el aviso de precios:',e);}
+}
+function cerrarPreciosBanner(){
+  const banner=qs('preciosBanner');if(!banner)return;
+  const id=banner.dataset.notifId;
+  if(id)localStorage.setItem(PRECIOS_BANNER_VISTO_KEY,id);
+  banner.classList.add('hidden');
+}
 async function init(){try{const cRes=await fetch(CONFIG_FILE);CONFIG=await cRes.json();
 const[{data:productsData,error:pErr},{data:rulesData,error:rErr},{data:verData},{data:settingsData,error:sErr},{data:catalogoData,error:catErr},{data:mediaData,error:medErr},{data:rankingData,error:rankErr},{data:stockData,error:stockErr},{data:adminsData,error:adminsErr}]=await Promise.all([
   sb.from('productos').select('*'),
@@ -2249,6 +2280,7 @@ if(settingsData)SETTINGS={company_name:settingsData.company_name||'',logo_url:se
 PRODUCTS=productsData||[];RULES=rulesData||[];
 await loadRulesForUser();
 renderVersionBadge(verData?.fecha_actualizacion);
+checkPreciosBanner();
 DATA=PRODUCTS.filter(x=>x.activo).map(x=>({...x,search:(`${x.referencia} ${x.descripcion} ${x.gama} ${x.producto}`).toUpperCase()}));byRef=new Map(DATA.map(x=>[normalize(x.referencia),x]));document.getElementById('appName').textContent=CONFIG.app_name||'ListaLoop B2B';document.title=CONFIG.app_name||'ListaLoop B2B';const amwt=document.querySelector('meta[name="apple-mobile-web-app-title"]'),anm=document.querySelector('meta[name="application-name"]');if(amwt)amwt.setAttribute('content',CONFIG.app_name||'ListaLoop B2B');if(anm)anm.setAttribute('content',CONFIG.app_name||'ListaLoop B2B');document.getElementById('introText').textContent=CONFIG.intro_text||'Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.';document.getElementById('baseName').textContent=CONFIG.base_name||'-';document.getElementById('devDate').textContent=CONFIG.development_date||'-';document.getElementById('waNote').textContent=CONFIG.whatsapp_note||'';document.getElementById('statRefs').textContent=DATA.length.toLocaleString('es-CO');
 applyCompanyName();applyLogo();applyTheme(SETTINGS.theme||'original');if(qs('settingsCompany'))qs('settingsCompany').value=SETTINGS.company_name||'';
 if(qs('limitePdv'))qs('limitePdv').value=SETTINGS.limite_pdv_por_distribuidor;
@@ -2271,6 +2303,7 @@ qs('btnUpdateStock').onclick=updateStockManual;
 qs('btnAnalyzeStockCSV').onclick=analyzeStockCSV;
 qs('addToQuote').onclick=addToQuote;qs('btnCopyMultiQuote').onclick=copyMultiQuote;qs('btnClearQuoteCart').onclick=clearQuoteCart;
 qs('btnPdfMultiQuote').onclick=abrirModalPdfCotizacion;qs('btnClosePdfQuote').onclick=cerrarModalPdfCotizacion;qs('pdfQuoteOverlay').addEventListener('click',e=>{if(e.target.id==='pdfQuoteOverlay')cerrarModalPdfCotizacion();});qs('btnGenerarPdfFinal').onclick=generarPdfCotizacion;
+qs('btnCerrarPreciosBanner').onclick=cerrarPreciosBanner;
 qs('navConsultar').onclick=()=>showMainTab('consultar');qs('navCotizacion').onclick=()=>showMainTab('cotizacion');qs('navDestacados').onclick=()=>showMainTab('destacados');qs('navMiEquipo').onclick=()=>showMainTab('miequipo');
 qs('exploreVista').addEventListener('change',()=>{EXPLORE_PAGE=1;renderExplore();});
 qs('exploreGama').addEventListener('change',()=>{EXPLORE_PAGE=1;renderExplore();});
