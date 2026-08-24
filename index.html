@@ -160,7 +160,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   <div class="partner-box">
     <div class="partner-hero">
       <div id="logoWrapReg" class="logo-wrap hidden"><img id="companyLogoReg" alt="Logo empresa"></div>
-      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v1.41.0</span></h1>
+      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v1.42.0</span></h1>
       <p>Activa tu acceso profesional para cotizar más rápido, vender con seguridad y mejorar tu rentabilidad.</p>
       <div class="benefits">
         <div>✅ Precios actualizados al instante</div>
@@ -199,7 +199,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div class="userbar"><div>Acceso activo: <b id="activeUser">-</b><span id="activeRoleWrap"> · <span id="activeRole"></span></span><span id="activeCompanyWrap"> · <span id="activeCompany"></span></span></div><button class="linkbtn" id="changeUser">Cambiar usuario</button></div>
 <div class='hero'>
 <div id="logoWrap" class="logo-wrap hidden"><img id="companyLogo" alt="Logo empresa"></div>
-<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v1.41.0</span></h1>
+<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v1.42.0</span></h1>
 <details id='heroDetails'>
 <summary>Ver información de la plataforma</summary>
 <p id='introText' style="margin-top:10px">Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.</p>
@@ -476,6 +476,19 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
     </div>
     <div id="stockCsvPreview"></div>
     <div class="mini-status" id="stockBulkStatus"></div>
+
+    <details id="detalleStockExterno" style="margin-top:14px">
+      <summary style="cursor:pointer;font-weight:700;color:var(--brand);font-size:.9rem">🔗 Conexión automática vía link a archivo externo (ERP / WMS)</summary>
+      <div style="margin-top:10px">
+        <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Conecta un archivo publicado como CSV (Google Sheet publicado en la web, o la exportación periódica de tu ERP/WMS) con el mismo formato de la carga masiva de arriba. A diferencia de la lista de precios, los cambios de disponibilidad se aplican automáticamente cada 15 minutos, sin necesidad de revisión manual.</p>
+        <div class="inline-form">
+          <div><label>Link del CSV externo de disponibilidad</label><input id="linkStockExterno" placeholder="https://docs.google.com/.../pub?output=csv"></div>
+          <div><button class="s mini" id="btnGuardarStockExterno" style="padding:12px 16px">Guardar link</button></div>
+        </div>
+        <div class="mini-status" id="stockExternoStatus"></div>
+        <p style="margin:8px 0 0;color:var(--muted);font-size:.78rem" id="stockExternoUltimaAplicacion"></p>
+      </div>
+    </details>
   </div>
 </div>
 <div class='card admin-panel hidden' id='adminUsuariosPanel'>
@@ -1295,6 +1308,7 @@ async function updateAdminTools(){
     showAdminTab('prices');
     cargarLinkExternoGuardado();
     verificarCambiosListaExterna();
+    cargarStockExternoGuardado();
   }else{
     if(pricePanel)pricePanel.classList.add('hidden');if(settingsPanel)settingsPanel.classList.add('hidden');
   }
@@ -2383,6 +2397,27 @@ async function sha256Hex(text){
   const buf=await crypto.subtle.digest('SHA-256',enc);
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
+async function guardarStockExterno(){
+  const link=(qs('linkStockExterno')?.value||'').trim();
+  if(!link){setStatus('stockExternoStatus','Ingresa un link antes de guardar.','err');return;}
+  setStatus('stockExternoStatus','Guardando link…','info');
+  const{error}=await sb.rpc('guardar_config_stock_externa',{p_link:link,p_hash:null,p_marcar_verificacion:false,p_marcar_aplicacion:false,p_email:CURRENT_USER?.email||''});
+  if(error){setStatus('stockExternoStatus','Error al guardar: '+error.message,'err');return;}
+  setStatus('stockExternoStatus','✅ Link guardado. La disponibilidad se actualizará automáticamente cada 15 minutos si el archivo cambia.','ok');
+}
+async function cargarStockExternoGuardado(){
+  try{
+    const{data,error}=await sb.from('config_stock_externa').select('link_csv,ultima_aplicacion').eq('id',1).maybeSingle();
+    if(error||!data)return;
+    const inp=qs('linkStockExterno');
+    if(inp&&!inp.value&&data.link_csv)inp.value=data.link_csv;
+    const info=qs('stockExternoUltimaAplicacion');
+    if(info&&data.ultima_aplicacion){
+      const dt=new Intl.DateTimeFormat('es-CO',{dateStyle:'medium',timeStyle:'short'}).format(new Date(data.ultima_aplicacion));
+      info.textContent=`Última actualización automática aplicada: ${dt}.`;
+    }
+  }catch(e){/* silencioso: campo queda vacío si no hay link guardado o falla la carga */}
+}
 async function guardarLinkExterno(){
   const link=(qs('linkCsvExterno')?.value||'').trim();
   if(!link){setStatus('linkExternoStatus','Ingresa un link antes de guardar.','err');return;}
@@ -2566,7 +2601,7 @@ copy.onclick=async()=>{if(!lastCopy)return;try{await navigator.clipboard.writeTe
 qs('activateAccess').onclick=activate;qs('loginPasswordBtn').onclick=loginConPassword;qs('regEmail').onblur=checkEmailRole;
 qs('changeUser').onclick=()=>{localStorage.removeItem(USER_KEY);showRegister();};qs('adminLogin').onclick=unlockAdmin;qs('adminLogout').onclick=lockAdmin;qs('exportUsers').onclick=()=>downloadCSV('comercial_partner_registros.csv',readJSON(USERS_KEY,[]));qs('exportLogs').onclick=()=>downloadCSV('comercial_partner_uso.csv',readJSON(LOGS_KEY,[]));
 qs('btnUpdateSingle').onclick=updateSinglePrice;qs('btnAnalyzeCSV').onclick=analyzeCSV;qs('btnUploadMedia').onclick=uploadMedia;
-qs('btnGuardarLinkExterno').onclick=guardarLinkExterno;qs('btnAnalyzeLinkExterno').onclick=analyzeLinkExterno;
+qs('btnGuardarLinkExterno').onclick=guardarLinkExterno;qs('btnAnalyzeLinkExterno').onclick=analyzeLinkExterno;qs('btnGuardarStockExterno').onclick=guardarStockExterno;
 qs('stockTipo').addEventListener('change',toggleStockFields);toggleStockFields();
 qs('btnUpdateStock').onclick=updateStockManual;
 qs('btnAnalyzeStockCSV').onclick=analyzeStockCSV;
