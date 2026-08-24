@@ -160,7 +160,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   <div class="partner-box">
     <div class="partner-hero">
       <div id="logoWrapReg" class="logo-wrap hidden"><img id="companyLogoReg" alt="Logo empresa"></div>
-      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v1.40.0</span></h1>
+      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v1.41.0</span></h1>
       <p>Activa tu acceso profesional para cotizar más rápido, vender con seguridad y mejorar tu rentabilidad.</p>
       <div class="benefits">
         <div>✅ Precios actualizados al instante</div>
@@ -199,7 +199,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div class="userbar"><div>Acceso activo: <b id="activeUser">-</b><span id="activeRoleWrap"> · <span id="activeRole"></span></span><span id="activeCompanyWrap"> · <span id="activeCompany"></span></span></div><button class="linkbtn" id="changeUser">Cambiar usuario</button></div>
 <div class='hero'>
 <div id="logoWrap" class="logo-wrap hidden"><img id="companyLogo" alt="Logo empresa"></div>
-<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v1.40.0</span></h1>
+<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v1.41.0</span></h1>
 <details id='heroDetails'>
 <summary>Ver información de la plataforma</summary>
 <p id='introText' style="margin-top:10px">Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.</p>
@@ -1231,8 +1231,8 @@ async function initReglasNegocio(){
   await renderDistribuidoresList();
   await renderLimitesDescuentoRolList();
 }
-const ROL_LEGIBLE={propietario_distribuidor:'Propietario Distribuidor',admin_pdv:'Administrador PDV',dependiente:'Dependiente PDV',vendedor:'Vendedor'};
-const ROL_ORDEN=['propietario_distribuidor','admin_pdv','dependiente','vendedor'];
+const ROL_LEGIBLE={propietario_distribuidor:'Propietario Distribuidor',admin_pdv:'Administrador PDV',dependiente:'Dependiente PDV',vendedor:'Vendedor',administrador:'Administrador (plataforma)'};
+const ROL_ORDEN=['administrador','propietario_distribuidor','admin_pdv','dependiente','vendedor'];
 async function renderLimitesDescuentoRolList(){
   const el=qs('limitesDescuentoRolList');if(!el)return;
   const{data,error}=await sb.from('limites_descuento_rol').select('*');
@@ -1421,7 +1421,7 @@ async function loginConPassword(){
   qs('regMsg').style.color='var(--muted)';qs('regMsg').textContent='Validando…';
   const{error}=await sb.auth.signInWithPassword({email,password:pass});
   if(error){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Clave incorrecta o usuario no autorizado.';return;}
-  const user={name:qs('regName').value.trim()||email,phone:normalizeColombiaPhone(qs('regPhone').value)||'',email,company:qs('regCompany').value.trim()||'',city:qs('regCity').value.trim()||'',store:qs('regStore').value.trim(),registeredAt:new Date().toISOString(),lastAccess:new Date().toISOString(),role:'Administrador',esEmpresaContratante:true,perfilRol:null,distribuidorId:null,distribuidorNombre:'',codigoDistribuidor:''};
+  const user={name:qs('regName').value.trim()||email,phone:normalizeColombiaPhone(qs('regPhone').value)||'',email,company:qs('regCompany').value.trim()||'',city:qs('regCity').value.trim()||'',store:qs('regStore').value.trim(),registeredAt:new Date().toISOString(),lastAccess:new Date().toISOString(),role:'Administrador',esEmpresaContratante:true,perfilRol:'administrador',distribuidorId:null,distribuidorNombre:'',codigoDistribuidor:''};
   qs('regMsg').textContent='';
   const users=readJSON(USERS_KEY,[]);const idx=users.findIndex(u=>(u.email||'').toLowerCase()===user.email.toLowerCase());if(idx>=0){user.registeredAt=users[idx].registeredAt;users[idx]={...users[idx],...user};}else users.push(user);writeJSON(USERS_KEY,users);writeJSON(USER_KEY,user);showApp(user);showToast('Acceso activado');
 }
