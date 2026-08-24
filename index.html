@@ -160,7 +160,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   <div class="partner-box">
     <div class="partner-hero">
       <div id="logoWrapReg" class="logo-wrap hidden"><img id="companyLogoReg" alt="Logo empresa"></div>
-      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v1.36.0</span></h1>
+      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v1.38.0</span></h1>
       <p>Activa tu acceso profesional para cotizar más rápido, vender con seguridad y mejorar tu rentabilidad.</p>
       <div class="benefits">
         <div>✅ Precios actualizados al instante</div>
@@ -199,7 +199,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div class="userbar"><div>Acceso activo: <b id="activeUser">-</b><span id="activeRoleWrap"> · <span id="activeRole"></span></span><span id="activeCompanyWrap"> · <span id="activeCompany"></span></span></div><button class="linkbtn" id="changeUser">Cambiar usuario</button></div>
 <div class='hero'>
 <div id="logoWrap" class="logo-wrap hidden"><img id="companyLogo" alt="Logo empresa"></div>
-<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v1.36.0</span></h1>
+<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v1.38.0</span></h1>
 <details id='heroDetails'>
 <summary>Ver información de la plataforma</summary>
 <p id='introText' style="margin-top:10px">Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.</p>
@@ -264,6 +264,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   <div class='actions' style='margin-top:10px'>
     <button class='p mini' id='btnCopyMultiQuote'>Copiar cotización múltiple</button>
     <button class='p mini' id='btnPdfMultiQuote'>📄 Generar PDF</button>
+    <button class='p mini' id='btnEnviarPedido'>📦 Enviar pedido a la empresa</button>
     <button class='s mini' id='btnClearQuoteCart'>Vaciar cotización</button>
   </div>
 </div>
@@ -330,6 +331,21 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
     <div style="margin-top:6px"><label>Notas u observaciones</label><textarea id="pdfNotas" rows="3" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:3px;font-size:.92rem;font-family:inherit" placeholder="Ej: Precios sujetos a disponibilidad de inventario."></textarea></div>
     <div style="margin-top:14px"><button class='p' id='btnGenerarPdfFinal' style="padding:12px 20px">Generar PDF</button></div>
     <div class="mini-status" id="pdfQuoteStatus"></div>
+  </div>
+</div>
+<div id='pedidoOverlay' class='overlay-backdrop hidden'>
+  <div class='overlay-panel'>
+    <div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:10px'>
+      <h3 style='margin:0;color:var(--brand)'>📦 Enviar pedido a la empresa</h3>
+      <button class='s mini' id='btnClosePedido'>✕ Cerrar</button>
+    </div>
+    <p style="margin:0 0 14px;color:var(--muted);font-size:.86rem">Se genera un archivo CSV con los productos de esta cotización y se envía por correo al área comercial/logística, listo para importar en el sistema de gestión.</p>
+    <div class="inline-form">
+      <div><label>Nombre del cliente (opcional)</label><input id="pedidoClienteNombre" placeholder="Ej: Almacén El Progreso"></div>
+    </div>
+    <div style="margin-top:6px"><label>Notas u observaciones (opcional)</label><textarea id="pedidoNotas" rows="3" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:3px;font-size:.92rem;font-family:inherit" placeholder="Ej: Entrega prioritaria, cliente frecuente."></textarea></div>
+    <div style="margin-top:14px"><button class='p' id='btnEnviarPedidoFinal' style="padding:12px 20px">Enviar pedido</button></div>
+    <div class="mini-status" id="pedidoStatus"></div>
   </div>
 </div>
 <div id='soporteOverlay' class='overlay-backdrop hidden'>
@@ -590,6 +606,16 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
       <div><button class="p mini" id="btnSaveCompany" style="padding:12px 16px">Guardar</button></div>
     </div>
     <div class="mini-status" id="companyStatus"></div>
+  </div>
+
+  <div class="admin-sub">
+    <h4>Correo de pedidos</h4>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Cuando un vendedor envía un pedido desde una cotización, el archivo CSV llega a este correo.</p>
+    <div class="inline-form">
+      <div><label>Correo de destino</label><input id="settingsCorreoPedidos" type="email" placeholder="pedidos@tuempresa.com"></div>
+      <div><button class="p mini" id="btnSaveCorreoPedidos" style="padding:12px 16px">Guardar</button></div>
+    </div>
+    <div class="mini-status" id="correoPedidosStatus"></div>
   </div>
 
   <div class="admin-sub">
@@ -1171,6 +1197,7 @@ async function addVendedor(){
   }
   setStatus('vendedoresStatus','✅ Vendedor agregado.','ok');
   qs('newVendNombre').value='';qs('newVendApellido').value='';qs('newVendEmail').value='';qs('newVendTelefono').value='';
+  sb.rpc('notificar_inscripcion_vendedor_empresa',{p_email:email}).then(({error:notifErr})=>{if(notifErr)console.warn('No se pudo notificar la inscripción del vendedor:',notifErr.message);});
   await renderVendedoresList();
 }
 async function toggleVendedor(id,activoActual){
@@ -1213,6 +1240,7 @@ async function showAdminTab(tab){
   if(!panels.prices)return;
   Object.keys(panels).forEach(k=>{if(panels[k])panels[k].classList.toggle('hidden',tab!==k);if(tabs[k])tabs[k].className=(tab===k?'p mini':'s mini');});
   if(tab==='settings'&&qs('settingsCompany'))qs('settingsCompany').value=SETTINGS.company_name||'';
+  if(tab==='settings'&&qs('settingsCorreoPedidos'))qs('settingsCorreoPedidos').value=SETTINGS.correo_pedidos||'';
   if(tab==='usuarios'){renderAdminsList();renderOwnersList();renderAdminPdvList();renderDependientesList();renderVendDistList();await renderNivelesList();renderDistribuidoresList();loadCodigoVendedor();renderVendedoresList();renderSoporteAdminList();}
   if(tab==='reglas')initReglasNegocio();
   if(tab==='destacados')fillBadgeInputs();
@@ -1419,7 +1447,7 @@ sb.from('consultas_log').insert({referencia:item.referencia}).then(({error})=>{i
 }
 let PRODUCTS=[],RULES=[],CONFIG={},DATA=[],byRef=new Map(),lastCopy="",lastQuote="",lastItem=null,QUOTE_ITEMS=[],CATALOGO_ITEMS=[],MEDIA_IMAGES=new Map(),QUOTE_SESSION_ID=null,RANKING_MAP=new Map(),EXPLORE_PAGE=1,DISPONIBILIDAD_MAP=new Map(),SUGGESTED_FOR_LAST=[],RELATED_FOR_LAST=new Map();
 const EXPLORE_PAGE_SIZE=20;
-let SETTINGS={company_name:'',logo_url:'',theme:'original',catalogo_foco_badge:'Nuevo',catalogo_bestseller_badge:'Best Seller',catalogo_oferta_badge:'Oferta',catalogo_oferta_formato:'porcentaje',limite_pdv_por_distribuidor:10,limite_vendedores_dependientes_por_distribuidor:10,limite_distribuidores:10,limite_vendedores_empresa:10,limite_niveles_descuento:10};
+let SETTINGS={company_name:'',logo_url:'',theme:'original',catalogo_foco_badge:'Nuevo',catalogo_bestseller_badge:'Best Seller',catalogo_oferta_badge:'Oferta',catalogo_oferta_formato:'porcentaje',limite_pdv_por_distribuidor:10,limite_vendedores_dependientes_por_distribuidor:10,limite_distribuidores:10,limite_vendedores_empresa:10,limite_niveles_descuento:10,correo_pedidos:''};
 const ref=document.getElementById('ref'),sala=document.getElementById('sala'),cant=document.getElementById('cantidad'),r=document.getElementById('r'),box=document.getElementById('box'),copy=document.getElementById('copy'),quote=document.getElementById('quote'),addBtn=document.getElementById('addToQuote'),toast=document.getElementById('toast');
 const money=v=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(Math.round(v));
 const pct=v=>Math.max(0,Math.min(100,Number(v)||0))/100; const now=()=>new Intl.DateTimeFormat('es-CO',{dateStyle:'medium',timeStyle:'short'}).format(new Date());
@@ -1633,6 +1661,65 @@ ${lines}
 
 ${totalsTxt}
 Fecha cotización: ${now()}`;
+}
+function csvEscapeField(v){
+  const s=String(v==null?'':v);
+  if(/[",\n]/.test(s))return'"'+s.replace(/"/g,'""')+'"';
+  return s;
+}
+function buildPedidoCSV(){
+  const filas=[['referencia','descripcion','cantidad','precio_unitario','subtotal']];
+  let totalPvp=0;
+  QUOTE_ITEMS.forEach(line=>{
+    const c=quoteLineCalc(line);if(!c)return;
+    totalPvp+=c.subtotalPvp;
+    filas.push([c.item.referencia,c.item.descripcion,line.cantidad,Math.round(c.pvpSI),Math.round(c.subtotalPvp)]);
+  });
+  const csv=filas.map(f=>f.map(csvEscapeField).join(',')).join('\r\n');
+  return{csv,totalPvp,totalItems:QUOTE_ITEMS.length};
+}
+function abrirModalPedido(){
+  if(!QUOTE_ITEMS.length){showToast('La cotización está vacía');return;}
+  const st=qs('pedidoStatus');if(st){st.textContent='';st.className='mini-status';}
+  qs('pedidoOverlay').classList.remove('hidden');
+}
+function cerrarModalPedido(){qs('pedidoOverlay').classList.add('hidden');}
+function utf8ToBase64(str){
+  return btoa(unescape(encodeURIComponent(str)));
+}
+async function enviarPedidoEmpresa(){
+  if(!QUOTE_ITEMS.length){showToast('La cotización está vacía');return;}
+  const btn=qs('btnEnviarPedidoFinal');
+  const st=qs('pedidoStatus');
+  if(btn)btn.disabled=true;
+  if(st){st.textContent='Enviando pedido…';st.className='mini-status';}
+  try{
+    const{csv,totalPvp,totalItems}=buildPedidoCSV();
+    const csvBase64=utf8ToBase64(csv);
+    const clienteNombre=(qs('pedidoClienteNombre')?.value||'').trim();
+    const notas=(qs('pedidoNotas')?.value||'').trim();
+    const fechaArchivo=new Date().toISOString().slice(0,10);
+    const nombreArchivo=`pedido_${fechaArchivo}_${(CURRENT_USER?.name||'vendedor').trim().replace(/\s+/g,'_')}.csv`;
+    const distribuidorNombre=CURRENT_USER?.esEmpresaContratante?(SETTINGS.company_name||''):(CURRENT_USER?.distribuidorNombre||'');
+    const{error}=await sb.rpc('enviar_pedido_empresa',{
+      p_csv_base64:csvBase64,
+      p_nombre_archivo:nombreArchivo,
+      p_vendedor_nombre:CURRENT_USER?.name||'',
+      p_vendedor_email:CURRENT_USER?.email||'',
+      p_distribuidor_nombre:distribuidorNombre,
+      p_total_items:totalItems,
+      p_total_pvp:Math.round(totalPvp),
+      p_cliente_nombre:clienteNombre||null,
+      p_notas:notas||null
+    });
+    if(error){if(st){st.textContent='Error al enviar: '+error.message;st.className='mini-status err';}return;}
+    if(st){st.textContent='✅ Pedido enviado. El área comercial lo recibirá por correo en breve.';st.className='mini-status ok';}
+    showToast('Pedido enviado');
+  }catch(e){
+    if(st){st.textContent='Error al enviar el pedido: '+(e?.message||e);st.className='mini-status err';}
+  }finally{
+    if(btn)btn.disabled=false;
+  }
 }
 function copyMultiQuote(){
   if(!QUOTE_ITEMS.length){showToast('La cotización está vacía');return;}
@@ -2402,6 +2489,7 @@ qs('btnUpdateStock').onclick=updateStockManual;
 qs('btnAnalyzeStockCSV').onclick=analyzeStockCSV;
 qs('addToQuote').onclick=addToQuote;qs('btnCopyMultiQuote').onclick=copyMultiQuote;qs('btnClearQuoteCart').onclick=clearQuoteCart;
 qs('btnPdfMultiQuote').onclick=abrirModalPdfCotizacion;qs('btnClosePdfQuote').onclick=cerrarModalPdfCotizacion;qs('pdfQuoteOverlay').addEventListener('click',e=>{if(e.target.id==='pdfQuoteOverlay')cerrarModalPdfCotizacion();});qs('btnGenerarPdfFinal').onclick=generarPdfCotizacion;
+qs('btnEnviarPedido').onclick=abrirModalPedido;qs('btnClosePedido').onclick=cerrarModalPedido;qs('pedidoOverlay').addEventListener('click',e=>{if(e.target.id==='pedidoOverlay')cerrarModalPedido();});qs('btnEnviarPedidoFinal').onclick=enviarPedidoEmpresa;
 qs('btnCerrarPreciosBanner').onclick=cerrarPreciosBanner;
 qs('navConsultar').onclick=()=>showMainTab('consultar');qs('navCotizacion').onclick=()=>showMainTab('cotizacion');qs('navDestacados').onclick=()=>showMainTab('destacados');qs('navMiEquipo').onclick=()=>showMainTab('miequipo');
 qs('exploreVista').addEventListener('change',()=>{EXPLORE_PAGE=1;renderExplore();});
@@ -2419,6 +2507,7 @@ wireRefAutocomplete('focoRef','focoRefBox');wireRefAutocomplete('bsRef','bsRefBo
 wireRefAutocomplete('vcDisparadoraRef','vcDisparadoraRefBox');wireRefAutocomplete('vcSugeridaRef','vcSugeridaRefBox');
 qs('btnAddVentaCruzada').onclick=addVentaCruzada;
 qs('btnSaveCompany').onclick=async()=>{const raw=qs('settingsCompany').value.trim();if(!raw){setStatus('companyStatus','Ingresa un nombre de empresa.','err');return;}const company=raw.toUpperCase();setStatus('companyStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({company_name:company,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('companyStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.company_name=company;qs('settingsCompany').value=company;applyCompanyName();setStatus('companyStatus','✅ Empresa contratante actualizada para todos los usuarios.','ok');};
+qs('btnSaveCorreoPedidos').onclick=async()=>{const correo=(qs('settingsCorreoPedidos').value||'').trim();if(!correo||!isValidEmail(correo)){setStatus('correoPedidosStatus','Ingresa un correo válido.','err');return;}setStatus('correoPedidosStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({correo_pedidos:correo,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('correoPedidosStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.correo_pedidos=correo;setStatus('correoPedidosStatus','✅ Correo de pedidos actualizado.','ok');};
 qs('btnAddAdmin').onclick=addAdminEmail;
 qs('btnAddNivel').onclick=addNivel;
 qs('newNivelTipo').onchange=onNivelTipoChange;
