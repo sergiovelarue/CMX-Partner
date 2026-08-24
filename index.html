@@ -160,7 +160,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   <div class="partner-box">
     <div class="partner-hero">
       <div id="logoWrapReg" class="logo-wrap hidden"><img id="companyLogoReg" alt="Logo empresa"></div>
-      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v1.42.0</span></h1>
+      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v1.43.0</span></h1>
       <p>Activa tu acceso profesional para cotizar más rápido, vender con seguridad y mejorar tu rentabilidad.</p>
       <div class="benefits">
         <div>✅ Precios actualizados al instante</div>
@@ -199,7 +199,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div class="userbar"><div>Acceso activo: <b id="activeUser">-</b><span id="activeRoleWrap"> · <span id="activeRole"></span></span><span id="activeCompanyWrap"> · <span id="activeCompany"></span></span></div><button class="linkbtn" id="changeUser">Cambiar usuario</button></div>
 <div class='hero'>
 <div id="logoWrap" class="logo-wrap hidden"><img id="companyLogo" alt="Logo empresa"></div>
-<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v1.42.0</span></h1>
+<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v1.43.0</span></h1>
 <details id='heroDetails'>
 <summary>Ver información de la plataforma</summary>
 <p id='introText' style="margin-top:10px">Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.</p>
@@ -397,6 +397,16 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   <h3>🔧 Lista de precios 1 — Administración</h3>
   <p style="margin:0;color:var(--muted);font-size:.86rem">Visible solo para el administrador autenticado. Esta es la Lista de precios 1 (base): el PVP con IVA de cada producto, la referencia de partida para todos los Niveles de descuento. Los cambios aquí afectan a todos los usuarios de inmediato.</p>
 
+  <div class="admin-sub hidden" id="preciosModoSelectorWrap">
+    <h4>Modo de actualización de precios</h4>
+    <div class="actions">
+      <button class="p mini" id="btnPreciosModoManual" style="padding:10px 16px">✍️ Manual</button>
+      <button class="s mini" id="btnPreciosModoLink" style="padding:10px 16px">🔗 Vía link</button>
+    </div>
+    <p style="margin:6px 0 0;color:var(--muted);font-size:.78rem">Elige cómo se actualiza esta lista de precios. Cambiar de modo no borra la configuración del otro.</p>
+  </div>
+
+  <div id="preciosModoManualWrap">
   <div class="admin-sub">
     <h4>Actualizar un precio individual</h4>
     <div class="inline-form">
@@ -416,21 +426,25 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
       <div><label>Archivo CSV</label><input id="csvFile" type="file" accept=".csv"></div>
       <div><button class="s mini" id="btnAnalyzeCSV" style="padding:12px 16px">Analizar archivo</button></div>
     </div>
-    <details id="detalleCargaExterna" style="margin-top:12px">
-      <summary style="cursor:pointer;font-weight:700;color:var(--brand);font-size:.9rem">🔗 Conexión automática vía link a archivo externo (Google Sheets / exportación de tu ERP)</summary>
-      <div style="margin-top:10px">
-        <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Conecta un archivo publicado como CSV (Google Sheet publicado en la web, o la exportación periódica de tu ERP/sistema de inventario). La app lo lee directamente y te avisa automáticamente si detecta cambios frente a la última versión cargada.</p>
-        <div class="inline-form">
-          <div><label>Link del CSV externo</label><input id="linkCsvExterno" placeholder="https://docs.google.com/.../pub?output=csv"></div>
-          <div><button class="s mini" id="btnGuardarLinkExterno" style="padding:12px 16px">Guardar link</button></div>
-          <div><button class="p mini" id="btnAnalyzeLinkExterno" style="padding:12px 16px">Analizar desde link</button></div>
-        </div>
-        <div class="mini-status" id="linkExternoStatus"></div>
-      </div>
-    </details>
     <div id="csvPreview"></div>
     <div class="mini-status" id="bulkStatus"></div>
     <div id="reportePostCarga"></div>
+  </div>
+  </div>
+
+  <div class="admin-sub hidden" id="preciosModoLinkWrap">
+    <h4 id="detalleCargaExterna">🔗 Conexión automática vía link a archivo externo (Google Sheets / exportación de tu ERP)</h4>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Conecta un archivo publicado como CSV (Google Sheet publicado en la web, o la exportación periódica de tu ERP/sistema de inventario). La app lo lee directamente y te avisa automáticamente si detecta cambios frente a la última versión cargada.</p>
+    <div class="inline-form">
+      <div><label>Nombre de esta lista (trazabilidad)</label><input id="uploadOrigenLink" placeholder="Ej: C01 22 julio 2026"></div>
+    </div>
+    <div class="inline-form">
+      <div><label>Link del CSV externo</label><input id="linkCsvExterno" placeholder="https://docs.google.com/.../pub?output=csv"></div>
+      <div><button class="s mini" id="btnGuardarLinkExterno" style="padding:12px 16px">Guardar link</button></div>
+      <div><button class="p mini" id="btnAnalyzeLinkExterno" style="padding:12px 16px">Analizar desde link</button></div>
+    </div>
+    <div class="mini-status" id="linkExternoStatus"></div>
+    <div id="csvPreviewLink"></div>
   </div>
 
   <div class="admin-sub">
@@ -448,6 +462,16 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
     <div class="mini-status" id="mediaStatus"></div>
   </div>
 
+  <div class="admin-sub hidden" id="stockModoSelectorWrap">
+    <h4>Modo de actualización de disponibilidad</h4>
+    <div class="actions">
+      <button class="p mini" id="btnStockModoManual" style="padding:10px 16px">✍️ Manual</button>
+      <button class="s mini" id="btnStockModoLink" style="padding:10px 16px">🔗 Vía link</button>
+    </div>
+    <p style="margin:6px 0 0;color:var(--muted);font-size:.78rem">Elige cómo se actualiza la disponibilidad MTS/MTO. Cambiar de modo no borra la configuración del otro.</p>
+  </div>
+
+  <div id="stockModoManualWrap">
   <div class="admin-sub">
     <h4>📦 Disponibilidad MTS / MTO — actualizar una referencia</h4>
     <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">MTS (Make to Stock): se muestran unidades disponibles y próximas a llegar. MTO (Make to Order): se muestran días de entrega aproximados.</p>
@@ -476,19 +500,18 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
     </div>
     <div id="stockCsvPreview"></div>
     <div class="mini-status" id="stockBulkStatus"></div>
+  </div>
+  </div>
 
-    <details id="detalleStockExterno" style="margin-top:14px">
-      <summary style="cursor:pointer;font-weight:700;color:var(--brand);font-size:.9rem">🔗 Conexión automática vía link a archivo externo (ERP / WMS)</summary>
-      <div style="margin-top:10px">
-        <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Conecta un archivo publicado como CSV (Google Sheet publicado en la web, o la exportación periódica de tu ERP/WMS) con el mismo formato de la carga masiva de arriba. A diferencia de la lista de precios, los cambios de disponibilidad se aplican automáticamente cada 15 minutos, sin necesidad de revisión manual.</p>
-        <div class="inline-form">
-          <div><label>Link del CSV externo de disponibilidad</label><input id="linkStockExterno" placeholder="https://docs.google.com/.../pub?output=csv"></div>
-          <div><button class="s mini" id="btnGuardarStockExterno" style="padding:12px 16px">Guardar link</button></div>
-        </div>
-        <div class="mini-status" id="stockExternoStatus"></div>
-        <p style="margin:8px 0 0;color:var(--muted);font-size:.78rem" id="stockExternoUltimaAplicacion"></p>
-      </div>
-    </details>
+  <div class="admin-sub hidden" id="stockModoLinkWrap">
+    <h4 id="detalleStockExterno">🔗 Conexión automática vía link a archivo externo (ERP / WMS)</h4>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Conecta un archivo publicado como CSV (Google Sheet publicado en la web, o la exportación periódica de tu ERP/WMS) con el mismo formato de la carga masiva. A diferencia de la lista de precios, los cambios de disponibilidad se aplican automáticamente cada 15 minutos, sin necesidad de revisión manual.</p>
+    <div class="inline-form">
+      <div><label>Link del CSV externo de disponibilidad</label><input id="linkStockExterno" placeholder="https://docs.google.com/.../pub?output=csv"></div>
+      <div><button class="s mini" id="btnGuardarStockExterno" style="padding:12px 16px">Guardar link</button></div>
+    </div>
+    <div class="mini-status" id="stockExternoStatus"></div>
+    <p style="margin:8px 0 0;color:var(--muted);font-size:.78rem" id="stockExternoUltimaAplicacion"></p>
   </div>
 </div>
 <div class='card admin-panel hidden' id='adminUsuariosPanel'>
@@ -618,6 +641,15 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div class='card admin-panel hidden' id='adminSettingsPanel'>
   <h3>⚙️ Ajustes Generales</h3>
   <p style="margin:0;color:var(--muted);font-size:.86rem">Visible solo para el creador de la aplicación. Los cambios aquí afectan a todos los usuarios de inmediato.</p>
+
+  <div class="admin-sub">
+    <h4>🔗 Conexión automática vía link a archivo externo (función adicional)</h4>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Habilita la conexión con ERP/WMS (vía link a Google Sheets u otro archivo publicado) para precios y disponibilidad. Es una función adicional al plan base: requiere acuerdo comercial adicional y un día extra de onboarding/capacitación con el cliente antes de activarla. Mientras esté apagada, todos los usuarios solo ven las opciones de carga manual (uno a uno / archivo CSV).</p>
+    <div class="actions">
+      <label style="display:flex;align-items:center;gap:8px;font-weight:500;font-size:.9rem;cursor:pointer"><input id="settingsConexionLink" type="checkbox" style="width:18px;height:18px"> Función habilitada para este cliente</label>
+    </div>
+    <div class="mini-status" id="conexionLinkStatus"></div>
+  </div>
 
   <div class="admin-sub">
     <h4>Empresa contratante</h4>
@@ -1292,10 +1324,55 @@ async function showAdminTab(tab){
   if(!panels.prices)return;
   Object.keys(panels).forEach(k=>{if(panels[k])panels[k].classList.toggle('hidden',tab!==k);if(tabs[k])tabs[k].className=(tab===k?'p mini':'s mini');});
   if(tab==='settings'&&qs('settingsCompany'))qs('settingsCompany').value=SETTINGS.company_name||'';
+  if(tab==='settings'&&qs('settingsConexionLink'))qs('settingsConexionLink').checked=!!SETTINGS.conexion_link_habilitada;
   if(tab==='settings'&&qs('settingsCorreoPedidos'))qs('settingsCorreoPedidos').value=SETTINGS.correo_pedidos||'';
   if(tab==='usuarios'){renderAdminsList();renderOwnersList();renderAdminPdvList();renderDependientesList();renderVendDistList();await renderNivelesList();renderDistribuidoresList();loadCodigoVendedor();renderVendedoresList();renderSoporteAdminList();}
   if(tab==='reglas')initReglasNegocio();
   if(tab==='destacados')fillBadgeInputs();
+  if(tab==='prices'){aplicarVisibilidadModoCarga();}
+}
+// Conexión vía link (ERP/WMS) es una función adicional al plan base: el superadmin
+// la habilita por cliente en Ajustes Generales (SETTINGS.conexion_link_habilitada).
+// Activarla implica un acuerdo comercial adicional y un día extra de onboarding/
+// capacitación con el cliente antes de usarla en producción (proceso externo a la
+// app, no se documenta en base de datos, solo aquí en el código).
+// Mientras esté deshabilitada, todos los admins ven solo las opciones manuales
+// (uno a uno / carga CSV) para precios y disponibilidad, sin importar el valor
+// guardado en modo_carga_precios / modo_carga_stock.
+function aplicarVisibilidadModoCarga(){
+  const habilitado=!!SETTINGS.conexion_link_habilitada;
+  const selPrecios=qs('preciosModoSelectorWrap'),selStock=qs('stockModoSelectorWrap');
+  if(selPrecios)selPrecios.classList.toggle('hidden',!habilitado);
+  if(selStock)selStock.classList.toggle('hidden',!habilitado);
+  setModoCargaPrecios(habilitado?(SETTINGS.modo_carga_precios||'manual'):'manual',false);
+  setModoCargaStock(habilitado?(SETTINGS.modo_carga_stock||'manual'):'manual',false);
+}
+function setModoCargaPrecios(modo,guardar){
+  const habilitado=!!SETTINGS.conexion_link_habilitada;
+  const esLink=habilitado&&modo==='link';
+  const manualWrap=qs('preciosModoManualWrap'),linkWrap=qs('preciosModoLinkWrap');
+  if(manualWrap)manualWrap.classList.toggle('hidden',esLink);
+  if(linkWrap)linkWrap.classList.toggle('hidden',!esLink);
+  const btnM=qs('btnPreciosModoManual'),btnL=qs('btnPreciosModoLink');
+  if(btnM)btnM.className=(esLink?'s mini':'p mini');
+  if(btnL)btnL.className=(esLink?'p mini':'s mini');
+  if(guardar)guardarModoCarga('modo_carga_precios',esLink?'link':'manual');
+}
+function setModoCargaStock(modo,guardar){
+  const habilitado=!!SETTINGS.conexion_link_habilitada;
+  const esLink=habilitado&&modo==='link';
+  const manualWrap=qs('stockModoManualWrap'),linkWrap=qs('stockModoLinkWrap');
+  if(manualWrap)manualWrap.classList.toggle('hidden',esLink);
+  if(linkWrap)linkWrap.classList.toggle('hidden',!esLink);
+  const btnM=qs('btnStockModoManual'),btnL=qs('btnStockModoLink');
+  if(btnM)btnM.className=(esLink?'s mini':'p mini');
+  if(btnL)btnL.className=(esLink?'p mini':'s mini');
+  if(guardar)guardarModoCarga('modo_carga_stock',esLink?'link':'manual');
+}
+async function guardarModoCarga(campo,valor){
+  const{error}=await sb.from('app_settings').update({[campo]:valor,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);
+  if(error){showToast('No se pudo guardar el modo seleccionado: '+error.message);return;}
+  SETTINGS[campo]=valor;
 }
 async function updateAdminTools(){
   const gate=qs('adminGate'),tools=qs('adminTools'),tabs=qs('adminTabs'),pricePanel=qs('adminPricePanel'),settingsPanel=qs('adminSettingsPanel'),tabSettings=qs('tabSettings');
@@ -1500,7 +1577,7 @@ sb.from('consultas_log').insert({referencia:item.referencia}).then(({error})=>{i
 }
 let PRODUCTS=[],RULES=[],CONFIG={},DATA=[],byRef=new Map(),lastCopy="",lastQuote="",lastItem=null,QUOTE_ITEMS=[],CATALOGO_ITEMS=[],MEDIA_IMAGES=new Map(),QUOTE_SESSION_ID=null,RANKING_MAP=new Map(),EXPLORE_PAGE=1,DISPONIBILIDAD_MAP=new Map(),SUGGESTED_FOR_LAST=[],RELATED_FOR_LAST=new Map();
 const EXPLORE_PAGE_SIZE=20;
-let SETTINGS={company_name:'',logo_url:'',theme:'original',catalogo_foco_badge:'Nuevo',catalogo_bestseller_badge:'Best Seller',catalogo_oferta_badge:'Oferta',catalogo_oferta_formato:'porcentaje',limite_pdv_por_distribuidor:10,limite_vendedores_dependientes_por_distribuidor:10,limite_distribuidores:10,limite_vendedores_empresa:10,limite_niveles_descuento:10,correo_pedidos:''};
+let SETTINGS={company_name:'',logo_url:'',theme:'original',catalogo_foco_badge:'Nuevo',catalogo_bestseller_badge:'Best Seller',catalogo_oferta_badge:'Oferta',catalogo_oferta_formato:'porcentaje',limite_pdv_por_distribuidor:10,limite_vendedores_dependientes_por_distribuidor:10,limite_distribuidores:10,limite_vendedores_empresa:10,limite_niveles_descuento:10,correo_pedidos:'',conexion_link_habilitada:false,modo_carga_precios:'manual',modo_carga_stock:'manual'};
 const ref=document.getElementById('ref'),sala=document.getElementById('sala'),cant=document.getElementById('cantidad'),r=document.getElementById('r'),box=document.getElementById('box'),copy=document.getElementById('copy'),quote=document.getElementById('quote'),addBtn=document.getElementById('addToQuote'),toast=document.getElementById('toast');
 const money=v=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(Math.round(v));
 const pct=v=>Math.max(0,Math.min(100,Number(v)||0))/100; const now=()=>new Intl.DateTimeFormat('es-CO',{dateStyle:'medium',timeStyle:'short'}).format(new Date());
@@ -2363,7 +2440,8 @@ function validateBulkRow(row,idx){const errs=[];const ref=(row.referencia||'').t
 if(!ref)errs.push('referencia vacía');if(!desc)errs.push('descripcion vacía');if(!gama)errs.push('gama vacía');if(!prod)errs.push('producto vacío');if(!row.c01||isNaN(c01)||c01<=0)errs.push('c01 inválido');
 return{ok:errs.length===0,errs,ref,desc,gama,prod,c01};}
 
-function procesarResultadosCSV(results,origen){
+function procesarResultadosCSV(results,origen,previewId){
+  previewId=previewId||'csvPreview';
   const rawRows=results.data;const seen=new Set();const valid=[];const invalid=[];const dupes=[];
   rawRows.forEach((row,i)=>{const v=validateBulkRow(row,i);const refKey=normalize(v.ref);
     if(!v.ok){invalid.push({row:i+2,errs:v.errs.join(', ')});return;}
@@ -2382,7 +2460,7 @@ function procesarResultadosCSV(results,origen){
   ${invalid.length?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--danger);font-size:.84rem">Ver filas con error</summary><table class="preview-table"><tr><th>Fila</th><th>Problema</th></tr>${invalid.slice(0,30).map(x=>`<tr><td>${x.row}</td><td>${escapeHtml(x.errs)}</td></tr>`).join('')}</table>${invalid.length>30?`<div style="font-size:.8rem;color:var(--muted);margin-top:4px">Mostrando 30 de ${invalid.length}</div>`:''}</details>`:''}
   <div class="mini-status info" style="display:block;margin-top:10px">⚠️ Al confirmar: los <b>${valid.length}</b> productos del archivo quedarán activos y con el precio de este archivo. Todos los demás productos que existan hoy en la base y NO estén en este archivo quedarán marcados <b>inactivos</b> (no se borran, ni tampoco sus imágenes, planos, manuales, destacados o disponibilidad asociados). Si el archivo trae gamas nuevas sin regla de margen configurada, esos productos quedarán visibles solo con PVP hasta que configures la regla. Al terminar verás un resumen de todo lo que requiera tu revisión.</div>
   <div class="actions" style="margin-top:10px"><button class="p mini" id="btnApplyBulk">Confirmar y aplicar carga masiva</button></div>`;
-  qs('csvPreview').innerHTML=previewHtml;
+  qs(previewId).innerHTML=previewHtml;
   qs('btnApplyBulk').onclick=applyBulkUpload;
 }
 function analyzeCSV(){const file=qs('csvFile').files[0];if(!file){setStatus('bulkStatus','Selecciona un archivo CSV primero.','err');return;}
@@ -2429,10 +2507,10 @@ async function guardarLinkExterno(){
 function analyzeLinkExterno(){
   const link=(qs('linkCsvExterno')?.value||'').trim();
   if(!link){setStatus('linkExternoStatus','Ingresa un link antes de analizar.','err');return;}
-  const origen=qs('uploadOrigen').value.trim();if(!origen){setStatus('linkExternoStatus','Ingresa un nombre para esta lista (arriba, "Nombre de esta lista") antes de analizar.','err');return;}
+  const origen=qs('uploadOrigenLink').value.trim();if(!origen){setStatus('linkExternoStatus','Ingresa un nombre para esta lista (arriba, "Nombre de esta lista") antes de analizar.','err');return;}
   setStatus('linkExternoStatus','Descargando y leyendo archivo remoto…','info');
   Papa.parse(link,{download:true,header:true,skipEmptyLines:true,complete:async function(results){
-    procesarResultadosCSV(results,origen);
+    procesarResultadosCSV(results,origen,'csvPreviewLink');
     setStatus('linkExternoStatus','','info');qs('linkExternoStatus').className='mini-status';
     try{
       const rawText=Papa.unparse(results.data);
@@ -2482,10 +2560,10 @@ if(deErr){setStatus('bulkStatus','Error al desactivar lista anterior: '+deErr.me
 setStatus('bulkStatus','Paso 2/2: cargando '+PENDING_BULK_ROWS.length+' productos…','info');
 const{error:upErr}=await sb.from('productos').upsert(PENDING_BULK_ROWS,{onConflict:'referencia'});
 if(upErr){setStatus('bulkStatus','Error al cargar productos nuevos: '+upErr.message+'. La lista anterior quedó desactivada — avisa para revisar antes de que los usuarios consulten precios.','err');return;}
-const origenLista=qs('uploadOrigen')?.value?.trim()||'';
+const origenLista=(qs('uploadOrigen')?.value?.trim())||(qs('uploadOrigenLink')?.value?.trim())||'';
 try{await sb.rpc('registrar_actualizacion_masiva_precios',{p_cantidad:PENDING_BULK_ROWS.length,p_origen:origenLista,p_updated_by:CURRENT_USER?.email||'admin'});}catch(notifErr){console.warn('No se pudo registrar la notificación de cambio de precios:',notifErr);}
 setStatus('bulkStatus','✅ Lista de precios actualizada correctamente. Recargando base…','ok');
-PENDING_BULK_ROWS=null;qs('csvPreview').innerHTML='';qs('csvFile').value='';
+PENDING_BULK_ROWS=null;if(qs('csvPreview'))qs('csvPreview').innerHTML='';if(qs('csvPreviewLink'))qs('csvPreviewLink').innerHTML='';if(qs('csvFile'))qs('csvFile').value='';
 await init();showToast('Lista de precios actualizada');
 await mostrarReportePostCarga();}
 async function mostrarReportePostCarga(){
@@ -2545,11 +2623,11 @@ async function revisarYAplicarLinkExterno(){
   if(!await isAdminUnlocked()){showToast('Primero desbloquea el panel de administrador (arriba a la derecha) y vuelve a hacer clic en "Revisar y aplicar".');return;}
   banner.classList.add('hidden');
   await showAdminTab('prices');
+  if(typeof setModoCargaPrecios==='function')setModoCargaPrecios('link',false);
   const linkInput=qs('linkCsvExterno');
   if(linkInput)linkInput.value=link;
-  const origenInput=qs('uploadOrigen');
+  const origenInput=qs('uploadOrigenLink');
   if(origenInput&&!origenInput.value.trim())origenInput.value='Link externo — '+new Date().toLocaleDateString('es-CO');
-  const detalles=qs('detalleCargaExterna');if(detalles)detalles.open=true;
   setStatus('linkExternoStatus','Descargando y analizando el archivo actualizado…','info');
   qs('linkCsvExterno')?.scrollIntoView({behavior:'smooth',block:'center'});
   analyzeLinkExterno();
@@ -2602,6 +2680,8 @@ qs('activateAccess').onclick=activate;qs('loginPasswordBtn').onclick=loginConPas
 qs('changeUser').onclick=()=>{localStorage.removeItem(USER_KEY);showRegister();};qs('adminLogin').onclick=unlockAdmin;qs('adminLogout').onclick=lockAdmin;qs('exportUsers').onclick=()=>downloadCSV('comercial_partner_registros.csv',readJSON(USERS_KEY,[]));qs('exportLogs').onclick=()=>downloadCSV('comercial_partner_uso.csv',readJSON(LOGS_KEY,[]));
 qs('btnUpdateSingle').onclick=updateSinglePrice;qs('btnAnalyzeCSV').onclick=analyzeCSV;qs('btnUploadMedia').onclick=uploadMedia;
 qs('btnGuardarLinkExterno').onclick=guardarLinkExterno;qs('btnAnalyzeLinkExterno').onclick=analyzeLinkExterno;qs('btnGuardarStockExterno').onclick=guardarStockExterno;
+qs('btnPreciosModoManual').onclick=()=>setModoCargaPrecios('manual',true);qs('btnPreciosModoLink').onclick=()=>setModoCargaPrecios('link',true);
+qs('btnStockModoManual').onclick=()=>setModoCargaStock('manual',true);qs('btnStockModoLink').onclick=()=>setModoCargaStock('link',true);
 qs('stockTipo').addEventListener('change',toggleStockFields);toggleStockFields();
 qs('btnUpdateStock').onclick=updateStockManual;
 qs('btnAnalyzeStockCSV').onclick=analyzeStockCSV;
@@ -2626,6 +2706,7 @@ wireRefAutocomplete('vcDisparadoraRef','vcDisparadoraRefBox');wireRefAutocomplet
 qs('btnAddVentaCruzada').onclick=addVentaCruzada;
 qs('btnSaveCompany').onclick=async()=>{const raw=qs('settingsCompany').value.trim();if(!raw){setStatus('companyStatus','Ingresa un nombre de empresa.','err');return;}const company=raw.toUpperCase();setStatus('companyStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({company_name:company,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('companyStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.company_name=company;qs('settingsCompany').value=company;applyCompanyName();setStatus('companyStatus','✅ Empresa contratante actualizada para todos los usuarios.','ok');};
 qs('btnSaveCorreoPedidos').onclick=async()=>{const correo=(qs('settingsCorreoPedidos').value||'').trim();if(!correo||!isValidEmail(correo)){setStatus('correoPedidosStatus','Ingresa un correo válido.','err');return;}setStatus('correoPedidosStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({correo_pedidos:correo,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('correoPedidosStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.correo_pedidos=correo;setStatus('correoPedidosStatus','✅ Correo de pedidos actualizado.','ok');};
+qs('settingsConexionLink').onchange=async()=>{const habilitado=qs('settingsConexionLink').checked;setStatus('conexionLinkStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({conexion_link_habilitada:habilitado,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('conexionLinkStatus','Error al guardar: '+error.message,'err');qs('settingsConexionLink').checked=!habilitado;return;}SETTINGS.conexion_link_habilitada=habilitado;setStatus('conexionLinkStatus',habilitado?'✅ Función habilitada. Los administradores ya pueden elegir el modo "Vía link" en Precios y Disponibilidad.':'✅ Función deshabilitada. Todos los usuarios quedan en modo manual; los links guardados no se borran.','ok');};
 qs('btnAddAdmin').onclick=addAdminEmail;
 qs('btnAddNivel').onclick=addNivel;
 qs('newNivelTipo').onchange=onNivelTipoChange;
