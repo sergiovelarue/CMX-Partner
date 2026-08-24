@@ -160,7 +160,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   <div class="partner-box">
     <div class="partner-hero">
       <div id="logoWrapReg" class="logo-wrap hidden"><img id="companyLogoReg" alt="Logo empresa"></div>
-      <h1>ListaLoop B2B</h1>
+      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v1.36.0</span></h1>
       <p>Activa tu acceso profesional para cotizar más rápido, vender con seguridad y mejorar tu rentabilidad.</p>
       <div class="benefits">
         <div>✅ Precios actualizados al instante</div>
@@ -199,7 +199,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div class="userbar"><div>Acceso activo: <b id="activeUser">-</b><span id="activeRoleWrap"> · <span id="activeRole"></span></span><span id="activeCompanyWrap"> · <span id="activeCompany"></span></span></div><button class="linkbtn" id="changeUser">Cambiar usuario</button></div>
 <div class='hero'>
 <div id="logoWrap" class="logo-wrap hidden"><img id="companyLogo" alt="Logo empresa"></div>
-<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v1.32.0</span></h1>
+<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v1.36.0</span></h1>
 <details id='heroDetails'>
 <summary>Ver información de la plataforma</summary>
 <p id='introText' style="margin-top:10px">Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.</p>
@@ -398,9 +398,9 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
       <div><button class="s mini" id="btnAnalyzeCSV" style="padding:12px 16px">Analizar archivo</button></div>
     </div>
     <details style="margin-top:12px">
-      <summary style="cursor:pointer;font-weight:700;color:var(--brand);font-size:.9rem">🔗 O conectar con un archivo externo (simulación ERP / Google Drive)</summary>
+      <summary style="cursor:pointer;font-weight:700;color:var(--brand);font-size:.9rem">🔗 Conexión automática vía link a archivo externo (Google Sheets / exportación de tu ERP)</summary>
       <div style="margin-top:10px">
-        <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Pega el link de un Google Sheet publicado como CSV (Archivo → Compartir → Publicar en la web → formato CSV). La app puede leerlo directamente y avisarte si detecta cambios.</p>
+        <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Conecta un archivo publicado como CSV (Google Sheet publicado en la web, o la exportación periódica de tu ERP/sistema de inventario). La app lo lee directamente y te avisa automáticamente si detecta cambios frente a la última versión cargada.</p>
         <div class="inline-form">
           <div><label>Link del CSV externo</label><input id="linkCsvExterno" placeholder="https://docs.google.com/.../pub?output=csv"></div>
           <div><button class="s mini" id="btnGuardarLinkExterno" style="padding:12px 16px">Guardar link</button></div>
