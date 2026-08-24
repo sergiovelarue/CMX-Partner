@@ -160,7 +160,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   <div class="partner-box">
     <div class="partner-hero">
       <div id="logoWrapReg" class="logo-wrap hidden"><img id="companyLogoReg" alt="Logo empresa"></div>
-      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v1.38.0</span></h1>
+      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v1.40.0</span></h1>
       <p>Activa tu acceso profesional para cotizar más rápido, vender con seguridad y mejorar tu rentabilidad.</p>
       <div class="benefits">
         <div>✅ Precios actualizados al instante</div>
@@ -199,7 +199,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div class="userbar"><div>Acceso activo: <b id="activeUser">-</b><span id="activeRoleWrap"> · <span id="activeRole"></span></span><span id="activeCompanyWrap"> · <span id="activeCompany"></span></span></div><button class="linkbtn" id="changeUser">Cambiar usuario</button></div>
 <div class='hero'>
 <div id="logoWrap" class="logo-wrap hidden"><img id="companyLogo" alt="Logo empresa"></div>
-<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v1.38.0</span></h1>
+<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v1.40.0</span></h1>
 <details id='heroDetails'>
 <summary>Ver información de la plataforma</summary>
 <p id='introText' style="margin-top:10px">Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.</p>
@@ -211,7 +211,10 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 </div>
 <div id="preciosBanner" class="precios-banner hidden">
   <span id="preciosBannerText">💰 Los precios se actualizaron recientemente. Algunos productos pueden tener nuevo valor.</span>
-  <button id="btnCerrarPreciosBanner" aria-label="Cerrar aviso">✕</button>
+  <span style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+    <button id="btnRevisarLinkExterno" class="hidden" style="background:#1a5c33;color:#fff;border:none;border-radius:3px;padding:6px 12px;font-size:.82rem;cursor:pointer;white-space:nowrap">Revisar y aplicar</button>
+    <button id="btnCerrarPreciosBanner" aria-label="Cerrar aviso">✕</button>
+  </span>
 </div>
 <div class='main-tabs' id='mainTabs'>
   <button class='p mini main-tab-btn' id='navConsultar'>🔍 Consultar</button>
@@ -222,7 +225,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div id='viewConsultar'>
 <div class='card'><div class='grid'>
 <div><label>Referencia o nombre</label><input id='ref' autocomplete='off' placeholder='Ej: CSMPC0102 o parte del nombre'><div id='box' class='box'></div><div style='font-size:.84rem;color:#667085;margin-top:8px'>Solo se muestran productos activos.</div></div>
-<div><label>Descuento en Sala (%)</label><input id='sala' type='number' value='0' step='0.1'><label style='margin-top:10px'>Cantidad</label><input id='cantidad' type='number' value='1' min='1' step='1'></div>
+<div><label id='salaLabel'>Descuento autorizado (%)</label><input id='sala' type='number' value='0' step='0.1'><label style='margin-top:10px'>Cantidad</label><input id='cantidad' type='number' value='1' min='1' step='1'></div>
 </div><div class='actions'><button class='p' id='calc'>Consultar precio</button><button class='g' id='copy' disabled>Copiar resultado</button><button class='g' id='quote' disabled>Copiar cotización WhatsApp</button><button class='p' id='addToQuote' disabled>🛒 Agregar a cotización</button><button class='s' id='clear'>Limpiar</button></div></div>
 <div class='card' id='r'><div class='empty'>Cargando base de productos…</div></div>
 <div class='card hidden' id='stockCard'><h3 style="margin:0 0 10px;color:var(--brand);font-size:1rem">📦 Disponibilidad</h3><div id='stockContent'></div></div>
@@ -413,7 +416,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
       <div><label>Archivo CSV</label><input id="csvFile" type="file" accept=".csv"></div>
       <div><button class="s mini" id="btnAnalyzeCSV" style="padding:12px 16px">Analizar archivo</button></div>
     </div>
-    <details style="margin-top:12px">
+    <details id="detalleCargaExterna" style="margin-top:12px">
       <summary style="cursor:pointer;font-weight:700;color:var(--brand);font-size:.9rem">🔗 Conexión automática vía link a archivo externo (Google Sheets / exportación de tu ERP)</summary>
       <div style="margin-top:10px">
         <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Conecta un archivo publicado como CSV (Google Sheet publicado en la web, o la exportación periódica de tu ERP/sistema de inventario). La app lo lee directamente y te avisa automáticamente si detecta cambios frente a la última versión cargada.</p>
@@ -592,6 +595,11 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
     <p id="reglaFormBase" style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Edita el % directo en cada fila.</p>
     <div id="reglasList" style="margin-top:10px"></div>
     <div class="mini-status" id="reglasStatus"></div>
+
+    <h5 style="margin:18px 0 6px;font-size:.88rem">Descuento autorizado por rol</h5>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Define hasta qué % de descuento puede otorgar cada rol al cotizar (campo "Descuento autorizado"). Aplica igual para todos los distribuidores.</p>
+    <div id="limitesDescuentoRolList" style="margin-top:10px"></div>
+    <div class="mini-status" id="limitesDescuentoRolStatus"></div>
   </div>
 </div>
 <div class='card admin-panel hidden' id='adminSettingsPanel'>
@@ -1221,6 +1229,37 @@ async function initReglasNegocio(){
   fillReglaGamaSelect();
   await renderNivelesList();
   await renderDistribuidoresList();
+  await renderLimitesDescuentoRolList();
+}
+const ROL_LEGIBLE={propietario_distribuidor:'Propietario Distribuidor',admin_pdv:'Administrador PDV',dependiente:'Dependiente PDV',vendedor:'Vendedor'};
+const ROL_ORDEN=['propietario_distribuidor','admin_pdv','dependiente','vendedor'];
+async function renderLimitesDescuentoRolList(){
+  const el=qs('limitesDescuentoRolList');if(!el)return;
+  const{data,error}=await sb.from('limites_descuento_rol').select('*');
+  if(error){el.innerHTML="<div class='empty' style='padding:8px 0'>No se pudo cargar los límites por rol.</div>";return;}
+  const porRol=new Map((data||[]).map(r=>[r.rol,r]));
+  el.innerHTML=`<table class='preview-table'><tr><th>Rol</th><th>Descuento autorizado hasta (%)</th></tr>${ROL_ORDEN.map(rol=>{
+    const fila=porRol.get(rol);
+    const valor=fila?Number(fila.max_descuento_pct):0;
+    return `<tr>
+    <td>${ROL_LEGIBLE[rol]}</td>
+    <td><input class='limite-rol-edit' type='number' min='0' max='100' step='0.1' data-rol='${rol}' value='${valor}' style='padding:9px 8px;border:1px solid #cfd8e3;border-radius:10px;width:110px'></td>
+  </tr>`;
+  }).join('')}</table>`;
+  el.querySelectorAll('input.limite-rol-edit').forEach(inp=>{
+    inp.onblur=()=>{
+      const v=Number(inp.value);
+      if(isNaN(v)||v<0||v>100){setStatus('limitesDescuentoRolStatus','El % debe estar entre 0 y 100.','err');return;}
+      updateLimiteDescuentoRol(inp.dataset.rol,v);
+    };
+  });
+}
+async function updateLimiteDescuentoRol(rol,maxPct){
+  setStatus('limitesDescuentoRolStatus','Guardando…','info');
+  const{error}=await sb.from('limites_descuento_rol').upsert({rol,max_descuento_pct:maxPct,updated_by:CURRENT_USER?.email||'admin',updated_at:new Date().toISOString()},{onConflict:'rol'});
+  if(error){setStatus('limitesDescuentoRolStatus','Error al guardar: '+error.message,'err');return;}
+  if(LIMITES_DESCUENTO_ROL_CACHE)LIMITES_DESCUENTO_ROL_CACHE.set(rol,maxPct);
+  setStatus('limitesDescuentoRolStatus','✅ Límite actualizado.','ok');
 }
 // Rol oculto ("creador de la aplicación"): no aparece en ningún selector de
 // cargo ni formulario de registro. Se valida contra app_superadmins en
@@ -1489,11 +1528,25 @@ async function precargarMargen(gama){
 // (RULES cargado de margin_rules vía Nivel 1, sin romper nada).
 async function loadRulesForUser(user=CURRENT_USER){
   NIVEL_ACTUAL_ID=null;MARGEN_CACHE=new Map();
+  await cargarLimiteDescuentoUsuario(user);
   if(user?.esEmpresaContratante&&user?.nivelEmpresaId){NIVEL_ACTUAL_ID=user.nivelEmpresaId;return;}
   if(!user?.distribuidorId)return;
   const{data:nivelId,error:distErr}=await sb.rpc('obtener_nivel_distribuidor',{p_distribuidor_id:user.distribuidorId});
   if(distErr||!nivelId){console.warn('No se pudo resolver el nivel de descuento del distribuidor, se usa Nivel 1 por defecto.');return;}
   NIVEL_ACTUAL_ID=nivelId;
+}
+let LIMITE_DESCUENTO_USUARIO=0; // % máximo autorizado para el rol del usuario logueado (0 = sin autorización)
+let LIMITES_DESCUENTO_ROL_CACHE=null;
+async function cargarLimiteDescuentoUsuario(user=CURRENT_USER){
+  LIMITE_DESCUENTO_USUARIO=0;
+  const rol=user?.perfilRol||null;
+  const salaLabel=qs('salaLabel');
+  if(!rol){if(salaLabel)salaLabel.textContent='Descuento autorizado (%)';return;}
+  const{data,error}=await sb.from('limites_descuento_rol').select('rol,max_descuento_pct');
+  if(error||!data){if(salaLabel)salaLabel.textContent='Descuento autorizado (%)';return;}
+  LIMITES_DESCUENTO_ROL_CACHE=new Map(data.map(r=>[r.rol,Number(r.max_descuento_pct)]));
+  LIMITE_DESCUENTO_USUARIO=LIMITES_DESCUENTO_ROL_CACHE.get(rol)||0;
+  if(salaLabel)salaLabel.textContent=`Descuento autorizado (hasta ${LIMITE_DESCUENTO_USUARIO.toFixed(1)}%)`;
 }
 const find=q=>{q=normalize(q);if(!q)return null;if(byRef.has(q))return byRef.get(q);return DATA.find(x=>x.search.includes(q));};
 const sugg=q=>{q=normalize(q);if(!q)return[];return DATA.filter(x=>x.search.includes(q)).slice(0,8);};
@@ -1538,6 +1591,12 @@ renderPriceCard();
 }
 function renderPriceCard(){
   const item=lastItem;if(!item)return;
+  const dsPctIngresado=Number(sala.value||0);
+  if(dsPctIngresado>LIMITE_DESCUENTO_USUARIO){
+    copy.disabled=true;quote.disabled=true;addBtn.disabled=true;
+    r.innerHTML=`<div class='badge danger'>Descuento no autorizado</div><div class='empty'>Tu rol tiene autorizado hasta ${LIMITE_DESCUENTO_USUARIO.toFixed(1)}% de descuento. Ajusta el valor del campo "Descuento autorizado" para continuar.</div>`;
+    return;
+  }
   const ds=pct(sala.value),qty=Math.max(1,parseInt(cant?.value||'1',10)||1);
   const canMargin=canSeeMargin();
   const m=resolveMargin(item.gama),pvpI=Number(item.c01||0),pvp=pvpI/1.19,pvpSI=pvpI*(1-ds),pvpS=pvpSI/1.19,pvdI=pvpSI*(1-m),pvd=pvdI/1.19,gain=pvpS-pvd,dt=now(),[bc,bt]=badge(ds);
@@ -1594,6 +1653,7 @@ function pushToQuote(referencia,cantidad,descuento){
 }
 function addToQuote(){
   if(!lastItem){showToast('Primero consulta un producto');return;}
+  if(Number(sala.value||0)>LIMITE_DESCUENTO_USUARIO){showToast(`Descuento no autorizado: tu rol tiene hasta ${LIMITE_DESCUENTO_USUARIO.toFixed(1)}%`);return;}
   pushToQuote(lastItem.referencia,cant?.value||'1',sala.value||0);
   showToast('Agregado a la cotización');
 }
@@ -1631,7 +1691,7 @@ function renderQuoteCart(){
   table.innerHTML=`<div class='cart-scroll-hint'>← Desliza para ver todos los datos →</div><table class='preview-table'><tr><th>Ref</th><th>Descripción</th><th>Cant.</th><th>Dto %</th><th>PVP unit c/IVA dto</th><th>Subtotal PVP</th>${canMargin?`<th>Subtotal PVD</th><th>Ganancia</th>`:''}<th></th></tr>${rows}</table>`;
   totals.innerHTML=`<div class='summary-chip'><b>${money(totalPvp)}</b>Total PVP</div>${canMargin?`<div class='summary-chip'><b>${money(totalPvd)}</b>Total PVD</div><div class='summary-chip'><b>${money(totalPvp-totalPvd)}</b>Ganancia total estimada</div>`:''}`;
   table.querySelectorAll('input.qty-input').forEach(inp=>{
-    inp.onchange=()=>{const i=Number(inp.dataset.i),f=inp.dataset.f;let v=Number(inp.value);if(f==='cantidad')v=Math.max(1,Math.round(v)||1);else v=Math.max(0,v||0);QUOTE_ITEMS[i][f]=v;renderQuoteCart();};
+    inp.onchange=()=>{const i=Number(inp.dataset.i),f=inp.dataset.f;let v=Number(inp.value);if(f==='cantidad')v=Math.max(1,Math.round(v)||1);else{v=Math.max(0,v||0);if(v>LIMITE_DESCUENTO_USUARIO){showToast(`Descuento no autorizado: tu rol tiene hasta ${LIMITE_DESCUENTO_USUARIO.toFixed(1)}%`);v=LIMITE_DESCUENTO_USUARIO;}}QUOTE_ITEMS[i][f]=v;renderQuoteCart();};
   });
   table.querySelectorAll('button.rm-btn').forEach(btn=>{
     btn.onclick=()=>{QUOTE_ITEMS.splice(Number(btn.dataset.i),1);renderQuoteCart();};
@@ -2363,11 +2423,14 @@ async function verificarCambiosListaExterna(){
         const rawText=Papa.unparse(results.data);
         const hashActual=await sha256Hex(rawText);
         if(data.ultimo_hash_contenido&&hashActual!==data.ultimo_hash_contenido){
-          const banner=qs('preciosBanner');const txt=qs('preciosBannerText');
+          const banner=qs('preciosBanner');const txt=qs('preciosBannerText');const btnRevisar=qs('btnRevisarLinkExterno');
           if(banner&&txt){
-            txt.textContent='🔗 El archivo externo conectado (link CSV) cambió desde la última carga. Revísalo en Ajustes → Carga masiva antes de aplicarlo.';
+            txt.textContent='🔗 Hay una nueva versión del archivo de precios conectado, todavía sin aplicar.';
             banner.classList.remove('hidden');
             banner.dataset.notifId='link_externo_'+hashActual;
+            banner.dataset.tipo='link_externo';
+            banner.dataset.linkExterno=data.link_csv;
+            if(btnRevisar)btnRevisar.classList.remove('hidden');
           }
         }
       }catch(e){console.warn('No se pudo comparar el hash del link externo:',e);}
@@ -2422,12 +2485,14 @@ async function checkPreciosBanner(){
     const ultima=data[0];
     const visto=localStorage.getItem(PRECIOS_BANNER_VISTO_KEY);
     if(visto===ultima.id)return;
-    const banner=qs('preciosBanner');const txt=qs('preciosBannerText');
+    const banner=qs('preciosBanner');const txt=qs('preciosBannerText');const btnRevisar=qs('btnRevisarLinkExterno');
     if(!banner||!txt)return;
     const dt=new Intl.DateTimeFormat('es-CO',{dateStyle:'medium',timeStyle:'short'}).format(new Date(ultima.created_at));
     txt.textContent=`💰 Los precios se actualizaron el ${dt}${ultima.origen?` (${escapeHtml(ultima.origen)})`:''}. Algunos productos pueden tener nuevo valor.`;
     banner.classList.remove('hidden');
     banner.dataset.notifId=ultima.id;
+    banner.dataset.tipo='precios_actualizados';
+    if(btnRevisar)btnRevisar.classList.add('hidden');
   }catch(e){console.warn('No se pudo verificar el aviso de precios:',e);}
 }
 function cerrarPreciosBanner(){
@@ -2435,6 +2500,24 @@ function cerrarPreciosBanner(){
   const id=banner.dataset.notifId;
   if(id)localStorage.setItem(PRECIOS_BANNER_VISTO_KEY,id);
   banner.classList.add('hidden');
+  const btnRevisar=qs('btnRevisarLinkExterno');if(btnRevisar)btnRevisar.classList.add('hidden');
+}
+async function revisarYAplicarLinkExterno(){
+  const banner=qs('preciosBanner');
+  const link=banner?.dataset?.linkExterno;
+  if(!link){showToast('No se encontró el link a revisar');return;}
+  if(!isAdmin()){showToast('Solo un administrador puede aplicar este cambio. Pídele que inicie sesión y revise el aviso.');return;}
+  if(!await isAdminUnlocked()){showToast('Primero desbloquea el panel de administrador (arriba a la derecha) y vuelve a hacer clic en "Revisar y aplicar".');return;}
+  banner.classList.add('hidden');
+  await showAdminTab('prices');
+  const linkInput=qs('linkCsvExterno');
+  if(linkInput)linkInput.value=link;
+  const origenInput=qs('uploadOrigen');
+  if(origenInput&&!origenInput.value.trim())origenInput.value='Link externo — '+new Date().toLocaleDateString('es-CO');
+  const detalles=qs('detalleCargaExterna');if(detalles)detalles.open=true;
+  setStatus('linkExternoStatus','Descargando y analizando el archivo actualizado…','info');
+  qs('linkCsvExterno')?.scrollIntoView({behavior:'smooth',block:'center'});
+  analyzeLinkExterno();
 }
 async function init(){try{const cRes=await fetch(CONFIG_FILE);CONFIG=await cRes.json();
 const[{data:productsData,error:pErr},{data:rulesData,error:rErr},{data:verData},{data:settingsData,error:sErr},{data:catalogoData,error:catErr},{data:mediaData,error:medErr},{data:rankingData,error:rankErr},{data:stockData,error:stockErr},{data:adminsData,error:adminsErr}]=await Promise.all([
@@ -2490,7 +2573,7 @@ qs('btnAnalyzeStockCSV').onclick=analyzeStockCSV;
 qs('addToQuote').onclick=addToQuote;qs('btnCopyMultiQuote').onclick=copyMultiQuote;qs('btnClearQuoteCart').onclick=clearQuoteCart;
 qs('btnPdfMultiQuote').onclick=abrirModalPdfCotizacion;qs('btnClosePdfQuote').onclick=cerrarModalPdfCotizacion;qs('pdfQuoteOverlay').addEventListener('click',e=>{if(e.target.id==='pdfQuoteOverlay')cerrarModalPdfCotizacion();});qs('btnGenerarPdfFinal').onclick=generarPdfCotizacion;
 qs('btnEnviarPedido').onclick=abrirModalPedido;qs('btnClosePedido').onclick=cerrarModalPedido;qs('pedidoOverlay').addEventListener('click',e=>{if(e.target.id==='pedidoOverlay')cerrarModalPedido();});qs('btnEnviarPedidoFinal').onclick=enviarPedidoEmpresa;
-qs('btnCerrarPreciosBanner').onclick=cerrarPreciosBanner;
+qs('btnCerrarPreciosBanner').onclick=cerrarPreciosBanner;qs('btnRevisarLinkExterno').onclick=revisarYAplicarLinkExterno;
 qs('navConsultar').onclick=()=>showMainTab('consultar');qs('navCotizacion').onclick=()=>showMainTab('cotizacion');qs('navDestacados').onclick=()=>showMainTab('destacados');qs('navMiEquipo').onclick=()=>showMainTab('miequipo');
 qs('exploreVista').addEventListener('change',()=>{EXPLORE_PAGE=1;renderExplore();});
 qs('exploreGama').addEventListener('change',()=>{EXPLORE_PAGE=1;renderExplore();});
