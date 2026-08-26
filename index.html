@@ -160,7 +160,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   <div class="partner-box">
     <div class="partner-hero">
       <div id="logoWrapReg" class="logo-wrap hidden"><img id="companyLogoReg" alt="Logo empresa"></div>
-      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v1.43.0</span></h1>
+      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v1.45.0</span></h1>
       <p>Activa tu acceso profesional para cotizar más rápido, vender con seguridad y mejorar tu rentabilidad.</p>
       <div class="benefits">
         <div>✅ Precios actualizados al instante</div>
@@ -199,7 +199,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div class="userbar"><div>Acceso activo: <b id="activeUser">-</b><span id="activeRoleWrap"> · <span id="activeRole"></span></span><span id="activeCompanyWrap"> · <span id="activeCompany"></span></span></div><button class="linkbtn" id="changeUser">Cambiar usuario</button></div>
 <div class='hero'>
 <div id="logoWrap" class="logo-wrap hidden"><img id="companyLogo" alt="Logo empresa"></div>
-<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v1.43.0</span></h1>
+<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v1.45.0</span></h1>
 <details id='heroDetails'>
 <summary>Ver información de la plataforma</summary>
 <p id='introText' style="margin-top:10px">Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.</p>
@@ -329,11 +329,16 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
       <div><label>Nombre del cliente</label><input id="pdfClienteNombre" placeholder="Ej: Almacén El Progreso"></div>
       <div><label>Correo del cliente</label><input id="pdfClienteEmail" type="email" placeholder="cliente@correo.com"></div>
       <div><label>Teléfono del cliente</label><input id="pdfClienteTelefono" placeholder="Ej: 3001234567"></div>
+      <div><label id="pdfClienteIdLabel">Identificación / NIT del cliente (opcional)</label><input id="pdfClienteIdentificacion" placeholder="Ej: 900123456-7"></div>
       <div><label>Válida hasta</label><input id="pdfValidaHasta" type="date"></div>
     </div>
     <div style="margin-top:6px"><label>Notas u observaciones</label><textarea id="pdfNotas" rows="3" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:3px;font-size:.92rem;font-family:inherit" placeholder="Ej: Precios sujetos a disponibilidad de inventario."></textarea></div>
-    <div style="margin-top:14px"><button class='p' id='btnGenerarPdfFinal' style="padding:12px 20px">Generar PDF</button></div>
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class='p' id='btnGenerarPdfFinal' style="padding:12px 20px">Generar PDF</button>
+      <button class='s hidden' id='btnEnviarAprobacion' style="padding:12px 20px">✅ Enviar para aprobación del cliente</button>
+    </div>
     <div class="mini-status" id="pdfQuoteStatus"></div>
+    <div class="mini-status" id="aprobacionStatus"></div>
   </div>
 </div>
 <div id='pedidoOverlay' class='overlay-backdrop hidden'>
@@ -649,6 +654,19 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
       <label style="display:flex;align-items:center;gap:8px;font-weight:500;font-size:.9rem;cursor:pointer"><input id="settingsConexionLink" type="checkbox" style="width:18px;height:18px"> Función habilitada para este cliente</label>
     </div>
     <div class="mini-status" id="conexionLinkStatus"></div>
+  </div>
+
+  <div class="admin-sub">
+    <h4>✅ Motor de Aprobación de Pedidos (función adicional)</h4>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Habilita el envío de cotizaciones a un portal externo donde el cliente aprueba, rechaza o pide ajustes; si aprueba, se genera automáticamente el pedido con evidencia legal. Es una función adicional al plan base: requiere acuerdo comercial adicional (empalme + valor mensual) y un día extra de onboarding/capacitación antes de activarla. Mientras esté apagada, ningún vendedor ve el botón "Enviar para aprobación".</p>
+    <div class="actions">
+      <label style="display:flex;align-items:center;gap:8px;font-weight:500;font-size:.9rem;cursor:pointer"><input id="settingsAprobacionPedidos" type="checkbox" style="width:18px;height:18px"> Función habilitada para este cliente</label>
+    </div>
+    <div class="inline-form" style="margin-top:8px">
+      <div><label>Tarifa de IVA para el cálculo de precio sin IVA (%)</label><input id="settingsIvaAprobacion" type="number" min="0" max="100" step="0.1" placeholder="Ej: 19"></div>
+    </div>
+    <p style="margin:6px 0 0;color:var(--muted);font-size:.78rem">El catálogo de ListaLoop guarda el precio con IVA incluido. Para armar el pedido, se calcula el precio sin IVA dividiendo entre (1 + tarifa/100). Ajusta esta tarifa si tu catálogo maneja una tasa distinta al 19% general.</p>
+    <div class="mini-status" id="aprobacionPedidosStatus"></div>
   </div>
 
   <div class="admin-sub">
@@ -1325,6 +1343,8 @@ async function showAdminTab(tab){
   Object.keys(panels).forEach(k=>{if(panels[k])panels[k].classList.toggle('hidden',tab!==k);if(tabs[k])tabs[k].className=(tab===k?'p mini':'s mini');});
   if(tab==='settings'&&qs('settingsCompany'))qs('settingsCompany').value=SETTINGS.company_name||'';
   if(tab==='settings'&&qs('settingsConexionLink'))qs('settingsConexionLink').checked=!!SETTINGS.conexion_link_habilitada;
+  if(tab==='settings'&&qs('settingsAprobacionPedidos'))qs('settingsAprobacionPedidos').checked=!!SETTINGS.aprobacion_pedidos_habilitada;
+  if(tab==='settings'&&qs('settingsIvaAprobacion'))qs('settingsIvaAprobacion').value=SETTINGS.iva_tarifa_pct_aprobacion??19;
   if(tab==='settings'&&qs('settingsCorreoPedidos'))qs('settingsCorreoPedidos').value=SETTINGS.correo_pedidos||'';
   if(tab==='usuarios'){renderAdminsList();renderOwnersList();renderAdminPdvList();renderDependientesList();renderVendDistList();await renderNivelesList();renderDistribuidoresList();loadCodigoVendedor();renderVendedoresList();renderSoporteAdminList();}
   if(tab==='reglas')initReglasNegocio();
@@ -1577,7 +1597,7 @@ sb.from('consultas_log').insert({referencia:item.referencia}).then(({error})=>{i
 }
 let PRODUCTS=[],RULES=[],CONFIG={},DATA=[],byRef=new Map(),lastCopy="",lastQuote="",lastItem=null,QUOTE_ITEMS=[],CATALOGO_ITEMS=[],MEDIA_IMAGES=new Map(),QUOTE_SESSION_ID=null,RANKING_MAP=new Map(),EXPLORE_PAGE=1,DISPONIBILIDAD_MAP=new Map(),SUGGESTED_FOR_LAST=[],RELATED_FOR_LAST=new Map();
 const EXPLORE_PAGE_SIZE=20;
-let SETTINGS={company_name:'',logo_url:'',theme:'original',catalogo_foco_badge:'Nuevo',catalogo_bestseller_badge:'Best Seller',catalogo_oferta_badge:'Oferta',catalogo_oferta_formato:'porcentaje',limite_pdv_por_distribuidor:10,limite_vendedores_dependientes_por_distribuidor:10,limite_distribuidores:10,limite_vendedores_empresa:10,limite_niveles_descuento:10,correo_pedidos:'',conexion_link_habilitada:false,modo_carga_precios:'manual',modo_carga_stock:'manual'};
+let SETTINGS={company_name:'',logo_url:'',theme:'original',catalogo_foco_badge:'Nuevo',catalogo_bestseller_badge:'Best Seller',catalogo_oferta_badge:'Oferta',catalogo_oferta_formato:'porcentaje',limite_pdv_por_distribuidor:10,limite_vendedores_dependientes_por_distribuidor:10,limite_distribuidores:10,limite_vendedores_empresa:10,limite_niveles_descuento:10,correo_pedidos:'',conexion_link_habilitada:false,modo_carga_precios:'manual',modo_carga_stock:'manual',aprobacion_pedidos_habilitada:false,iva_tarifa_pct_aprobacion:19};
 const ref=document.getElementById('ref'),sala=document.getElementById('sala'),cant=document.getElementById('cantidad'),r=document.getElementById('r'),box=document.getElementById('box'),copy=document.getElementById('copy'),quote=document.getElementById('quote'),addBtn=document.getElementById('addToQuote'),toast=document.getElementById('toast');
 const money=v=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(Math.round(v));
 const pct=v=>Math.max(0,Math.min(100,Number(v)||0))/100; const now=()=>new Intl.DateTimeFormat('es-CO',{dateStyle:'medium',timeStyle:'short'}).format(new Date());
@@ -1880,7 +1900,55 @@ function clearQuoteCart(){QUOTE_ITEMS=[];QUOTE_SESSION_ID=null;renderQuoteCart()
 function abrirModalPdfCotizacion(){
   if(!QUOTE_ITEMS.length){showToast('La cotización está vacía');return;}
   const st=qs('pdfQuoteStatus');if(st){st.textContent='';st.className='mini-status';}
+  const stA=qs('aprobacionStatus');if(stA){stA.textContent='';stA.className='mini-status';}
+  const btnAprob=qs('btnEnviarAprobacion');
+  const habilitado=!!SETTINGS.aprobacion_pedidos_habilitada;
+  if(btnAprob)btnAprob.classList.toggle('hidden',!habilitado);
+  const idLabel=qs('pdfClienteIdLabel');
+  if(idLabel)idLabel.textContent=habilitado?'Identificación / NIT del cliente (requerido para aprobación)':'Identificación / NIT del cliente (opcional)';
   qs('pdfQuoteOverlay').classList.remove('hidden');
+}
+// Motor de Aprobación de Pedidos: función adicional de pago, habilitada solo por
+// el superadministrador (SETTINGS.aprobacion_pedidos_habilitada). Envía la
+// cotización a un portal externo (proyecto Supabase msozyqmvvcuvvszabtjn) donde
+// el cliente aprueba/rechaza/pide ajustes. No reemplaza el PDF: es un paso
+// adicional. El secreto que firma la llamada (WEBHOOK_SECRET) vive únicamente
+// en la Edge Function enviar-a-aprobacion (backend), nunca en este frontend.
+async function enviarParaAprobacion(){
+  if(!QUOTE_ITEMS.length){showToast('La cotización está vacía');return;}
+  const btn=qs('btnEnviarAprobacion');
+  const st=qs('aprobacionStatus');
+  const cliente=(qs('pdfClienteNombre')?.value||'').trim();
+  const clienteEmail=(qs('pdfClienteEmail')?.value||'').trim();
+  const clienteIdentificacion=(qs('pdfClienteIdentificacion')?.value||'').trim();
+  if(!cliente||!clienteEmail){setStatus('aprobacionStatus','Completa nombre y correo del cliente antes de enviar a aprobación.','err');return;}
+  if(!isValidEmail(clienteEmail)){setStatus('aprobacionStatus','El correo del cliente no es válido.','err');return;}
+  if(!clienteIdentificacion){setStatus('aprobacionStatus','Ingresa la identificación/NIT del cliente: el Motor de Aprobación la requiere para generar el pedido.','err');return;}
+  if(btn)btn.disabled=true;
+  setStatus('aprobacionStatus','Enviando cotización para aprobación…','info');
+  try{
+    const ivaTarifa=Number(SETTINGS.iva_tarifa_pct_aprobacion??19);
+    const lineas=QUOTE_ITEMS.map(line=>{
+      const c=quoteLineCalc(line);if(!c)return null;
+      const precioConIva=c.pvpSI; // precio final ya con descuento de sala aplicado, mismo valor que en el PDF
+      const precioSinIva=Math.round((precioConIva/(1+ivaTarifa/100))*100)/100;
+      return{sku:c.item.referencia,descripcion:c.item.descripcion,cantidad:line.cantidad,unidad_medida:'UND',precio_unitario_cop:precioSinIva,descuento_pct:0,iva_tarifa_pct:ivaTarifa};
+    }).filter(Boolean);
+    if(!lineas.length){setStatus('aprobacionStatus','No hay líneas válidas para enviar.','err');if(btn)btn.disabled=false;return;}
+    const payload={
+      id_cotizacion_origen:ensureQuoteSession(),
+      vendedor:{nombre:CURRENT_USER?.name||CURRENT_USER?.email||'',email:CURRENT_USER?.email||''},
+      cliente:{razon_social:cliente,email_contacto:clienteEmail,identificacion:clienteIdentificacion},
+      condiciones_comerciales:{forma_pago:'no_definida',vigencia_dias:15},
+      lineas
+    };
+    const{data,error}=await sb.functions.invoke('enviar-a-aprobacion',{body:payload});
+    if(error){setStatus('aprobacionStatus','No se pudo enviar la cotización para aprobación: '+error.message,'err');if(btn)btn.disabled=false;return;}
+    const urlPortal=data?.url_portal_cliente;
+    setStatus('aprobacionStatus',urlPortal?`✅ Se envió un correo a ${cliente} con el link para aprobar. Puedes hacerle seguimiento en: ${urlPortal}`:'✅ Cotización enviada para aprobación.','ok');
+    showToast('Cotización enviada para aprobación del cliente');
+  }catch(e){setStatus('aprobacionStatus','Error inesperado al enviar para aprobación: '+e.message,'err');}
+  if(btn)btn.disabled=false;
 }
 function cerrarModalPdfCotizacion(){qs('pdfQuoteOverlay').classList.add('hidden');}
 async function imagenComoDataURL(url){
@@ -2686,7 +2754,7 @@ qs('stockTipo').addEventListener('change',toggleStockFields);toggleStockFields()
 qs('btnUpdateStock').onclick=updateStockManual;
 qs('btnAnalyzeStockCSV').onclick=analyzeStockCSV;
 qs('addToQuote').onclick=addToQuote;qs('btnCopyMultiQuote').onclick=copyMultiQuote;qs('btnClearQuoteCart').onclick=clearQuoteCart;
-qs('btnPdfMultiQuote').onclick=abrirModalPdfCotizacion;qs('btnClosePdfQuote').onclick=cerrarModalPdfCotizacion;qs('pdfQuoteOverlay').addEventListener('click',e=>{if(e.target.id==='pdfQuoteOverlay')cerrarModalPdfCotizacion();});qs('btnGenerarPdfFinal').onclick=generarPdfCotizacion;
+qs('btnPdfMultiQuote').onclick=abrirModalPdfCotizacion;qs('btnClosePdfQuote').onclick=cerrarModalPdfCotizacion;qs('pdfQuoteOverlay').addEventListener('click',e=>{if(e.target.id==='pdfQuoteOverlay')cerrarModalPdfCotizacion();});qs('btnGenerarPdfFinal').onclick=generarPdfCotizacion;qs('btnEnviarAprobacion').onclick=enviarParaAprobacion;
 qs('btnEnviarPedido').onclick=abrirModalPedido;qs('btnClosePedido').onclick=cerrarModalPedido;qs('pedidoOverlay').addEventListener('click',e=>{if(e.target.id==='pedidoOverlay')cerrarModalPedido();});qs('btnEnviarPedidoFinal').onclick=enviarPedidoEmpresa;
 qs('btnCerrarPreciosBanner').onclick=cerrarPreciosBanner;qs('btnRevisarLinkExterno').onclick=revisarYAplicarLinkExterno;
 qs('navConsultar').onclick=()=>showMainTab('consultar');qs('navCotizacion').onclick=()=>showMainTab('cotizacion');qs('navDestacados').onclick=()=>showMainTab('destacados');qs('navMiEquipo').onclick=()=>showMainTab('miequipo');
@@ -2707,6 +2775,8 @@ qs('btnAddVentaCruzada').onclick=addVentaCruzada;
 qs('btnSaveCompany').onclick=async()=>{const raw=qs('settingsCompany').value.trim();if(!raw){setStatus('companyStatus','Ingresa un nombre de empresa.','err');return;}const company=raw.toUpperCase();setStatus('companyStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({company_name:company,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('companyStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.company_name=company;qs('settingsCompany').value=company;applyCompanyName();setStatus('companyStatus','✅ Empresa contratante actualizada para todos los usuarios.','ok');};
 qs('btnSaveCorreoPedidos').onclick=async()=>{const correo=(qs('settingsCorreoPedidos').value||'').trim();if(!correo||!isValidEmail(correo)){setStatus('correoPedidosStatus','Ingresa un correo válido.','err');return;}setStatus('correoPedidosStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({correo_pedidos:correo,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('correoPedidosStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.correo_pedidos=correo;setStatus('correoPedidosStatus','✅ Correo de pedidos actualizado.','ok');};
 qs('settingsConexionLink').onchange=async()=>{const habilitado=qs('settingsConexionLink').checked;setStatus('conexionLinkStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({conexion_link_habilitada:habilitado,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('conexionLinkStatus','Error al guardar: '+error.message,'err');qs('settingsConexionLink').checked=!habilitado;return;}SETTINGS.conexion_link_habilitada=habilitado;setStatus('conexionLinkStatus',habilitado?'✅ Función habilitada. Los administradores ya pueden elegir el modo "Vía link" en Precios y Disponibilidad.':'✅ Función deshabilitada. Todos los usuarios quedan en modo manual; los links guardados no se borran.','ok');};
+qs('settingsAprobacionPedidos').onchange=async()=>{const habilitado=qs('settingsAprobacionPedidos').checked;setStatus('aprobacionPedidosStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({aprobacion_pedidos_habilitada:habilitado,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('aprobacionPedidosStatus','Error al guardar: '+error.message,'err');qs('settingsAprobacionPedidos').checked=!habilitado;return;}SETTINGS.aprobacion_pedidos_habilitada=habilitado;setStatus('aprobacionPedidosStatus',habilitado?'✅ Función habilitada. Los vendedores ya ven el botón "Enviar para aprobación" al generar una cotización.':'✅ Función deshabilitada. El botón "Enviar para aprobación" queda oculto para todos.','ok');};
+qs('settingsIvaAprobacion').onchange=async()=>{const val=Number(qs('settingsIvaAprobacion').value);if(isNaN(val)||val<0||val>100){setStatus('aprobacionPedidosStatus','Ingresa una tarifa de IVA válida (0 a 100).','err');qs('settingsIvaAprobacion').value=SETTINGS.iva_tarifa_pct_aprobacion??19;return;}setStatus('aprobacionPedidosStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({iva_tarifa_pct_aprobacion:val,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('aprobacionPedidosStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.iva_tarifa_pct_aprobacion=val;setStatus('aprobacionPedidosStatus','✅ Tarifa de IVA actualizada para el cálculo del Motor de Aprobación.','ok');};
 qs('btnAddAdmin').onclick=addAdminEmail;
 qs('btnAddNivel').onclick=addNivel;
 qs('newNivelTipo').onchange=onNivelTipoChange;

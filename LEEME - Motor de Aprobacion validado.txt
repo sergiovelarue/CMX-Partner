@@ -1,0 +1,35 @@
+MEJORA +45 — Motor de Aprobación de Pedidos: prueba end-to-end EXITOSA (v1.45.0)
+
+Estado actual: FUNCIONAL, backend desplegado y validado.
+
+Lo que se hizo en esta entrega:
+1. Se aplicó la migración en Supabase (Calc Precios): columnas
+   app_settings.aprobacion_pedidos_habilitada y
+   app_settings.iva_tarifa_pct_aprobacion (ya existentes desde la +44).
+2. Se desplegó la Edge Function enviar-a-aprobacion (activa).
+3. Se configuró WEBHOOK_SECRET en la función (hecho por Sergio).
+4. Primera prueba: el Motor de Aprobación devolvió error 500 porque exige
+   cliente_identificacion (NIT/C.C.) como campo obligatorio en su base de
+   datos, y ListaLoop no lo capturaba.
+5. Se agregó el campo "Identificación / NIT del cliente" al modal de
+   cotización — obligatorio solo cuando el Motor de Aprobación está
+   habilitado (aparece marcado como opcional cuando está deshabilitado).
+6. Segunda prueba, con el campo incluido: RESPUESTA 200 OK.
+   {
+     "id_interno_generado": "TEST-...",
+     "url_portal_cliente": "https://motor-aprobacion-pedidos.netlify.app/c/...",
+     "estado": "ENVIADA"
+   }
+
+Confirmado end-to-end: firma HMAC correcta, conexión al Motor de Aprobación
+correcta, contrato del payload aceptado.
+
+Pasos que faltan para ustedes (no técnicos, de negocio/proceso):
+1. Activar el switch "Motor de Aprobación de Pedidos habilitado" en Ajustes
+   Generales (solo visible/editable para el superadministrador) cuando
+   quieran habilitarlo para vendedores reales.
+2. Confirmar/ajustar la tarifa de IVA (19% por defecto) si el catálogo maneja
+   una tasa distinta.
+3. Hacer una prueba con un vendedor real desde la app (no solo la prueba
+   técnica directa que hicimos hoy) antes de anunciarlo a todo el equipo
+   comercial.
