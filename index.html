@@ -160,7 +160,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   <div class="partner-box">
     <div class="partner-hero">
       <div id="logoWrapReg" class="logo-wrap hidden"><img id="companyLogoReg" alt="Logo empresa"></div>
-      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v1.45.0</span></h1>
+      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v1.46.0</span></h1>
       <p>Activa tu acceso profesional para cotizar más rápido, vender con seguridad y mejorar tu rentabilidad.</p>
       <div class="benefits">
         <div>✅ Precios actualizados al instante</div>
@@ -199,7 +199,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div class="userbar"><div>Acceso activo: <b id="activeUser">-</b><span id="activeRoleWrap"> · <span id="activeRole"></span></span><span id="activeCompanyWrap"> · <span id="activeCompany"></span></span></div><button class="linkbtn" id="changeUser">Cambiar usuario</button></div>
 <div class='hero'>
 <div id="logoWrap" class="logo-wrap hidden"><img id="companyLogo" alt="Logo empresa"></div>
-<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v1.45.0</span></h1>
+<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v1.46.0</span></h1>
 <details id='heroDetails'>
 <summary>Ver información de la plataforma</summary>
 <p id='introText' style="margin-top:10px">Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.</p>
@@ -267,7 +267,6 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   <div class='actions' style='margin-top:10px'>
     <button class='p mini' id='btnCopyMultiQuote'>Copiar cotización múltiple</button>
     <button class='p mini' id='btnPdfMultiQuote'>📄 Generar PDF</button>
-    <button class='p mini' id='btnEnviarPedido'>📦 Enviar pedido a la empresa</button>
     <button class='s mini' id='btnClearQuoteCart'>Vaciar cotización</button>
   </div>
 </div>
@@ -324,7 +323,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
       <h3 style='margin:0;color:var(--brand)'>📄 Datos de la cotización</h3>
       <button class='s mini' id='btnClosePdfQuote'>✕ Cerrar</button>
     </div>
-    <p style="margin:0 0 14px;color:var(--muted);font-size:.86rem">Estos datos son opcionales y aparecen en el encabezado del PDF. Puedes generarlo sin completarlos.</p>
+    <p style="margin:0 0 14px;color:var(--muted);font-size:.86rem">Estos datos se usan para el PDF y, si corresponde, para enviar la cotización o el pedido. Nombre e identificación son requeridos para enviar a aprobación o como pedido; para solo generar el PDF son opcionales.</p>
     <div class="inline-form">
       <div><label>Nombre del cliente</label><input id="pdfClienteNombre" placeholder="Ej: Almacén El Progreso"></div>
       <div><label>Correo del cliente</label><input id="pdfClienteEmail" type="email" placeholder="cliente@correo.com"></div>
@@ -336,23 +335,10 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
     <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
       <button class='p' id='btnGenerarPdfFinal' style="padding:12px 20px">Generar PDF</button>
       <button class='s hidden' id='btnEnviarAprobacion' style="padding:12px 20px">✅ Enviar para aprobación del cliente</button>
+      <button class='s hidden' id='btnEnviarPedidoFinal' style="padding:12px 20px">📦 Enviar pedido</button>
     </div>
     <div class="mini-status" id="pdfQuoteStatus"></div>
     <div class="mini-status" id="aprobacionStatus"></div>
-  </div>
-</div>
-<div id='pedidoOverlay' class='overlay-backdrop hidden'>
-  <div class='overlay-panel'>
-    <div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:10px'>
-      <h3 style='margin:0;color:var(--brand)'>📦 Enviar pedido a la empresa</h3>
-      <button class='s mini' id='btnClosePedido'>✕ Cerrar</button>
-    </div>
-    <p style="margin:0 0 14px;color:var(--muted);font-size:.86rem">Se genera un archivo CSV con los productos de esta cotización y se envía por correo al área comercial/logística, listo para importar en el sistema de gestión.</p>
-    <div class="inline-form">
-      <div><label>Nombre del cliente (opcional)</label><input id="pedidoClienteNombre" placeholder="Ej: Almacén El Progreso"></div>
-    </div>
-    <div style="margin-top:6px"><label>Notas u observaciones (opcional)</label><textarea id="pedidoNotas" rows="3" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:3px;font-size:.92rem;font-family:inherit" placeholder="Ej: Entrega prioritaria, cliente frecuente."></textarea></div>
-    <div style="margin-top:14px"><button class='p' id='btnEnviarPedidoFinal' style="padding:12px 20px">Enviar pedido</button></div>
     <div class="mini-status" id="pedidoStatus"></div>
   </div>
 </div>
@@ -667,6 +653,25 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
     </div>
     <p style="margin:6px 0 0;color:var(--muted);font-size:.78rem">El catálogo de ListaLoop guarda el precio con IVA incluido. Para armar el pedido, se calcula el precio sin IVA dividiendo entre (1 + tarifa/100). Ajusta esta tarifa si tu catálogo maneja una tasa distinta al 19% general.</p>
     <div class="mini-status" id="aprobacionPedidosStatus"></div>
+  </div>
+
+  <div class="admin-sub">
+    <h4>🔢 Numeración de cotizaciones y pedidos</h4>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Prefijo y número inicial del consecutivo asignado en cada envío. Son dos numeraciones independientes: "Cotizaciones" (envíos al Motor de Aprobación del cliente) y "Pedidos" (envíos directos al área comercial hechos por distribuidores). Cambiar el número inicial aquí solo debe hacerse para corregir un error operativo — el consecutivo avanza automáticamente en cada envío real.</p>
+    <div class="inline-form">
+      <div><label>Prefijo Cotizaciones</label><input id="consecCotPrefijo" placeholder="Ej: COT" maxlength="10"></div>
+      <div><label>Siguiente número (Cotizaciones)</label><input id="consecCotSiguiente" type="number" min="1" step="1"></div>
+      <div><label>Incluir año</label><select id="consecCotIncluirAnio"><option value="true">Sí (ej. COT-2026-0001)</option><option value="false">No (ej. COT-0001)</option></select></div>
+      <div><button class="s mini" id="btnGuardarConsecCot" style="padding:12px 16px">Guardar</button></div>
+    </div>
+    <div class="mini-status" id="consecCotStatus"></div>
+    <div class="inline-form" style="margin-top:10px">
+      <div><label>Prefijo Pedidos</label><input id="consecPedPrefijo" placeholder="Ej: PED" maxlength="10"></div>
+      <div><label>Siguiente número (Pedidos)</label><input id="consecPedSiguiente" type="number" min="1" step="1"></div>
+      <div><label>Incluir año</label><select id="consecPedIncluirAnio"><option value="true">Sí (ej. PED-2026-0001)</option><option value="false">No (ej. PED-0001)</option></select></div>
+      <div><button class="s mini" id="btnGuardarConsecPed" style="padding:12px 16px">Guardar</button></div>
+    </div>
+    <div class="mini-status" id="consecPedStatus"></div>
   </div>
 
   <div class="admin-sub">
@@ -1345,6 +1350,7 @@ async function showAdminTab(tab){
   if(tab==='settings'&&qs('settingsConexionLink'))qs('settingsConexionLink').checked=!!SETTINGS.conexion_link_habilitada;
   if(tab==='settings'&&qs('settingsAprobacionPedidos'))qs('settingsAprobacionPedidos').checked=!!SETTINGS.aprobacion_pedidos_habilitada;
   if(tab==='settings'&&qs('settingsIvaAprobacion'))qs('settingsIvaAprobacion').value=SETTINGS.iva_tarifa_pct_aprobacion??19;
+  if(tab==='settings')cargarConfigConsecutivos();
   if(tab==='settings'&&qs('settingsCorreoPedidos'))qs('settingsCorreoPedidos').value=SETTINGS.correo_pedidos||'';
   if(tab==='usuarios'){renderAdminsList();renderOwnersList();renderAdminPdvList();renderDependientesList();renderVendDistList();await renderNivelesList();renderDistribuidoresList();loadCodigoVendedor();renderVendedoresList();renderSoporteAdminList();}
   if(tab==='reglas')initReglasNegocio();
@@ -1849,28 +1855,34 @@ function buildPedidoCSV(){
   const csv=filas.map(f=>f.map(csvEscapeField).join(',')).join('\r\n');
   return{csv,totalPvp,totalItems:QUOTE_ITEMS.length};
 }
-function abrirModalPedido(){
-  if(!QUOTE_ITEMS.length){showToast('La cotización está vacía');return;}
-  const st=qs('pedidoStatus');if(st){st.textContent='';st.className='mini-status';}
-  qs('pedidoOverlay').classList.remove('hidden');
-}
-function cerrarModalPedido(){qs('pedidoOverlay').classList.add('hidden');}
 function utf8ToBase64(str){
   return btoa(unescape(encodeURIComponent(str)));
 }
+// Enviar pedido directo (roles de distribuidor: Propietario de Distribuidor,
+// Administrador PDV, Dependiente PDV, vendedor de distribuidor): a diferencia
+// de "Enviar para aprobación" (empresa contratante, requiere el Motor de
+// Aprobación como función paga), este flujo va directo al área comercial por
+// correo, sin portal de aprobación del cliente final. Usa los mismos datos de
+// cliente ya capturados en el modal de cotización (nombre, correo, teléfono,
+// identificación) en vez de pedirlos de nuevo.
 async function enviarPedidoEmpresa(){
   if(!QUOTE_ITEMS.length){showToast('La cotización está vacía');return;}
   const btn=qs('btnEnviarPedidoFinal');
   const st=qs('pedidoStatus');
+  const clienteNombre=(qs('pdfClienteNombre')?.value||'').trim();
+  const clienteEmail=(qs('pdfClienteEmail')?.value||'').trim();
+  const clienteTelefono=(qs('pdfClienteTelefono')?.value||'').trim();
+  const clienteIdentificacion=(qs('pdfClienteIdentificacion')?.value||'').trim();
+  const notas=(qs('pdfNotas')?.value||'').trim();
+  if(!clienteNombre){setStatus('pedidoStatus','Ingresa el nombre del cliente antes de enviar el pedido.','err');return;}
   if(btn)btn.disabled=true;
   if(st){st.textContent='Enviando pedido…';st.className='mini-status';}
   try{
     const{csv,totalPvp,totalItems}=buildPedidoCSV();
     const csvBase64=utf8ToBase64(csv);
-    const clienteNombre=(qs('pedidoClienteNombre')?.value||'').trim();
-    const notas=(qs('pedidoNotas')?.value||'').trim();
+    const numeroPedido=await sb.rpc('obtener_siguiente_consecutivo',{p_clave:'pedido'}).then(r=>r.data).catch(()=>null);
     const fechaArchivo=new Date().toISOString().slice(0,10);
-    const nombreArchivo=`pedido_${fechaArchivo}_${(CURRENT_USER?.name||'vendedor').trim().replace(/\s+/g,'_')}.csv`;
+    const nombreArchivo=`${(numeroPedido||'pedido').replace(/[^a-zA-Z0-9-]/g,'_')}_${fechaArchivo}.csv`;
     const distribuidorNombre=CURRENT_USER?.esEmpresaContratante?(SETTINGS.company_name||''):(CURRENT_USER?.distribuidorNombre||'');
     const{error}=await sb.rpc('enviar_pedido_empresa',{
       p_csv_base64:csvBase64,
@@ -1881,10 +1893,14 @@ async function enviarPedidoEmpresa(){
       p_total_items:totalItems,
       p_total_pvp:Math.round(totalPvp),
       p_cliente_nombre:clienteNombre||null,
-      p_notas:notas||null
+      p_notas:notas||null,
+      p_numero_pedido:numeroPedido||null,
+      p_cliente_email:clienteEmail||null,
+      p_cliente_telefono:clienteTelefono||null,
+      p_cliente_identificacion:clienteIdentificacion||null
     });
     if(error){if(st){st.textContent='Error al enviar: '+error.message;st.className='mini-status err';}return;}
-    if(st){st.textContent='✅ Pedido enviado. El área comercial lo recibirá por correo en breve.';st.className='mini-status ok';}
+    if(st){st.textContent=`✅ Pedido ${numeroPedido?numeroPedido+' ':''}enviado. El área comercial lo recibirá por correo en breve.`;st.className='mini-status ok';}
     showToast('Pedido enviado');
   }catch(e){
     if(st){st.textContent='Error al enviar el pedido: '+(e?.message||e);st.className='mini-status err';}
@@ -1901,12 +1917,59 @@ function abrirModalPdfCotizacion(){
   if(!QUOTE_ITEMS.length){showToast('La cotización está vacía');return;}
   const st=qs('pdfQuoteStatus');if(st){st.textContent='';st.className='mini-status';}
   const stA=qs('aprobacionStatus');if(stA){stA.textContent='';stA.className='mini-status';}
+  // Qué botón de envío se muestra depende del rol de quien cotiza, no de una
+  // elección manual: Administrador/Vendedor de la empresa contratante (ConAccion)
+  // venden a través del Motor de Aprobación (portal para el cliente final);
+  // los roles de distribuidor (Propietario, Admin PDV, Dependiente PDV,
+  // vendedor de distribuidor) envían el pedido directo al área comercial.
+  const esEmpresaContratante=!!CURRENT_USER?.esEmpresaContratante;
+  const aprobacionHabilitada=!!SETTINGS.aprobacion_pedidos_habilitada;
+  const mostrarAprobacion=esEmpresaContratante&&aprobacionHabilitada;
+  const mostrarPedidoDirecto=!esEmpresaContratante;
   const btnAprob=qs('btnEnviarAprobacion');
-  const habilitado=!!SETTINGS.aprobacion_pedidos_habilitada;
-  if(btnAprob)btnAprob.classList.toggle('hidden',!habilitado);
+  const btnPedido=qs('btnEnviarPedidoFinal');
+  if(btnAprob)btnAprob.classList.toggle('hidden',!mostrarAprobacion);
+  if(btnPedido)btnPedido.classList.toggle('hidden',!mostrarPedidoDirecto);
   const idLabel=qs('pdfClienteIdLabel');
-  if(idLabel)idLabel.textContent=habilitado?'Identificación / NIT del cliente (requerido para aprobación)':'Identificación / NIT del cliente (opcional)';
+  if(idLabel)idLabel.textContent=mostrarAprobacion?'Identificación / NIT del cliente (requerido para aprobación)':(mostrarPedidoDirecto?'Identificación / NIT del cliente (opcional)':'Identificación / NIT del cliente (opcional)');
   qs('pdfQuoteOverlay').classList.remove('hidden');
+}
+// Numeración de cotizaciones (envío a aprobación) y pedidos (envío directo):
+// dos consecutivos independientes, configurables solo por el superadministrador
+// (prefijo, número inicial y si incluye el año). El contador real se asigna
+// de forma atómica en el servidor (obtener_siguiente_consecutivo) en cada
+// envío; esta carga/guardado solo maneja la configuración, nunca el contador
+// en caliente durante un envío.
+async function cargarConfigConsecutivos(){
+  try{
+    const{data,error}=await sb.from('app_consecutivos').select('*');
+    if(error||!data)return;
+    const cot=data.find(r=>r.clave==='cotizacion');
+    const ped=data.find(r=>r.clave==='pedido');
+    if(cot){
+      if(qs('consecCotPrefijo'))qs('consecCotPrefijo').value=cot.prefijo||'';
+      if(qs('consecCotSiguiente'))qs('consecCotSiguiente').value=cot.siguiente_numero;
+      if(qs('consecCotIncluirAnio'))qs('consecCotIncluirAnio').value=String(!!cot.incluir_anio);
+    }
+    if(ped){
+      if(qs('consecPedPrefijo'))qs('consecPedPrefijo').value=ped.prefijo||'';
+      if(qs('consecPedSiguiente'))qs('consecPedSiguiente').value=ped.siguiente_numero;
+      if(qs('consecPedIncluirAnio'))qs('consecPedIncluirAnio').value=String(!!ped.incluir_anio);
+    }
+  }catch(e){console.warn('No se pudo cargar la configuración de consecutivos:',e);}
+}
+async function guardarConfigConsecutivo(clave){
+  const esP=clave==='pedido';
+  const prefijo=(qs(esP?'consecPedPrefijo':'consecCotPrefijo')?.value||'').trim().toUpperCase();
+  const siguiente=Number(qs(esP?'consecPedSiguiente':'consecCotSiguiente')?.value);
+  const incluirAnio=(qs(esP?'consecPedIncluirAnio':'consecCotIncluirAnio')?.value)==='true';
+  const statusId=esP?'consecPedStatus':'consecCotStatus';
+  if(!prefijo){setStatus(statusId,'Ingresa un prefijo (ej. COT o PED).','err');return;}
+  if(!siguiente||siguiente<1){setStatus(statusId,'El siguiente número debe ser 1 o mayor.','err');return;}
+  setStatus(statusId,'Guardando…','info');
+  const{error}=await sb.rpc('guardar_config_consecutivo',{p_clave:clave,p_prefijo:prefijo,p_siguiente_numero:siguiente,p_ancho_padding:4,p_incluir_anio:incluirAnio,p_email:CURRENT_USER?.email||''});
+  if(error){setStatus(statusId,'Error al guardar: '+error.message,'err');return;}
+  setStatus(statusId,'✅ Numeración actualizada.','ok');
 }
 // Motor de Aprobación de Pedidos: función adicional de pago, habilitada solo por
 // el superadministrador (SETTINGS.aprobacion_pedidos_habilitada). Envía la
@@ -1935,8 +1998,14 @@ async function enviarParaAprobacion(){
       return{sku:c.item.referencia,descripcion:c.item.descripcion,cantidad:line.cantidad,unidad_medida:'UND',precio_unitario_cop:precioSinIva,descuento_pct:0,iva_tarifa_pct:ivaTarifa};
     }).filter(Boolean);
     if(!lineas.length){setStatus('aprobacionStatus','No hay líneas válidas para enviar.','err');if(btn)btn.disabled=false;return;}
+    // id_cotizacion_origen: se usa el consecutivo legible (ej. COT-2026-0001)
+    // configurado por el superadmin en vez del UUID técnico de sesión, para
+    // que el número que ve el vendedor coincida con el que identifica la
+    // cotización del lado del Motor de Aprobación.
+    const numeroCotizacion=await sb.rpc('obtener_siguiente_consecutivo',{p_clave:'cotizacion'}).then(r=>r.data).catch(()=>null);
+    const idCotizacionOrigen=numeroCotizacion||ensureQuoteSession();
     const payload={
-      id_cotizacion_origen:ensureQuoteSession(),
+      id_cotizacion_origen:idCotizacionOrigen,
       vendedor:{nombre:CURRENT_USER?.name||CURRENT_USER?.email||'',email:CURRENT_USER?.email||''},
       cliente:{razon_social:cliente,email_contacto:clienteEmail,identificacion:clienteIdentificacion},
       condiciones_comerciales:{forma_pago:'no_definida',vigencia_dias:15},
@@ -1945,7 +2014,8 @@ async function enviarParaAprobacion(){
     const{data,error}=await sb.functions.invoke('enviar-a-aprobacion',{body:payload});
     if(error){setStatus('aprobacionStatus','No se pudo enviar la cotización para aprobación: '+error.message,'err');if(btn)btn.disabled=false;return;}
     const urlPortal=data?.url_portal_cliente;
-    setStatus('aprobacionStatus',urlPortal?`✅ Se envió un correo a ${cliente} con el link para aprobar. Puedes hacerle seguimiento en: ${urlPortal}`:'✅ Cotización enviada para aprobación.','ok');
+    const prefijoMsg=numeroCotizacion?`Cotización ${numeroCotizacion}: `:'';
+    setStatus('aprobacionStatus',urlPortal?`✅ ${prefijoMsg}se envió un correo a ${cliente} con el link para aprobar. Puedes hacerle seguimiento en: ${urlPortal}`:'✅ Cotización enviada para aprobación.','ok');
     showToast('Cotización enviada para aprobación del cliente');
   }catch(e){setStatus('aprobacionStatus','Error inesperado al enviar para aprobación: '+e.message,'err');}
   if(btn)btn.disabled=false;
@@ -2755,7 +2825,7 @@ qs('btnUpdateStock').onclick=updateStockManual;
 qs('btnAnalyzeStockCSV').onclick=analyzeStockCSV;
 qs('addToQuote').onclick=addToQuote;qs('btnCopyMultiQuote').onclick=copyMultiQuote;qs('btnClearQuoteCart').onclick=clearQuoteCart;
 qs('btnPdfMultiQuote').onclick=abrirModalPdfCotizacion;qs('btnClosePdfQuote').onclick=cerrarModalPdfCotizacion;qs('pdfQuoteOverlay').addEventListener('click',e=>{if(e.target.id==='pdfQuoteOverlay')cerrarModalPdfCotizacion();});qs('btnGenerarPdfFinal').onclick=generarPdfCotizacion;qs('btnEnviarAprobacion').onclick=enviarParaAprobacion;
-qs('btnEnviarPedido').onclick=abrirModalPedido;qs('btnClosePedido').onclick=cerrarModalPedido;qs('pedidoOverlay').addEventListener('click',e=>{if(e.target.id==='pedidoOverlay')cerrarModalPedido();});qs('btnEnviarPedidoFinal').onclick=enviarPedidoEmpresa;
+qs('btnEnviarPedidoFinal').onclick=enviarPedidoEmpresa;
 qs('btnCerrarPreciosBanner').onclick=cerrarPreciosBanner;qs('btnRevisarLinkExterno').onclick=revisarYAplicarLinkExterno;
 qs('navConsultar').onclick=()=>showMainTab('consultar');qs('navCotizacion').onclick=()=>showMainTab('cotizacion');qs('navDestacados').onclick=()=>showMainTab('destacados');qs('navMiEquipo').onclick=()=>showMainTab('miequipo');
 qs('exploreVista').addEventListener('change',()=>{EXPLORE_PAGE=1;renderExplore();});
@@ -2777,6 +2847,7 @@ qs('btnSaveCorreoPedidos').onclick=async()=>{const correo=(qs('settingsCorreoPed
 qs('settingsConexionLink').onchange=async()=>{const habilitado=qs('settingsConexionLink').checked;setStatus('conexionLinkStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({conexion_link_habilitada:habilitado,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('conexionLinkStatus','Error al guardar: '+error.message,'err');qs('settingsConexionLink').checked=!habilitado;return;}SETTINGS.conexion_link_habilitada=habilitado;setStatus('conexionLinkStatus',habilitado?'✅ Función habilitada. Los administradores ya pueden elegir el modo "Vía link" en Precios y Disponibilidad.':'✅ Función deshabilitada. Todos los usuarios quedan en modo manual; los links guardados no se borran.','ok');};
 qs('settingsAprobacionPedidos').onchange=async()=>{const habilitado=qs('settingsAprobacionPedidos').checked;setStatus('aprobacionPedidosStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({aprobacion_pedidos_habilitada:habilitado,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('aprobacionPedidosStatus','Error al guardar: '+error.message,'err');qs('settingsAprobacionPedidos').checked=!habilitado;return;}SETTINGS.aprobacion_pedidos_habilitada=habilitado;setStatus('aprobacionPedidosStatus',habilitado?'✅ Función habilitada. Los vendedores ya ven el botón "Enviar para aprobación" al generar una cotización.':'✅ Función deshabilitada. El botón "Enviar para aprobación" queda oculto para todos.','ok');};
 qs('settingsIvaAprobacion').onchange=async()=>{const val=Number(qs('settingsIvaAprobacion').value);if(isNaN(val)||val<0||val>100){setStatus('aprobacionPedidosStatus','Ingresa una tarifa de IVA válida (0 a 100).','err');qs('settingsIvaAprobacion').value=SETTINGS.iva_tarifa_pct_aprobacion??19;return;}setStatus('aprobacionPedidosStatus','Guardando…','info');const{error}=await sb.from('app_settings').update({iva_tarifa_pct_aprobacion:val,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);if(error){setStatus('aprobacionPedidosStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.iva_tarifa_pct_aprobacion=val;setStatus('aprobacionPedidosStatus','✅ Tarifa de IVA actualizada para el cálculo del Motor de Aprobación.','ok');};
+qs('btnGuardarConsecCot').onclick=()=>guardarConfigConsecutivo('cotizacion');qs('btnGuardarConsecPed').onclick=()=>guardarConfigConsecutivo('pedido');
 qs('btnAddAdmin').onclick=addAdminEmail;
 qs('btnAddNivel').onclick=addNivel;
 qs('newNivelTipo').onchange=onNivelTipoChange;

@@ -1,0 +1,34 @@
+MEJORA +46 — Numeración de cotizaciones/pedidos + rediseño de botones por rol (v1.46.0)
+
+1) Numeración configurable por el superadministrador (Ajustes Generales →
+   "Numeración de cotizaciones y pedidos"):
+   - Dos consecutivos INDEPENDIENTES: "Cotizaciones" (envíos a aprobación del
+     cliente) y "Pedidos" (envíos directos al área comercial).
+   - Cada uno con prefijo propio, número inicial propio y opción de incluir
+     el año (ej. COT-2026-0001 vs COT-0001).
+   - El contador avanza automáticamente en cada envío real (asignación
+     atómica en el servidor); cambiar el número aquí solo debe usarse para
+     corregir un error operativo.
+   - Backend: tabla app_consecutivos, función obtener_siguiente_consecutivo()
+     y guardar_config_consecutivo() (validación de superadmin server-side).
+
+2) Rediseño de "Enviar pedido a la empresa":
+   - Se eliminó el botón suelto en el carrito de cotización y su modal
+     independiente (pedía solo nombre de cliente, sin correo/identificación).
+   - Ahora vive DENTRO del modal "Datos de la cotización" (el mismo donde se
+     genera el PDF), porque enviar un pedido requiere los mismos datos del
+     cliente que ya se capturan ahí.
+   - El botón que se muestra depende del ROL de quien cotiza, no de una
+     elección manual:
+     · Administrador / Vendedor de la empresa contratante (ConAccion) →
+       "Enviar para aprobación del cliente" (Motor de Aprobación, función de
+       pago, solo si el superadmin la activó).
+     · Propietario de Distribuidor, Administrador PDV, Dependiente PDV,
+       vendedor de distribuidor → "Enviar pedido" (directo al área comercial
+       por correo, SIN portal de aprobación del cliente final — es un flujo
+       distinto y no requiere el Motor de Aprobación).
+   - El correo de "Enviar pedido" ahora incluye el número de pedido
+     consecutivo en el asunto y en el cuerpo, además de correo/teléfono/
+     identificación del cliente (ya no se piden dos veces).
+
+Nada de esto afecta el catálogo, precios, descuentos o reglas de margen.
