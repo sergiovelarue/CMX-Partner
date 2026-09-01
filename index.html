@@ -173,7 +173,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   <div class="partner-box">
     <div class="partner-hero">
       <div id="logoWrapReg" class="logo-wrap hidden"><img id="companyLogoReg" alt="Logo empresa"></div>
-      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v2.2</span></h1>
+      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v2.3</span></h1>
       <p>Activa tu acceso profesional para cotizar más rápido, vender con seguridad y mejorar tu rentabilidad.</p>
       <div class="benefits">
         <div>✅ Precios actualizados al instante</div>
@@ -212,7 +212,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div class="userbar"><div>Acceso activo: <b id="activeUser">-</b><span id="activeRoleWrap"> · <span id="activeRole"></span></span><span id="activeCompanyWrap"> · <span id="activeCompany"></span></span></div><button class="linkbtn" id="changeUser">Cambiar usuario</button></div>
 <div class='hero'>
 <div id="logoWrap" class="logo-wrap hidden"><img id="companyLogo" alt="Logo empresa"></div>
-<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v2.2</span></h1>
+<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v2.3</span></h1>
 <details id='heroDetails'>
 <summary>Ver información de la plataforma</summary>
 <p id='introText' style="margin-top:10px">Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.</p>
@@ -666,6 +666,16 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
     </div>
     <p style="margin:6px 0 0;color:var(--muted);font-size:.78rem">El catálogo de ListaLoop guarda el precio con IVA incluido. Para armar el pedido, se calcula el precio sin IVA dividiendo entre (1 + tarifa/100). Ajusta esta tarifa si tu catálogo maneja una tasa distinta al 19% general.</p>
     <div class="mini-status" id="aprobacionPedidosStatus"></div>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border,#e2e2e2)">
+      <p style="margin:0 0 6px;font-weight:500;font-size:.86rem">🔐 Clave de integración con el Motor de Aprobación</p>
+      <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Esta clave identifica y autentica a esta empresa ante el Motor de Aprobación (junto con el NIT de Empresa contratante). Por seguridad, la clave nunca se guarda ni se muestra dentro de ListaLoop — solo vive como secreto de la función de envío en Supabase. Este indicador es informativo, actualizado manualmente cuando se configura o rota la clave.</p>
+      <div id="secretoAprobacionEstado" style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;font-size:.82rem"></div>
+      <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="s mini" id="btnProbarConexionAprobacion">▶️ Probar conexión</button>
+        <span style="font-size:.76rem;color:var(--muted)">⚠️ Envía una cotización de prueba real al Motor de Aprobación (usa tu propio correo como cliente) para validar la clave y el NIT. Úsalo solo cuando lo necesites, no como chequeo rutinario.</span>
+      </div>
+      <div class="mini-status" id="probarConexionStatus"></div>
+    </div>
   </div>
 
   <div class="admin-sub">
@@ -689,7 +699,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 
   <div class="admin-sub">
     <h4>Empresa contratante</h4>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Se muestra como "Distribuidores autorizados por [EMPRESA]" y reemplaza el encabezado de las cotizaciones de WhatsApp. El nombre se guarda siempre en MAYÚSCULAS. El NIT se usa en documentos de la cotización (por ahora no viaja al Motor de Aprobación de Pedidos, solo se usa dentro de ListaLoop).</p>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Se muestra como "Distribuidores autorizados por [EMPRESA]" y reemplaza el encabezado de las cotizaciones de WhatsApp. El nombre se guarda siempre en MAYÚSCULAS. El NIT se usa en documentos de la cotización y, si el Motor de Aprobación está habilitado, identifica esta cuenta ante ese servicio: debe coincidir exactamente con el NIT registrado ahí, o los envíos serán rechazados.</p>
     <div class="inline-form">
       <div><label>Nombre de la empresa</label><input id="settingsCompany" placeholder="Ej: COMODISIMOS"></div>
       <div><label>NIT de la empresa</label><input id="settingsNitEmpresa" placeholder="Ej: 900123456-7"></div>
@@ -1376,6 +1386,7 @@ async function showAdminTab(tab){
   if(tab==='settings'&&qs('settingsConexionLink'))qs('settingsConexionLink').checked=!!SETTINGS.conexion_link_habilitada;
   if(tab==='settings'&&qs('settingsAprobacionPedidos'))qs('settingsAprobacionPedidos').checked=!!SETTINGS.aprobacion_pedidos_habilitada;
   if(tab==='settings'&&qs('settingsIvaAprobacion'))qs('settingsIvaAprobacion').value=SETTINGS.iva_tarifa_pct_aprobacion??19;
+  if(tab==='settings')renderSecretoAprobacionEstado();
   if(tab==='settings')cargarConfigConsecutivos();
   if(tab==='settings'&&qs('settingsCorreoPedidos'))qs('settingsCorreoPedidos').value=SETTINGS.correo_pedidos||'';
   if(tab==='usuarios'){renderAdminsList();renderOwnersList();renderAdminPdvList();renderDependientesList();renderVendDistList();await renderNivelesList();renderDistribuidoresList();loadCodigoVendedor();renderVendedoresList();renderSoporteAdminList();}
@@ -2003,6 +2014,52 @@ async function guardarConfigConsecutivo(clave){
 // el cliente aprueba/rechaza/pide ajustes. No reemplaza el PDF: es un paso
 // adicional. El secreto que firma la llamada (WEBHOOK_SECRET) vive únicamente
 // en la Edge Function enviar-a-aprobacion (backend), nunca en este frontend.
+//
+// Indicador de estado del secreto (aprobacion_secreto_configurado): es solo
+// informativo, actualizado manualmente por Sergio cuando configura o rota la
+// clave de integración de esta empresa en Supabase. La app deliberadamente
+// NO tiene capacidad de escribir el secreto por sí misma — eso requeriría un
+// Personal Access Token de administración total de la cuenta de Supabase
+// dentro de una Edge Function, un riesgo desproporcionado frente al
+// beneficio de automatizar una rotación de clave poco frecuente.
+function renderSecretoAprobacionEstado(){
+  const el=qs('secretoAprobacionEstado');
+  if(!el)return;
+  const configurado=!!SETTINGS.aprobacion_secreto_configurado;
+  const fecha=SETTINGS.aprobacion_secreto_actualizado_en?new Date(SETTINGS.aprobacion_secreto_actualizado_en).toLocaleDateString('es-CO',{day:'2-digit',month:'2-digit',year:'numeric'}):null;
+  if(configurado){
+    el.style.background='var(--bg-success,#e6f4ea)';el.style.color='var(--text-success,#1a7f37)';
+    el.innerHTML=`✅ Clave de integración configurada${fecha?` · actualizada ${fecha}`:''}`;
+  }else{
+    el.style.background='var(--bg-danger,#fdecea)';el.style.color='var(--text-danger,#c0392b)';
+    el.innerHTML='⚠️ Clave de integración no configurada — el envío a aprobación fallará hasta que se configure en Supabase.';
+  }
+}
+async function probarConexionAprobacion(){
+  const btn=qs('btnProbarConexionAprobacion');
+  if(btn)btn.disabled=true;
+  setStatus('probarConexionStatus','Probando conexión con el Motor de Aprobación…','info');
+  try{
+    const payload={
+      id_cotizacion_origen:'PRUEBA-CONEXION-'+Date.now(),
+      vendedor:{nombre:CURRENT_USER?.name||CURRENT_USER?.email||'',email:CURRENT_USER?.email||''},
+      cliente:{razon_social:'Prueba de conexión ListaLoop',email_contacto:CURRENT_USER?.email||'prueba@listaloop.local',identificacion:'000000000'},
+      condiciones_comerciales:{forma_pago:'no_definida',vigencia_dias:1},
+      lineas:[{sku:'PRUEBA-CONEXION',descripcion:'Línea de verificación — no representa un producto real',cantidad:1,unidad_medida:'UND',precio_unitario_cop:1,descuento_pct:0,iva_tarifa_pct:19}]
+    };
+    const{data,error}=await sb.functions.invoke('enviar-a-aprobacion',{body:payload});
+    if(error){
+      const httpStatus=error.context?.status;
+      let msg='La conexión falló: '+error.message;
+      if(httpStatus===401)msg='❌ La clave de integración configurada no es válida (401). Verifica el secreto en la función enviar-a-aprobacion.';
+      else if(httpStatus===403)msg='❌ La cuenta de esta empresa está desactivada en el Motor de Aprobación (403).';
+      else if(httpStatus===404)msg='❌ No existe una cuenta activa para el NIT configurado (404). Verifica el NIT en Empresa contratante.';
+      setStatus('probarConexionStatus',msg,'err');if(btn)btn.disabled=false;return;
+    }
+    setStatus('probarConexionStatus','✅ Conexión exitosa: la clave y el NIT son válidos. id_interno_generado: '+(data?.id_interno_generado||'—'),'ok');
+  }catch(e){setStatus('probarConexionStatus','Error inesperado al probar conexión: '+e.message,'err');}
+  if(btn)btn.disabled=false;
+}
 async function enviarParaAprobacion(){
   if(!QUOTE_ITEMS.length){showToast('La cotización está vacía');return;}
   const btn=qs('btnEnviarAprobacion');
@@ -2852,7 +2909,7 @@ const mediaMap=new Map();(mediaData||[]).forEach(mm=>{const k=normalize(mm.refer
 // vuelve silenciosamente al default (ej. un switch guardado en true aparece
 // apagado al recargar, aunque en la BD siga en true). Ya pasó una vez con
 // conexion_link_habilitada/aprobacion_pedidos_habilitada — no repetir el bug.
-if(settingsData)SETTINGS={company_name:settingsData.company_name||'',nit_empresa:settingsData.nit_empresa||'',logo_url:settingsData.logo_url||'',theme:settingsData.theme||'original',catalogo_foco_badge:settingsData.catalogo_foco_badge||'Nuevo',catalogo_bestseller_badge:settingsData.catalogo_bestseller_badge||'Best Seller',catalogo_oferta_badge:settingsData.catalogo_oferta_badge||'Oferta',catalogo_oferta_formato:settingsData.catalogo_oferta_formato||'porcentaje',limite_pdv_por_distribuidor:settingsData.limite_pdv_por_distribuidor??10,limite_vendedores_dependientes_por_distribuidor:settingsData.limite_vendedores_dependientes_por_distribuidor??10,limite_distribuidores:settingsData.limite_distribuidores??10,limite_vendedores_empresa:settingsData.limite_vendedores_empresa??10,limite_niveles_descuento:settingsData.limite_niveles_descuento??10,correo_pedidos:settingsData.correo_pedidos||'',conexion_link_habilitada:!!settingsData.conexion_link_habilitada,modo_carga_precios:settingsData.modo_carga_precios||'manual',modo_carga_stock:settingsData.modo_carga_stock||'manual',aprobacion_pedidos_habilitada:!!settingsData.aprobacion_pedidos_habilitada,iva_tarifa_pct_aprobacion:settingsData.iva_tarifa_pct_aprobacion??19};
+if(settingsData)SETTINGS={company_name:settingsData.company_name||'',nit_empresa:settingsData.nit_empresa||'',logo_url:settingsData.logo_url||'',theme:settingsData.theme||'original',catalogo_foco_badge:settingsData.catalogo_foco_badge||'Nuevo',catalogo_bestseller_badge:settingsData.catalogo_bestseller_badge||'Best Seller',catalogo_oferta_badge:settingsData.catalogo_oferta_badge||'Oferta',catalogo_oferta_formato:settingsData.catalogo_oferta_formato||'porcentaje',limite_pdv_por_distribuidor:settingsData.limite_pdv_por_distribuidor??10,limite_vendedores_dependientes_por_distribuidor:settingsData.limite_vendedores_dependientes_por_distribuidor??10,limite_distribuidores:settingsData.limite_distribuidores??10,limite_vendedores_empresa:settingsData.limite_vendedores_empresa??10,limite_niveles_descuento:settingsData.limite_niveles_descuento??10,correo_pedidos:settingsData.correo_pedidos||'',conexion_link_habilitada:!!settingsData.conexion_link_habilitada,modo_carga_precios:settingsData.modo_carga_precios||'manual',modo_carga_stock:settingsData.modo_carga_stock||'manual',aprobacion_pedidos_habilitada:!!settingsData.aprobacion_pedidos_habilitada,iva_tarifa_pct_aprobacion:settingsData.iva_tarifa_pct_aprobacion??19,aprobacion_secreto_configurado:!!settingsData.aprobacion_secreto_configurado,aprobacion_secreto_actualizado_en:settingsData.aprobacion_secreto_actualizado_en||null};
 PRODUCTS=productsData||[];RULES=rulesData||[];
 await loadRulesForUser();
 renderVersionBadge(verData?.fecha_actualizacion);
@@ -2881,7 +2938,7 @@ qs('stockTipo').addEventListener('change',toggleStockFields);toggleStockFields()
 qs('btnUpdateStock').onclick=updateStockManual;
 qs('btnAnalyzeStockCSV').onclick=analyzeStockCSV;
 qs('addToQuote').onclick=addToQuote;qs('btnCopyMultiQuote').onclick=copyMultiQuote;qs('btnClearQuoteCart').onclick=clearQuoteCart;
-qs('btnPdfMultiQuote').onclick=abrirModalPdfCotizacion;qs('btnClosePdfQuote').onclick=cerrarModalPdfCotizacion;qs('pdfQuoteOverlay').addEventListener('click',e=>{if(e.target.id==='pdfQuoteOverlay')cerrarModalPdfCotizacion();});qs('btnGenerarPdfFinal').onclick=generarPdfCotizacion;qs('btnEnviarAprobacion').onclick=enviarParaAprobacion;
+qs('btnPdfMultiQuote').onclick=abrirModalPdfCotizacion;qs('btnClosePdfQuote').onclick=cerrarModalPdfCotizacion;qs('pdfQuoteOverlay').addEventListener('click',e=>{if(e.target.id==='pdfQuoteOverlay')cerrarModalPdfCotizacion();});qs('btnGenerarPdfFinal').onclick=generarPdfCotizacion;qs('btnEnviarAprobacion').onclick=enviarParaAprobacion;if(qs('btnProbarConexionAprobacion'))qs('btnProbarConexionAprobacion').onclick=probarConexionAprobacion;
 qs('btnEnviarPedidoFinal').onclick=enviarPedidoEmpresa;
 qs('btnCerrarPreciosBanner').onclick=cerrarPreciosBanner;qs('btnRevisarLinkExterno').onclick=revisarYAplicarLinkExterno;
 qs('navConsultar').onclick=()=>showMainTab('consultar');qs('navCotizacion').onclick=()=>showMainTab('cotizacion');qs('navDestacados').onclick=()=>showMainTab('destacados');qs('navMiEquipo').onclick=()=>showMainTab('miequipo');
