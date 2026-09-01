@@ -173,7 +173,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   <div class="partner-box">
     <div class="partner-hero">
       <div id="logoWrapReg" class="logo-wrap hidden"><img id="companyLogoReg" alt="Logo empresa"></div>
-      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v2.6</span></h1>
+      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v2.7</span></h1>
       <p>Activa tu acceso profesional para cotizar más rápido, vender con seguridad y mejorar tu rentabilidad.</p>
       <div class="benefits">
         <div>✅ Precios actualizados al instante</div>
@@ -212,7 +212,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div class="userbar"><div>Acceso activo: <b id="activeUser">-</b><span id="activeRoleWrap"> · <span id="activeRole"></span></span><span id="activeCompanyWrap"> · <span id="activeCompany"></span></span></div><button class="linkbtn" id="changeUser">Cambiar usuario</button></div>
 <div class='hero'>
 <div id="logoWrap" class="logo-wrap hidden"><img id="companyLogo" alt="Logo empresa"></div>
-<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v2.6</span></h1>
+<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v2.7</span></h1>
 <details id='heroDetails'>
 <summary>Ver información de la plataforma</summary>
 <p id='introText' style="margin-top:10px">Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.</p>
@@ -1540,7 +1540,7 @@ async function renderMiEquipo(){
   };});
 }
 // ===== REGISTRO Y ACCESO (login, activación de cuenta, sesión) =====
-function showApp(user){
+async function showApp(user){
   CURRENT_USER=user;qs('registerScreen').classList.add('hidden');qs('appScreen').classList.remove('hidden');
   qs('activeUser').textContent=user.name||'-';
   const roleEl=qs('activeRole'),roleWrap=qs('activeRoleWrap');
@@ -1553,7 +1553,17 @@ function showApp(user){
   const empresaMostrar=user.esEmpresaContratante?(SETTINGS.company_name||''):(user.distribuidorNombre||'');
   if(companyEl&&companyWrap){if(empresaMostrar){companyEl.textContent=empresaMostrar;companyWrap.classList.remove('hidden');}else{companyWrap.classList.add('hidden');}}
   const navMiEquipo=qs('navMiEquipo');if(navMiEquipo)navMiEquipo.classList.toggle('hidden',!esPropietarioConEquipo(user));
-  showMainTab('consultar');renderQuoteCart();updateAdminTools();loadRulesForUser(user);
+  showMainTab('consultar');renderQuoteCart();updateAdminTools();
+  // IMPORTANTE: se espera (await) a que el Nivel de descuento del usuario
+  // quede resuelto (NIVEL_ACTUAL_ID) ANTES de dejar la app interactiva. Antes
+  // esta llamada no se esperaba: el usuario podía alcanzar a buscar un
+  // producto mientras la RPC obtener_nivel_distribuidor todavía viajaba por
+  // red, y esa carrera dejaba productos con margen válido marcados como "No
+  // disponible" — afectaba a Propietario de Distribuidor, Vendedor de la
+  // empresa contratante, Admin PDV y Dependiente PDV (todos resuelven el
+  // nivel vía RPC); Administrador nunca lo sufría porque usa un cálculo
+  // local instantáneo, sin red.
+  await loadRulesForUser(user);
 }
 function showRegister(){CURRENT_USER=null;lockAdmin();qs('appScreen').classList.add('hidden');qs('registerScreen').classList.remove('hidden');}
 // ---- Detección de rol por correo: solo Administrador usa Auth (correo+contraseña),
@@ -1591,7 +1601,7 @@ async function loginConPassword(){
   if(error){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Clave incorrecta o usuario no autorizado.';return;}
   const user={name:qs('regName').value.trim()||email,phone:normalizeColombiaPhone(qs('regPhone').value)||'',email,company:qs('regCompany').value.trim()||'',city:qs('regCity').value.trim()||'',store:qs('regStore').value.trim(),registeredAt:new Date().toISOString(),lastAccess:new Date().toISOString(),role:'Administrador',esEmpresaContratante:true,perfilRol:'administrador',distribuidorId:null,distribuidorNombre:'',codigoDistribuidor:''};
   qs('regMsg').textContent='';
-  const users=readJSON(USERS_KEY,[]);const idx=users.findIndex(u=>(u.email||'').toLowerCase()===user.email.toLowerCase());if(idx>=0){user.registeredAt=users[idx].registeredAt;users[idx]={...users[idx],...user};}else users.push(user);writeJSON(USERS_KEY,users);writeJSON(USER_KEY,user);showApp(user);showToast('Acceso activado');
+  const users=readJSON(USERS_KEY,[]);const idx=users.findIndex(u=>(u.email||'').toLowerCase()===user.email.toLowerCase());if(idx>=0){user.registeredAt=users[idx].registeredAt;users[idx]={...users[idx],...user};}else users.push(user);writeJSON(USERS_KEY,users);writeJSON(USER_KEY,user);await showApp(user);showToast('Acceso activado');
 }
 // Envuelve una promesa de Supabase con un límite de tiempo: si la red falla o
 // la conexión queda colgada a mitad de una consulta, esto evita que la
@@ -1649,7 +1659,7 @@ if(rolLower==='vendedor'){
   user.distribuidorNit=distRow?.nit_identificacion||'';
 }
 qs('regMsg').textContent='';
-const users=readJSON(USERS_KEY,[]);const idx=users.findIndex(u=>(u.email||'').toLowerCase()===user.email.toLowerCase()||(u.phone&&normalizeColombiaPhone(u.phone)===user.phone));if(idx>=0){user.registeredAt=users[idx].registeredAt;users[idx]={...users[idx],...user};}else users.push(user);writeJSON(USERS_KEY,users);writeJSON(USER_KEY,user);showApp(user);showToast('Acceso activado');}
+const users=readJSON(USERS_KEY,[]);const idx=users.findIndex(u=>(u.email||'').toLowerCase()===user.email.toLowerCase()||(u.phone&&normalizeColombiaPhone(u.phone)===user.phone));if(idx>=0){user.registeredAt=users[idx].registeredAt;users[idx]={...users[idx],...user};}else users.push(user);writeJSON(USERS_KEY,users);writeJSON(USER_KEY,user);await showApp(user);showToast('Acceso activado');}
 function logUsage(item){if(!CURRENT_USER||!item)return;const logs=readJSON(LOGS_KEY,[]);logs.push({date:new Date().toLocaleDateString('es-CO'),time:new Date().toLocaleTimeString('es-CO'),iso:new Date().toISOString(),name:CURRENT_USER.name,email:CURRENT_USER.email,phone:CURRENT_USER.phone,company:CURRENT_USER.company,city:CURRENT_USER.city,store:CURRENT_USER.store,role:CURRENT_USER.role,reference:item.referencia,description:item.descripcion,gama:item.gama,product:item.producto});writeJSON(LOGS_KEY,logs);CURRENT_USER.lastAccess=new Date().toISOString();writeJSON(USER_KEY,CURRENT_USER);
 // Fase 3: registro agregado/anónimo (sin datos de usuario) para alimentar "más consultados" y venta cruzada.
 sb.from('consultas_log').insert({referencia:item.referencia}).then(({error})=>{if(error)console.warn('No se pudo registrar consulta agregada:',error.message);});
@@ -3209,6 +3219,6 @@ async function renderSoporteAdminList(){
 qs('soporteFiltroTipo').addEventListener('change',renderSoporteAdminList);
 qs('soporteFiltroEstado').addEventListener('change',renderSoporteAdminList);
 
-const savedUser=readJSON(USER_KEY,null);if(savedUser&&savedUser.consent)showApp(savedUser);else showRegister();
+const savedUser=readJSON(USER_KEY,null);if(savedUser&&savedUser.consent)showApp(savedUser).catch(e=>console.error('Error al restaurar sesión:',e));else showRegister();
 init();
 </script></body></html>
