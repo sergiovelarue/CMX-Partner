@@ -173,7 +173,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   <div class="partner-box">
     <div class="partner-hero">
       <div id="logoWrapReg" class="logo-wrap hidden"><img id="companyLogoReg" alt="Logo empresa"></div>
-      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v2.0</span></h1>
+      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v2.1</span></h1>
       <p>Activa tu acceso profesional para cotizar más rápido, vender con seguridad y mejorar tu rentabilidad.</p>
       <div class="benefits">
         <div>✅ Precios actualizados al instante</div>
@@ -212,7 +212,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div class="userbar"><div>Acceso activo: <b id="activeUser">-</b><span id="activeRoleWrap"> · <span id="activeRole"></span></span><span id="activeCompanyWrap"> · <span id="activeCompany"></span></span></div><button class="linkbtn" id="changeUser">Cambiar usuario</button></div>
 <div class='hero'>
 <div id="logoWrap" class="logo-wrap hidden"><img id="companyLogo" alt="Logo empresa"></div>
-<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v2.0</span></h1>
+<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v2.1</span></h1>
 <details id='heroDetails'>
 <summary>Ver información de la plataforma</summary>
 <p id='introText' style="margin-top:10px">Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.</p>
@@ -2270,8 +2270,8 @@ async function saveBadgeSettings(){
   const of=(qs('badgeOferta').value||'').trim()||'Oferta';
   const fmt=qs('ofertaFormato').value==='absoluto'?'absoluto':'porcentaje';
   setStatus('badgesStatus','Guardando…','info');
-  const{error}=await sb.from('app_settings').update({catalogo_foco_badge:foco,catalogo_bestseller_badge:bs,catalogo_oferta_badge:of,catalogo_oferta_formato:fmt,updated_by:CURRENT_USER?.email||'admin'}).eq('id',1);
-  if(error){setStatus('badgesStatus','Error al guardar: '+error.message+'. ¿Ya corriste el script setup_catalogo_destacados_supabase.sql en Supabase?','err');return;}
+  const{error}=await sb.rpc('guardar_badges_destacados',{p_foco:foco,p_bestseller:bs,p_oferta:of,p_formato:fmt,p_email:CURRENT_USER?.email||''});
+  if(error){setStatus('badgesStatus','Error al guardar: '+error.message,'err');return;}
   SETTINGS.catalogo_foco_badge=foco;SETTINGS.catalogo_bestseller_badge=bs;SETTINGS.catalogo_oferta_badge=of;SETTINGS.catalogo_oferta_formato=fmt;
   setStatus('badgesStatus','✅ Etiquetas guardadas para todos los usuarios.','ok');
 }
