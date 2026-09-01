@@ -1,42 +1,28 @@
-MEJORA +49 — Corrección: opciones de Ajustes Generales que "no se guardaban" (v1.48.0)
+MEJORA +50 — Corrección REAL: switches se veían apagados al recargar (v1.48.1)
 
-CAUSA RAÍZ ENCONTRADA (confirmada con prueba directa en base de datos):
-La política de seguridad (RLS) de app_settings exigía una sesión de Supabase
-Auth REAL activa (auth.role()='authenticated') para poder guardar cambios.
-Si esa sesión no estaba activa en el momento exacto de guardar — por ejemplo,
-si expiró silenciosamente, o si el superadministrador nunca completó el paso
-de "Acceso administrador" con su contraseña de Supabase antes de tocar
-Ajustes Generales — el guardado se bloqueaba con CERO filas afectadas y
-SIN ERROR VISIBLE. La app mostraba "✅ Guardado correctamente" en pantalla,
-pero en realidad no se había escrito nada en la base de datos. Por eso, al
-volver a entrar, las opciones aparecían como si nunca se hubieran configurado.
+Tu prueba fue la clave para encontrarlo: verifiqué en base de datos y
+confirmé que "Conexión vía link" y "Motor de Aprobación" SÍ estaban
+guardados correctamente (true, true) — el problema NO era el guardado (eso
+ya se había corregido en la +49). El problema estaba en la LECTURA al
+recargar la app.
 
-Se reprodujo el bug exacto en base de datos (UPDATE directo sin sesión Auth
-→ 0 filas, sin error) y se confirmó la corrección (mismo escenario, ahora vía
-RPC → guarda correctamente, o avisa con un error claro si el usuario no es
-superadministrador).
+CAUSA RAÍZ:
+En la función que carga la configuración al abrir la app (init), había una
+línea que reconstruye el objeto SETTINGS completo desde la fila de la base
+de datos, pero esa línea solo incluía 11 campos "antiguos" (nombre de
+empresa, logo, tema, badges, límites). Los campos agregados en mejoras
+recientes — NIT, correo de pedidos, conexión vía link, Motor de Aprobación,
+tarifa de IVA, modo de carga — NO estaban en esa lista. Resultado: aunque
+esos valores SÍ estaban bien guardados en la base de datos, al recargar la
+app se sobrescribían con sus valores por defecto (apagado/vacío) sin ningún
+error visible.
 
-CORRECCIÓN APLICADA:
-Todos los guardados de Ajustes Generales ahora usan funciones del servidor
-(RPC) que validan directamente contra la tabla de superadministradores, sin
-depender de esa sesión Auth frágil:
-- Empresa contratante (nombre + NIT)
-- Correo de pedidos
-- Límites del sistema (PDV, vendedores, distribuidores, niveles)
-- Tema visual (Claro/Oscuro/Pastel)
-- Logo de la empresa (subir/quitar)
-- Switch de conexión vía link (precios/stock)
-- Switch del Motor de Aprobación de Pedidos + tarifa de IVA
-- Selector Manual/Vía link (precios y stock)
+CORRECCIÓN:
+Se agregaron los 7 campos faltantes a esa reconstrucción, y se dejó un
+comentario explícito en el código advirtiendo que cualquier columna nueva
+que se agregue a app_settings en el futuro debe listarse ahí también, para
+no repetir este mismo bug.
 
-Este es el MISMO patrón de seguridad (RLS cerrado, acceso solo vía funciones
-SECURITY DEFINER) que ya usa el proyecto hermano RADAR-INDUSTRIAL desde el
-18 de agosto — se aplicó a propósito de forma consistente pensando en la
-futura fusión de ambas apps: cuando se unifiquen, el patrón de guardado de
-configuración ya coincide entre las dos.
-
-PENDIENTE (no reportado por el usuario todavía, detectado en la revisión):
-Las etiquetas de "Destacados" (Foco/Best Seller/Ofertas) en el panel
-Destacados usan todavía el mismo patrón antiguo (UPDATE directo). Se dejó
-pendiente de una próxima mejora, ya que el usuario reportó específicamente
-Ajustes Generales.
+Con esto, la selección de "Conexión vía link", "Motor de Aprobación", el
+NIT, el correo de pedidos y el modo manual/link ahora sí deben mantenerse
+correctamente al cerrar y volver a entrar, desde cualquier dispositivo.

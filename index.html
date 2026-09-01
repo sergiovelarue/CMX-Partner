@@ -160,7 +160,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   <div class="partner-box">
     <div class="partner-hero">
       <div id="logoWrapReg" class="logo-wrap hidden"><img id="companyLogoReg" alt="Logo empresa"></div>
-      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v1.48.0</span></h1>
+      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v1.48.1</span></h1>
       <p>Activa tu acceso profesional para cotizar más rápido, vender con seguridad y mejorar tu rentabilidad.</p>
       <div class="benefits">
         <div>✅ Precios actualizados al instante</div>
@@ -199,7 +199,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div class="userbar"><div>Acceso activo: <b id="activeUser">-</b><span id="activeRoleWrap"> · <span id="activeRole"></span></span><span id="activeCompanyWrap"> · <span id="activeCompany"></span></span></div><button class="linkbtn" id="changeUser">Cambiar usuario</button></div>
 <div class='hero'>
 <div id="logoWrap" class="logo-wrap hidden"><img id="companyLogo" alt="Logo empresa"></div>
-<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v1.48.0</span></h1>
+<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v1.48.1</span></h1>
 <details id='heroDetails'>
 <summary>Ver información de la plataforma</summary>
 <p id='introText' style="margin-top:10px">Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.</p>
@@ -2810,7 +2810,14 @@ RANKING_MAP=new Map((rankingData||[]).map(x=>[normalize(x.referencia),Number(x.v
 DISPONIBILIDAD_MAP=new Map((stockData||[]).map(x=>[normalize(x.referencia),x]));
 CATALOGO_ITEMS=catalogoData||[];
 const mediaMap=new Map();(mediaData||[]).forEach(mm=>{const k=normalize(mm.referencia);if(!mediaMap.has(k))mediaMap.set(k,mm.url);});MEDIA_IMAGES=mediaMap;
-if(settingsData)SETTINGS={company_name:settingsData.company_name||'',logo_url:settingsData.logo_url||'',theme:settingsData.theme||'original',catalogo_foco_badge:settingsData.catalogo_foco_badge||'Nuevo',catalogo_bestseller_badge:settingsData.catalogo_bestseller_badge||'Best Seller',catalogo_oferta_badge:settingsData.catalogo_oferta_badge||'Oferta',catalogo_oferta_formato:settingsData.catalogo_oferta_formato||'porcentaje',limite_pdv_por_distribuidor:settingsData.limite_pdv_por_distribuidor??10,limite_vendedores_dependientes_por_distribuidor:settingsData.limite_vendedores_dependientes_por_distribuidor??10,limite_distribuidores:settingsData.limite_distribuidores??10,limite_vendedores_empresa:settingsData.limite_vendedores_empresa??10,limite_niveles_descuento:settingsData.limite_niveles_descuento??10};
+// IMPORTANTE: este objeto reconstruye SETTINGS completo desde la fila real de
+// app_settings. Debe incluir explícitamente TODOS los campos que la app usa,
+// no solo un subconjunto — si se agrega una columna nueva a app_settings pero
+// no se lista aquí, su valor real de la base de datos se descarta y SETTINGS
+// vuelve silenciosamente al default (ej. un switch guardado en true aparece
+// apagado al recargar, aunque en la BD siga en true). Ya pasó una vez con
+// conexion_link_habilitada/aprobacion_pedidos_habilitada — no repetir el bug.
+if(settingsData)SETTINGS={company_name:settingsData.company_name||'',nit_empresa:settingsData.nit_empresa||'',logo_url:settingsData.logo_url||'',theme:settingsData.theme||'original',catalogo_foco_badge:settingsData.catalogo_foco_badge||'Nuevo',catalogo_bestseller_badge:settingsData.catalogo_bestseller_badge||'Best Seller',catalogo_oferta_badge:settingsData.catalogo_oferta_badge||'Oferta',catalogo_oferta_formato:settingsData.catalogo_oferta_formato||'porcentaje',limite_pdv_por_distribuidor:settingsData.limite_pdv_por_distribuidor??10,limite_vendedores_dependientes_por_distribuidor:settingsData.limite_vendedores_dependientes_por_distribuidor??10,limite_distribuidores:settingsData.limite_distribuidores??10,limite_vendedores_empresa:settingsData.limite_vendedores_empresa??10,limite_niveles_descuento:settingsData.limite_niveles_descuento??10,correo_pedidos:settingsData.correo_pedidos||'',conexion_link_habilitada:!!settingsData.conexion_link_habilitada,modo_carga_precios:settingsData.modo_carga_precios||'manual',modo_carga_stock:settingsData.modo_carga_stock||'manual',aprobacion_pedidos_habilitada:!!settingsData.aprobacion_pedidos_habilitada,iva_tarifa_pct_aprobacion:settingsData.iva_tarifa_pct_aprobacion??19};
 PRODUCTS=productsData||[];RULES=rulesData||[];
 await loadRulesForUser();
 renderVersionBadge(verData?.fecha_actualizacion);
