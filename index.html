@@ -173,7 +173,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   <div class="partner-box">
     <div class="partner-hero">
       <div id="logoWrapReg" class="logo-wrap hidden"><img id="companyLogoReg" alt="Logo empresa"></div>
-      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v2.1</span></h1>
+      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v2.2</span></h1>
       <p>Activa tu acceso profesional para cotizar más rápido, vender con seguridad y mejorar tu rentabilidad.</p>
       <div class="benefits">
         <div>✅ Precios actualizados al instante</div>
@@ -212,7 +212,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div class="userbar"><div>Acceso activo: <b id="activeUser">-</b><span id="activeRoleWrap"> · <span id="activeRole"></span></span><span id="activeCompanyWrap"> · <span id="activeCompany"></span></span></div><button class="linkbtn" id="changeUser">Cambiar usuario</button></div>
 <div class='hero'>
 <div id="logoWrap" class="logo-wrap hidden"><img id="companyLogo" alt="Logo empresa"></div>
-<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v2.1</span></h1>
+<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v2.2</span></h1>
 <details id='heroDetails'>
 <summary>Ver información de la plataforma</summary>
 <p id='introText' style="margin-top:10px">Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.</p>
@@ -2009,6 +2009,7 @@ async function enviarParaAprobacion(){
   const st=qs('aprobacionStatus');
   const cliente=(qs('pdfClienteNombre')?.value||'').trim();
   const clienteEmail=(qs('pdfClienteEmail')?.value||'').trim();
+  const clienteTelefono=(qs('pdfClienteTelefono')?.value||'').trim();
   const clienteIdentificacion=(qs('pdfClienteIdentificacion')?.value||'').trim();
   if(!cliente||!clienteEmail){setStatus('aprobacionStatus','Completa nombre y correo del cliente antes de enviar a aprobación.','err');return;}
   if(!isValidEmail(clienteEmail)){setStatus('aprobacionStatus','El correo del cliente no es válido.','err');return;}
@@ -2017,11 +2018,21 @@ async function enviarParaAprobacion(){
   setStatus('aprobacionStatus','Enviando cotización para aprobación…','info');
   try{
     const ivaTarifa=Number(SETTINGS.iva_tarifa_pct_aprobacion??19);
+    const verMargen=canSeeMargin();
     const lineas=QUOTE_ITEMS.map(line=>{
       const c=quoteLineCalc(line);if(!c)return null;
       const precioConIva=c.pvpSI; // precio final ya con descuento de sala aplicado, mismo valor que en el PDF
       const precioSinIva=Math.round((precioConIva/(1+ivaTarifa/100))*100)/100;
-      return{sku:c.item.referencia,descripcion:c.item.descripcion,cantidad:line.cantidad,unidad_medida:'UND',precio_unitario_cop:precioSinIva,descuento_pct:0,iva_tarifa_pct:ivaTarifa};
+      const linea={sku:c.item.referencia,descripcion:c.item.descripcion,cantidad:line.cantidad,unidad_medida:'UND',precio_unitario_cop:precioSinIva,descuento_pct:0,iva_tarifa_pct:ivaTarifa};
+      // Campos internos de rentabilidad: solo se calculan y envían si el rol
+      // actual tiene visibilidad de margen/PVD — nunca se inventan ni se
+      // envían en 0 para roles que no deben verlos.
+      if(verMargen){
+        const pvdSinIva=Math.round((c.pvdI/(1+ivaTarifa/100))*100)/100;
+        linea._interno_pvd_unitario_cop=pvdSinIva;
+        linea._interno_ganancia_unitaria_cop=Math.round((precioSinIva-pvdSinIva)*100)/100;
+      }
+      return linea;
     }).filter(Boolean);
     if(!lineas.length){setStatus('aprobacionStatus','No hay líneas válidas para enviar.','err');if(btn)btn.disabled=false;return;}
     // id_cotizacion_origen: se usa el consecutivo legible (ej. COT-2026-0001)
@@ -2033,12 +2044,23 @@ async function enviarParaAprobacion(){
     const payload={
       id_cotizacion_origen:idCotizacionOrigen,
       vendedor:{nombre:CURRENT_USER?.name||CURRENT_USER?.email||'',email:CURRENT_USER?.email||''},
-      cliente:{razon_social:cliente,email_contacto:clienteEmail,identificacion:clienteIdentificacion},
+      cliente:{razon_social:cliente,email_contacto:clienteEmail,identificacion:clienteIdentificacion,...(clienteTelefono?{telefono_contacto:clienteTelefono}:{})},
       condiciones_comerciales:{forma_pago:'no_definida',vigencia_dias:15},
       lineas
     };
     const{data,error}=await sb.functions.invoke('enviar-a-aprobacion',{body:payload});
-    if(error){setStatus('aprobacionStatus','No se pudo enviar la cotización para aprobación: '+error.message,'err');if(btn)btn.disabled=false;return;}
+    if(error){
+      // Mensajes específicos según el código de error documentado por el
+      // Motor de Aprobación (contrato multi-empresa vigente desde 2026-09-01).
+      const ctx=error.context;
+      const httpStatus=ctx?.status;
+      let msg='No se pudo enviar la cotización para aprobación: '+error.message;
+      if(httpStatus===401)msg='La clave de integración de esta empresa no es válida o no coincide con el Motor de Aprobación. Revisa el secreto configurado en la función enviar-a-aprobacion.';
+      else if(httpStatus===403)msg='La cuenta de esta empresa en el Motor de Aprobación está desactivada. Contacta al administrador del Motor de Aprobación.';
+      else if(httpStatus===404)msg='No existe una cuenta activa en el Motor de Aprobación para el NIT configurado en Ajustes Generales. Verifica que el NIT coincida exactamente con el registrado.';
+      else if(httpStatus===400)msg='El Motor de Aprobación rechazó la cotización: falta un dato obligatorio. '+error.message;
+      setStatus('aprobacionStatus',msg,'err');if(btn)btn.disabled=false;return;
+    }
     const urlPortal=data?.url_portal_cliente;
     const prefijoMsg=numeroCotizacion?`Cotización ${numeroCotizacion}: `:'';
     setStatus('aprobacionStatus',urlPortal?`✅ ${prefijoMsg}se envió un correo a ${cliente} con el link para aprobar. Puedes hacerle seguimiento en: ${urlPortal}`:'✅ Cotización enviada para aprobación.','ok');
