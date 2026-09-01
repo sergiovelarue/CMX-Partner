@@ -1,25 +1,42 @@
-MEJORA +48 — NIT de empresa contratante + persistencia de sesión admin (v1.47.0)
+MEJORA +49 — Corrección: opciones de Ajustes Generales que "no se guardaban" (v1.48.0)
 
-Esta entrega reemplaza a la +47 (incluye ese mismo ajuste de sesión, todavía
-no subido, más el NIT que pediste antes de subir).
+CAUSA RAÍZ ENCONTRADA (confirmada con prueba directa en base de datos):
+La política de seguridad (RLS) de app_settings exigía una sesión de Supabase
+Auth REAL activa (auth.role()='authenticated') para poder guardar cambios.
+Si esa sesión no estaba activa en el momento exacto de guardar — por ejemplo,
+si expiró silenciosamente, o si el superadministrador nunca completó el paso
+de "Acceso administrador" con su contraseña de Supabase antes de tocar
+Ajustes Generales — el guardado se bloqueaba con CERO filas afectadas y
+SIN ERROR VISIBLE. La app mostraba "✅ Guardado correctamente" en pantalla,
+pero en realidad no se había escrito nada en la base de datos. Por eso, al
+volver a entrar, las opciones aparecían como si nunca se hubieran configurado.
 
-1) Persistencia de sesión de administrador (heredado de +47):
-   - persistSession + autoRefreshToken activados explícitamente en la
-     conexión a Supabase. La sesión de admin/superadmin dura indefinidamente
-     en un dispositivo hasta "Bloquear descargas" manual.
-   - Nota aclaratoria junto al botón "Acceso administrador": pedir la clave
-     de nuevo NO significa que se perdió configuración — todo sigue guardado
-     en la base de datos.
+Se reprodujo el bug exacto en base de datos (UPDATE directo sin sesión Auth
+→ 0 filas, sin error) y se confirmó la corrección (mismo escenario, ahora vía
+RPC → guarda correctamente, o avisa con un error claro si el usuario no es
+superadministrador).
 
-2) NIT de empresa contratante (nuevo):
-   - Campo "NIT de la empresa" en Ajustes Generales, junto al nombre de la
-     empresa contratante (mismo bloque, mismo botón "Guardar").
-   - Se guarda en app_settings.nit_empresa (persistido en base de datos).
-   - Se imprime en el encabezado del PDF de cotización, debajo del nombre de
-     la empresa.
-   - IMPORTANTE: por ahora el NIT NO viaja en el envío al Motor de Aprobación
-     de Pedidos. El contrato actual del webhook (recibir-cotizacion) no tiene
-     un campo dedicado para el NIT del emisor (solo para el cliente
-     comprador). Queda pendiente definir con Sergio dónde debe ir ese dato
-     antes de incluirlo en ese payload — decisión explícita para no inventar
-     un lugar incorrecto en un contrato ya acordado.
+CORRECCIÓN APLICADA:
+Todos los guardados de Ajustes Generales ahora usan funciones del servidor
+(RPC) que validan directamente contra la tabla de superadministradores, sin
+depender de esa sesión Auth frágil:
+- Empresa contratante (nombre + NIT)
+- Correo de pedidos
+- Límites del sistema (PDV, vendedores, distribuidores, niveles)
+- Tema visual (Claro/Oscuro/Pastel)
+- Logo de la empresa (subir/quitar)
+- Switch de conexión vía link (precios/stock)
+- Switch del Motor de Aprobación de Pedidos + tarifa de IVA
+- Selector Manual/Vía link (precios y stock)
+
+Este es el MISMO patrón de seguridad (RLS cerrado, acceso solo vía funciones
+SECURITY DEFINER) que ya usa el proyecto hermano RADAR-INDUSTRIAL desde el
+18 de agosto — se aplicó a propósito de forma consistente pensando en la
+futura fusión de ambas apps: cuando se unifiquen, el patrón de guardado de
+configuración ya coincide entre las dos.
+
+PENDIENTE (no reportado por el usuario todavía, detectado en la revisión):
+Las etiquetas de "Destacados" (Foco/Best Seller/Ofertas) en el panel
+Destacados usan todavía el mismo patrón antiguo (UPDATE directo). Se dejó
+pendiente de una próxima mejora, ya que el usuario reportó específicamente
+Ajustes Generales.
