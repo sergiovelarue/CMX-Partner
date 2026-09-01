@@ -173,7 +173,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   <div class="partner-box">
     <div class="partner-hero">
       <div id="logoWrapReg" class="logo-wrap hidden"><img id="companyLogoReg" alt="Logo empresa"></div>
-      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v2.3</span></h1>
+      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v2.4</span></h1>
       <p>Activa tu acceso profesional para cotizar más rápido, vender con seguridad y mejorar tu rentabilidad.</p>
       <div class="benefits">
         <div>✅ Precios actualizados al instante</div>
@@ -212,7 +212,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div class="userbar"><div>Acceso activo: <b id="activeUser">-</b><span id="activeRoleWrap"> · <span id="activeRole"></span></span><span id="activeCompanyWrap"> · <span id="activeCompany"></span></span></div><button class="linkbtn" id="changeUser">Cambiar usuario</button></div>
 <div class='hero'>
 <div id="logoWrap" class="logo-wrap hidden"><img id="companyLogo" alt="Logo empresa"></div>
-<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v2.3</span></h1>
+<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v2.4</span></h1>
 <details id='heroDetails'>
 <summary>Ver información de la plataforma</summary>
 <p id='introText' style="margin-top:10px">Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.</p>
@@ -666,6 +666,15 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
     </div>
     <p style="margin:6px 0 0;color:var(--muted);font-size:.78rem">El catálogo de ListaLoop guarda el precio con IVA incluido. Para armar el pedido, se calcula el precio sin IVA dividiendo entre (1 + tarifa/100). Ajusta esta tarifa si tu catálogo maneja una tasa distinta al 19% general.</p>
     <div class="mini-status" id="aprobacionPedidosStatus"></div>
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border,#e2e2e2)">
+      <p style="margin:0 0 6px;font-weight:500;font-size:.86rem">🔗 URL del webhook del Motor de Aprobación</p>
+      <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Endpoint al que ListaLoop envía cada cotización. Es información pública (no un secreto) — cámbiala solo si el Motor de Aprobación te informa un nuevo dominio.</p>
+      <div class="inline-form">
+        <div style="flex:1"><input id="settingsAprobacionWebhookUrl" type="url" placeholder="https://..." style="width:100%"></div>
+      </div>
+      <div style="margin-top:6px"><button class="s mini" id="btnGuardarWebhookUrl">Guardar URL</button></div>
+      <div class="mini-status" id="webhookUrlStatus"></div>
+    </div>
     <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border,#e2e2e2)">
       <p style="margin:0 0 6px;font-weight:500;font-size:.86rem">🔐 Clave de integración con el Motor de Aprobación</p>
       <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Esta clave identifica y autentica a esta empresa ante el Motor de Aprobación (junto con el NIT de Empresa contratante). Por seguridad, la clave nunca se guarda ni se muestra dentro de ListaLoop — solo vive como secreto de la función de envío en Supabase. Este indicador es informativo, actualizado manualmente cuando se configura o rota la clave.</p>
@@ -1386,6 +1395,7 @@ async function showAdminTab(tab){
   if(tab==='settings'&&qs('settingsConexionLink'))qs('settingsConexionLink').checked=!!SETTINGS.conexion_link_habilitada;
   if(tab==='settings'&&qs('settingsAprobacionPedidos'))qs('settingsAprobacionPedidos').checked=!!SETTINGS.aprobacion_pedidos_habilitada;
   if(tab==='settings'&&qs('settingsIvaAprobacion'))qs('settingsIvaAprobacion').value=SETTINGS.iva_tarifa_pct_aprobacion??19;
+  if(tab==='settings'&&qs('settingsAprobacionWebhookUrl'))qs('settingsAprobacionWebhookUrl').value=SETTINGS.aprobacion_webhook_url||'';
   if(tab==='settings')renderSecretoAprobacionEstado();
   if(tab==='settings')cargarConfigConsecutivos();
   if(tab==='settings'&&qs('settingsCorreoPedidos'))qs('settingsCorreoPedidos').value=SETTINGS.correo_pedidos||'';
@@ -2034,6 +2044,15 @@ function renderSecretoAprobacionEstado(){
     el.style.background='var(--bg-danger,#fdecea)';el.style.color='var(--text-danger,#c0392b)';
     el.innerHTML='⚠️ Clave de integración no configurada — el envío a aprobación fallará hasta que se configure en Supabase.';
   }
+}
+async function guardarWebhookUrlAprobacion(){
+  const url=(qs('settingsAprobacionWebhookUrl')?.value||'').trim();
+  if(!url||!/^https:\/\//.test(url)){setStatus('webhookUrlStatus','La URL debe comenzar con https://','err');return;}
+  setStatus('webhookUrlStatus','Guardando…','info');
+  const{error}=await sb.rpc('guardar_webhook_url_aprobacion',{p_url:url,p_email:CURRENT_USER?.email||''});
+  if(error){setStatus('webhookUrlStatus','Error al guardar: '+error.message,'err');return;}
+  SETTINGS.aprobacion_webhook_url=url;
+  setStatus('webhookUrlStatus','✅ URL del webhook actualizada.','ok');
 }
 async function probarConexionAprobacion(){
   const btn=qs('btnProbarConexionAprobacion');
@@ -2909,7 +2928,7 @@ const mediaMap=new Map();(mediaData||[]).forEach(mm=>{const k=normalize(mm.refer
 // vuelve silenciosamente al default (ej. un switch guardado en true aparece
 // apagado al recargar, aunque en la BD siga en true). Ya pasó una vez con
 // conexion_link_habilitada/aprobacion_pedidos_habilitada — no repetir el bug.
-if(settingsData)SETTINGS={company_name:settingsData.company_name||'',nit_empresa:settingsData.nit_empresa||'',logo_url:settingsData.logo_url||'',theme:settingsData.theme||'original',catalogo_foco_badge:settingsData.catalogo_foco_badge||'Nuevo',catalogo_bestseller_badge:settingsData.catalogo_bestseller_badge||'Best Seller',catalogo_oferta_badge:settingsData.catalogo_oferta_badge||'Oferta',catalogo_oferta_formato:settingsData.catalogo_oferta_formato||'porcentaje',limite_pdv_por_distribuidor:settingsData.limite_pdv_por_distribuidor??10,limite_vendedores_dependientes_por_distribuidor:settingsData.limite_vendedores_dependientes_por_distribuidor??10,limite_distribuidores:settingsData.limite_distribuidores??10,limite_vendedores_empresa:settingsData.limite_vendedores_empresa??10,limite_niveles_descuento:settingsData.limite_niveles_descuento??10,correo_pedidos:settingsData.correo_pedidos||'',conexion_link_habilitada:!!settingsData.conexion_link_habilitada,modo_carga_precios:settingsData.modo_carga_precios||'manual',modo_carga_stock:settingsData.modo_carga_stock||'manual',aprobacion_pedidos_habilitada:!!settingsData.aprobacion_pedidos_habilitada,iva_tarifa_pct_aprobacion:settingsData.iva_tarifa_pct_aprobacion??19,aprobacion_secreto_configurado:!!settingsData.aprobacion_secreto_configurado,aprobacion_secreto_actualizado_en:settingsData.aprobacion_secreto_actualizado_en||null};
+if(settingsData)SETTINGS={company_name:settingsData.company_name||'',nit_empresa:settingsData.nit_empresa||'',logo_url:settingsData.logo_url||'',theme:settingsData.theme||'original',catalogo_foco_badge:settingsData.catalogo_foco_badge||'Nuevo',catalogo_bestseller_badge:settingsData.catalogo_bestseller_badge||'Best Seller',catalogo_oferta_badge:settingsData.catalogo_oferta_badge||'Oferta',catalogo_oferta_formato:settingsData.catalogo_oferta_formato||'porcentaje',limite_pdv_por_distribuidor:settingsData.limite_pdv_por_distribuidor??10,limite_vendedores_dependientes_por_distribuidor:settingsData.limite_vendedores_dependientes_por_distribuidor??10,limite_distribuidores:settingsData.limite_distribuidores??10,limite_vendedores_empresa:settingsData.limite_vendedores_empresa??10,limite_niveles_descuento:settingsData.limite_niveles_descuento??10,correo_pedidos:settingsData.correo_pedidos||'',conexion_link_habilitada:!!settingsData.conexion_link_habilitada,modo_carga_precios:settingsData.modo_carga_precios||'manual',modo_carga_stock:settingsData.modo_carga_stock||'manual',aprobacion_pedidos_habilitada:!!settingsData.aprobacion_pedidos_habilitada,iva_tarifa_pct_aprobacion:settingsData.iva_tarifa_pct_aprobacion??19,aprobacion_secreto_configurado:!!settingsData.aprobacion_secreto_configurado,aprobacion_secreto_actualizado_en:settingsData.aprobacion_secreto_actualizado_en||null,aprobacion_webhook_url:settingsData.aprobacion_webhook_url||''};
 PRODUCTS=productsData||[];RULES=rulesData||[];
 await loadRulesForUser();
 renderVersionBadge(verData?.fecha_actualizacion);
@@ -2938,7 +2957,7 @@ qs('stockTipo').addEventListener('change',toggleStockFields);toggleStockFields()
 qs('btnUpdateStock').onclick=updateStockManual;
 qs('btnAnalyzeStockCSV').onclick=analyzeStockCSV;
 qs('addToQuote').onclick=addToQuote;qs('btnCopyMultiQuote').onclick=copyMultiQuote;qs('btnClearQuoteCart').onclick=clearQuoteCart;
-qs('btnPdfMultiQuote').onclick=abrirModalPdfCotizacion;qs('btnClosePdfQuote').onclick=cerrarModalPdfCotizacion;qs('pdfQuoteOverlay').addEventListener('click',e=>{if(e.target.id==='pdfQuoteOverlay')cerrarModalPdfCotizacion();});qs('btnGenerarPdfFinal').onclick=generarPdfCotizacion;qs('btnEnviarAprobacion').onclick=enviarParaAprobacion;if(qs('btnProbarConexionAprobacion'))qs('btnProbarConexionAprobacion').onclick=probarConexionAprobacion;
+qs('btnPdfMultiQuote').onclick=abrirModalPdfCotizacion;qs('btnClosePdfQuote').onclick=cerrarModalPdfCotizacion;qs('pdfQuoteOverlay').addEventListener('click',e=>{if(e.target.id==='pdfQuoteOverlay')cerrarModalPdfCotizacion();});qs('btnGenerarPdfFinal').onclick=generarPdfCotizacion;qs('btnEnviarAprobacion').onclick=enviarParaAprobacion;if(qs('btnProbarConexionAprobacion'))qs('btnProbarConexionAprobacion').onclick=probarConexionAprobacion;if(qs('btnGuardarWebhookUrl'))qs('btnGuardarWebhookUrl').onclick=guardarWebhookUrlAprobacion;
 qs('btnEnviarPedidoFinal').onclick=enviarPedidoEmpresa;
 qs('btnCerrarPreciosBanner').onclick=cerrarPreciosBanner;qs('btnRevisarLinkExterno').onclick=revisarYAplicarLinkExterno;
 qs('navConsultar').onclick=()=>showMainTab('consultar');qs('navCotizacion').onclick=()=>showMainTab('cotizacion');qs('navDestacados').onclick=()=>showMainTab('destacados');qs('navMiEquipo').onclick=()=>showMainTab('miequipo');
