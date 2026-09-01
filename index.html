@@ -173,7 +173,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   <div class="partner-box">
     <div class="partner-hero">
       <div id="logoWrapReg" class="logo-wrap hidden"><img id="companyLogoReg" alt="Logo empresa"></div>
-      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v2.4</span></h1>
+      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v2.5</span></h1>
       <p>Activa tu acceso profesional para cotizar más rápido, vender con seguridad y mejorar tu rentabilidad.</p>
       <div class="benefits">
         <div>✅ Precios actualizados al instante</div>
@@ -212,7 +212,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div class="userbar"><div>Acceso activo: <b id="activeUser">-</b><span id="activeRoleWrap"> · <span id="activeRole"></span></span><span id="activeCompanyWrap"> · <span id="activeCompany"></span></span></div><button class="linkbtn" id="changeUser">Cambiar usuario</button></div>
 <div class='hero'>
 <div id="logoWrap" class="logo-wrap hidden"><img id="companyLogo" alt="Logo empresa"></div>
-<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v2.4</span></h1>
+<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v2.5</span></h1>
 <details id='heroDetails'>
 <summary>Ver información de la plataforma</summary>
 <p id='introText' style="margin-top:10px">Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.</p>
@@ -556,10 +556,11 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
     <div class="inline-form">
       <div><label>Nombre del distribuidor</label><input id="newDistNombre" placeholder="Ej: El Palacio Del Mueble"></div>
       <div><label>Código de distribuidor</label><input id="newDistCodigo" placeholder="Ej: PDM-7X2K"></div>
+      <div><label>NIT / identificación (opcional)</label><input id="newDistNit" placeholder="Ej: 900123456-7"></div>
       <div><label>Correo del propietario (opcional)</label><input id="newDistOwnerEmail" type="email" placeholder="nombre@distribuidor.com"></div>
       <div><button class="p mini" id="btnAddDist" style="padding:12px 16px">Crear distribuidor</button></div>
     </div>
-    <p style="margin:6px 0 0;color:var(--muted);font-size:.76rem">Con correo: crea también al Propietario. Ingresa con ese correo + el código de distribuidor, igual que Admin PDV.</p>
+    <p style="margin:6px 0 0;color:var(--muted);font-size:.76rem">Con correo: crea también al Propietario. Ingresa con ese correo + el código de distribuidor, igual que Admin PDV. El NIT es requerido para que el Propietario pueda usar el Motor de Aprobación de Pedidos (envía sus propias cotizaciones a aprobación como si fuera cliente de la empresa).</p>
     <div id="distribuidoresList" style="margin-top:10px"></div>
     <div class="mini-status" id="distribuidoresStatus"></div>
   </div>
@@ -1204,9 +1205,10 @@ async function renderDistribuidoresList(){
   const{data:nivelesData}=await sb.from('niveles_descuento').select('id,nombre').order('nombre');
   const niveles=nivelesData||[];
   const nivelOptions=(selectedId)=>niveles.map(n=>`<option value='${n.id}' ${n.id===selectedId?'selected':''}>${escapeHtml(n.nombre)}</option>`).join('');
-  el.innerHTML=`<table class='preview-table'><tr><th>Distribuidor</th><th>Código</th><th>Nivel</th><th>Activo</th><th></th></tr>${dist.map(d=>`<tr>
+  el.innerHTML=`<table class='preview-table'><tr><th>Distribuidor</th><th>Código</th><th>NIT</th><th>Nivel</th><th>Activo</th><th></th></tr>${dist.map(d=>`<tr>
     <td><input class='dist-edit-nombre' data-id='${d.id}' value='${escapeHtml(d.nombre||'')}' style='padding:9px 8px;border:1px solid #cfd8e3;border-radius:10px;min-width:120px;max-width:100%'></td>
     <td><input class='dist-edit-codigo' data-id='${d.id}' value='${escapeHtml(d.codigo_distribuidor||'')}' style='padding:9px 8px;border:1px solid #cfd8e3;border-radius:10px;min-width:90px;max-width:100%' autocomplete='off'></td>
+    <td><input class='dist-edit-nit' data-id='${d.id}' value='${escapeHtml(d.nit_identificacion||'')}' placeholder='Ej: 900123456-7' style='padding:9px 8px;border:1px solid #cfd8e3;border-radius:10px;min-width:110px;max-width:100%' autocomplete='off'></td>
     <td><select class='dist-nivel-select' data-id='${d.id}' style='padding:6px 8px;border:1px solid #cfd8e3;border-radius:10px'>${nivelOptions(d.nivel_descuento_id)}</select></td>
     <td><input type='checkbox' class='dist-edit-activo' data-id='${d.id}' ${d.activo?'checked':''}></td>
     <td><button class='rm-btn' data-id='${d.id}'>✕</button></td>
@@ -1215,6 +1217,7 @@ async function renderDistribuidoresList(){
   el.querySelectorAll('select.dist-nivel-select').forEach(sel=>{sel.onchange=()=>updateDistribuidorCampo(sel.dataset.id,'nivel_descuento_id',sel.value);});
   el.querySelectorAll('input.dist-edit-nombre').forEach(inp=>{inp.onblur=()=>updateDistribuidorCampo(inp.dataset.id,'nombre',inp.value.trim());});
   el.querySelectorAll('input.dist-edit-codigo').forEach(inp=>{inp.onblur=()=>updateDistribuidorCampo(inp.dataset.id,'codigo_distribuidor',inp.value.trim().toUpperCase());});
+  el.querySelectorAll('input.dist-edit-nit').forEach(inp=>{inp.onblur=()=>updateDistribuidorCampo(inp.dataset.id,'nit_identificacion',inp.value.trim());});
   el.querySelectorAll('input.dist-edit-activo').forEach(inp=>{inp.onchange=()=>updateDistribuidorCampo(inp.dataset.id,'activo',inp.checked);});
 }
 async function updateDistribuidorCampo(id,campo,valor){
@@ -1234,13 +1237,14 @@ async function updateDistribuidorCampo(id,campo,valor){
 async function addDistribuidor(){
   const nombre=qs('newDistNombre').value.trim();
   const codigo=qs('newDistCodigo').value.trim().toUpperCase();
+  const nit=(qs('newDistNit')?.value||'').trim();
   const ownerEmail=normalizeEmail(qs('newDistOwnerEmail').value);
   if(!nombre||!codigo){setStatus('distribuidoresStatus','Completa nombre y código de distribuidor.','err');return;}
   if(ownerEmail&&!isValidEmail(ownerEmail)){setStatus('distribuidoresStatus','El correo del propietario no es válido.','err');return;}
   setStatus('distribuidoresStatus','Guardando…','info');
   const nivel1=NIVELES_CACHE.find(n=>n.nombre==='Nivel 1');
   if(!nivel1){setStatus('distribuidoresStatus','No se encontró Nivel 1. Verifica en la sección de arriba que exista un nivel llamado exactamente "Nivel 1".','err');return;}
-  const{data:nuevoDist,error}=await sb.from('distribuidores').insert({nombre,codigo_distribuidor:codigo,nivel_descuento_id:nivel1.id,created_by:CURRENT_USER?.email||'admin',updated_by:CURRENT_USER?.email||'admin'}).select().single();
+  const{data:nuevoDist,error}=await sb.from('distribuidores').insert({nombre,codigo_distribuidor:codigo,nit_identificacion:nit||null,nivel_descuento_id:nivel1.id,created_by:CURRENT_USER?.email||'admin',updated_by:CURRENT_USER?.email||'admin'}).select().single();
   if(error){setStatus('distribuidoresStatus','Error al guardar: '+error.message,'err');return;}
   if(ownerEmail){
     const{error:errOwner}=await sb.from('perfiles_usuario').insert({email:ownerEmail,rol:'propietario_distribuidor',distribuidor_id:nuevoDist.id,created_by:CURRENT_USER?.email||'admin',updated_by:CURRENT_USER?.email||'admin'});
@@ -1253,7 +1257,7 @@ async function addDistribuidor(){
   }else{
     setStatus('distribuidoresStatus','✅ Distribuidor creado en Nivel 1.','ok');
   }
-  qs('newDistNombre').value='';qs('newDistCodigo').value='';qs('newDistOwnerEmail').value='';
+  qs('newDistNombre').value='';qs('newDistCodigo').value='';if(qs('newDistNit'))qs('newDistNit').value='';qs('newDistOwnerEmail').value='';
   await renderDistribuidoresList();
 }
 async function removeDistribuidor(id){
@@ -1639,8 +1643,10 @@ if(rolLower==='vendedor'){
   const{data:perfil,error:perfilErr}=await conTimeout(sb.rpc('registrar_perfil_operativo',{p_email:user.email,p_rol:rolRpc,p_codigo_distribuidor:user.codigoDistribuidor,p_punto_venta:user.store||null,p_telefono:user.phone||null}));
   if(perfilErr){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Código de distribuidor no válido: '+perfilErr.message;return;}
   user.perfilRol=perfil.rol;user.distribuidorId=perfil.distribuidor_id;
-  const{data:nombreDist}=await conTimeout(sb.rpc('obtener_nombre_distribuidor',{p_distribuidor_id:perfil.distribuidor_id}));
-  user.distribuidorNombre=nombreDist||'';
+  const{data:datosDist}=await conTimeout(sb.rpc('obtener_datos_distribuidor',{p_distribuidor_id:perfil.distribuidor_id}));
+  const distRow=datosDist&&datosDist[0]?datosDist[0]:null;
+  user.distribuidorNombre=distRow?.nombre||'';
+  user.distribuidorNit=distRow?.nit_identificacion||'';
 }
 qs('regMsg').textContent='';
 const users=readJSON(USERS_KEY,[]);const idx=users.findIndex(u=>(u.email||'').toLowerCase()===user.email.toLowerCase()||(u.phone&&normalizeColombiaPhone(u.phone)===user.phone));if(idx>=0){user.registeredAt=users[idx].registeredAt;users[idx]={...users[idx],...user};}else users.push(user);writeJSON(USERS_KEY,users);writeJSON(USER_KEY,user);showApp(user);showToast('Acceso activado');}
@@ -1960,25 +1966,56 @@ function copyMultiQuote(){
   navigator.clipboard.writeText(buildMultiQuoteText()).then(()=>showToast('Cotización múltiple copiada')).catch(()=>{});
 }
 function clearQuoteCart(){QUOTE_ITEMS=[];QUOTE_SESSION_ID=null;renderQuoteCart();}
-function abrirModalPdfCotizacion(){
+async function abrirModalPdfCotizacion(){
   if(!QUOTE_ITEMS.length){showToast('La cotización está vacía');return;}
   const st=qs('pdfQuoteStatus');if(st){st.textContent='';st.className='mini-status';}
   const stA=qs('aprobacionStatus');if(stA){stA.textContent='';stA.className='mini-status';}
-  // Qué botón de envío se muestra depende del rol de quien cotiza, no de una
-  // elección manual: Administrador/Vendedor de la empresa contratante (ConAccion)
-  // venden a través del Motor de Aprobación (portal para el cliente final);
-  // los roles de distribuidor (Propietario, Admin PDV, Dependiente PDV,
-  // vendedor de distribuidor) envían el pedido directo al área comercial.
+  // Qué botón de envío se muestra depende del rol exacto de quien cotiza
+  // (definido con Sergio el 2026-09-01), no de una elección manual:
+  // - Administrador/Superadmin/Vendedor de la empresa contratante: envían a
+  //   aprobación con datos de un cliente EXTERNO real, capturados a mano.
+  // - Propietario de Distribuidor: envía a aprobación con los datos de su
+  //   PROPIO negocio (distribuidor) autocompletados y bloqueados — él mismo
+  //   es quien recibe el correo y aprueba su pedido ante la empresa.
+  // - Admin PDV y Dependiente PDV: sin ningún botón de envío, solo cotizan
+  //   (generan PDF / copian cotización). El antiguo "pedido directo por
+  //   correo" (btnEnviarPedidoFinal) queda retirado para todos los roles.
   const esEmpresaContratante=!!CURRENT_USER?.esEmpresaContratante;
+  const esPropietarioDistribuidor=String(CURRENT_USER?.perfilRol||'').toLowerCase()==='propietario_distribuidor';
   const aprobacionHabilitada=!!SETTINGS.aprobacion_pedidos_habilitada;
-  const mostrarAprobacion=esEmpresaContratante&&aprobacionHabilitada;
-  const mostrarPedidoDirecto=!esEmpresaContratante;
+  const mostrarAprobacionCliente=esEmpresaContratante&&aprobacionHabilitada;
+  const mostrarAprobacionPropietario=esPropietarioDistribuidor&&aprobacionHabilitada;
   const btnAprob=qs('btnEnviarAprobacion');
   const btnPedido=qs('btnEnviarPedidoFinal');
-  if(btnAprob)btnAprob.classList.toggle('hidden',!mostrarAprobacion);
-  if(btnPedido)btnPedido.classList.toggle('hidden',!mostrarPedidoDirecto);
+  if(btnAprob)btnAprob.classList.toggle('hidden',!(mostrarAprobacionCliente||mostrarAprobacionPropietario));
+  if(btnPedido)btnPedido.classList.add('hidden');
   const idLabel=qs('pdfClienteIdLabel');
-  if(idLabel)idLabel.textContent=mostrarAprobacion?'Identificación / NIT del cliente (requerido para aprobación)':(mostrarPedidoDirecto?'Identificación / NIT del cliente (opcional)':'Identificación / NIT del cliente (opcional)');
+  if(idLabel)idLabel.textContent=(mostrarAprobacionCliente||mostrarAprobacionPropietario)?'Identificación / NIT del cliente (requerido para aprobación)':'Identificación / NIT del cliente (opcional)';
+  // Para el Propietario, los "datos del cliente" son los de su propio
+  // negocio: se autocompletan y se bloquean para que no se envíen a
+  // aprobación datos de un tercero por error.
+  const camposCliente=['pdfClienteNombre','pdfClienteEmail','pdfClienteTelefono','pdfClienteIdentificacion'];
+  if(mostrarAprobacionPropietario){
+    // Compatibilidad con sesiones guardadas antes de este cambio (sin
+    // distribuidorNit en localStorage): se completa una sola vez desde la
+    // base de datos y se cachea en CURRENT_USER para no repetir la consulta.
+    if(CURRENT_USER.distribuidorNit==null&&CURRENT_USER?.distribuidorId){
+      const{data:datosDist}=await sb.rpc('obtener_datos_distribuidor',{p_distribuidor_id:CURRENT_USER.distribuidorId}).catch(()=>({data:null}));
+      const distRow=datosDist&&datosDist[0]?datosDist[0]:null;
+      CURRENT_USER.distribuidorNit=distRow?.nit_identificacion||'';
+      if(!CURRENT_USER.distribuidorNombre&&distRow?.nombre)CURRENT_USER.distribuidorNombre=distRow.nombre;
+      writeJSON(USER_KEY,CURRENT_USER);
+    }
+    if(qs('pdfClienteNombre'))qs('pdfClienteNombre').value=CURRENT_USER?.distribuidorNombre||'';
+    if(qs('pdfClienteEmail'))qs('pdfClienteEmail').value=CURRENT_USER?.email||'';
+    if(qs('pdfClienteTelefono'))qs('pdfClienteTelefono').value=CURRENT_USER?.phone||'';
+    if(qs('pdfClienteIdentificacion'))qs('pdfClienteIdentificacion').value=CURRENT_USER?.distribuidorNit||'';
+    camposCliente.forEach(id=>{if(qs(id))qs(id).setAttribute('readonly','readonly');});
+    if(st){st.textContent='';}
+    setStatus('pdfQuoteStatus','Estos datos son los de tu negocio — se envían a la empresa contratante para aprobar tu pedido.','info');
+  }else{
+    camposCliente.forEach(id=>{if(qs(id))qs(id).removeAttribute('readonly');});
+  }
   qs('pdfQuoteOverlay').classList.remove('hidden');
 }
 // Numeración de cotizaciones (envío a aprobación) y pedidos (envío directo):
@@ -2095,15 +2132,23 @@ async function enviarParaAprobacion(){
   try{
     const ivaTarifa=Number(SETTINGS.iva_tarifa_pct_aprobacion??19);
     const verMargen=canSeeMargin();
+    // Propietario de Distribuidor: el pedido que envía es una COMPRA a la
+    // empresa contratante, así que el precio que viaja es el PVD (lo que él
+    // paga), no el PVP (precio de reventa al público). Para el resto de
+    // roles (empresa contratante vendiendo a un cliente externo) se
+    // mantiene el PVP, como siempre.
+    const esPropietarioDistribuidor=String(CURRENT_USER?.perfilRol||'').toLowerCase()==='propietario_distribuidor';
     const lineas=QUOTE_ITEMS.map(line=>{
       const c=quoteLineCalc(line);if(!c)return null;
-      const precioConIva=c.pvpSI; // precio final ya con descuento de sala aplicado, mismo valor que en el PDF
+      const precioConIva=esPropietarioDistribuidor?c.pvdI:c.pvpSI; // PVD para pedido de distribuidor; PVP (con descuento de sala) para cliente externo, igual que en el PDF
       const precioSinIva=Math.round((precioConIva/(1+ivaTarifa/100))*100)/100;
       const linea={sku:c.item.referencia,descripcion:c.item.descripcion,cantidad:line.cantidad,unidad_medida:'UND',precio_unitario_cop:precioSinIva,descuento_pct:0,iva_tarifa_pct:ivaTarifa};
       // Campos internos de rentabilidad: solo se calculan y envían si el rol
       // actual tiene visibilidad de margen/PVD — nunca se inventan ni se
-      // envían en 0 para roles que no deben verlos.
-      if(verMargen){
+      // envían en 0 para roles que no deben verlos. Si el precio principal
+      // ya es PVD (caso Propietario), no tiene sentido repetirlo como
+      // "interno", así que solo se agrega cuando el precio principal es PVP.
+      if(verMargen&&!esPropietarioDistribuidor){
         const pvdSinIva=Math.round((c.pvdI/(1+ivaTarifa/100))*100)/100;
         linea._interno_pvd_unitario_cop=pvdSinIva;
         linea._interno_ganancia_unitaria_cop=Math.round((precioSinIva-pvdSinIva)*100)/100;
@@ -2139,7 +2184,8 @@ async function enviarParaAprobacion(){
     }
     const urlPortal=data?.url_portal_cliente;
     const prefijoMsg=numeroCotizacion?`Cotización ${numeroCotizacion}: `:'';
-    setStatus('aprobacionStatus',urlPortal?`✅ ${prefijoMsg}se envió un correo a ${cliente} con el link para aprobar. Puedes hacerle seguimiento en: ${urlPortal}`:'✅ Cotización enviada para aprobación.','ok');
+    const mensajeDestino=esPropietarioDistribuidor?`se envió un correo a tu propio correo (${clienteEmail}) con el link para que apruebes tu pedido`:`se envió un correo a ${cliente} con el link para aprobar`;
+    setStatus('aprobacionStatus',urlPortal?`✅ ${prefijoMsg}${mensajeDestino}. Puedes hacerle seguimiento en: ${urlPortal}`:'✅ Cotización enviada para aprobación.','ok');
     showToast('Cotización enviada para aprobación del cliente');
   }catch(e){setStatus('aprobacionStatus','Error inesperado al enviar para aprobación: '+e.message,'err');}
   if(btn)btn.disabled=false;
@@ -2958,7 +3004,11 @@ qs('btnUpdateStock').onclick=updateStockManual;
 qs('btnAnalyzeStockCSV').onclick=analyzeStockCSV;
 qs('addToQuote').onclick=addToQuote;qs('btnCopyMultiQuote').onclick=copyMultiQuote;qs('btnClearQuoteCart').onclick=clearQuoteCart;
 qs('btnPdfMultiQuote').onclick=abrirModalPdfCotizacion;qs('btnClosePdfQuote').onclick=cerrarModalPdfCotizacion;qs('pdfQuoteOverlay').addEventListener('click',e=>{if(e.target.id==='pdfQuoteOverlay')cerrarModalPdfCotizacion();});qs('btnGenerarPdfFinal').onclick=generarPdfCotizacion;qs('btnEnviarAprobacion').onclick=enviarParaAprobacion;if(qs('btnProbarConexionAprobacion'))qs('btnProbarConexionAprobacion').onclick=probarConexionAprobacion;if(qs('btnGuardarWebhookUrl'))qs('btnGuardarWebhookUrl').onclick=guardarWebhookUrlAprobacion;
-qs('btnEnviarPedidoFinal').onclick=enviarPedidoEmpresa;
+// btnEnviarPedidoFinal (pedido directo por correo) queda retirado del flujo:
+// desde 2026-09-01 todos los roles de distribuidor usan el Motor de
+// Aprobación (btnEnviarAprobacion) o no tienen botón de envío. El botón
+// permanece oculto en el HTML (no se elimina el marcado ni enviarPedidoEmpresa/
+// enviar_pedido_empresa, que quedan sin uso por si se retoman más adelante).
 qs('btnCerrarPreciosBanner').onclick=cerrarPreciosBanner;qs('btnRevisarLinkExterno').onclick=revisarYAplicarLinkExterno;
 qs('navConsultar').onclick=()=>showMainTab('consultar');qs('navCotizacion').onclick=()=>showMainTab('cotizacion');qs('navDestacados').onclick=()=>showMainTab('destacados');qs('navMiEquipo').onclick=()=>showMainTab('miequipo');
 qs('exploreVista').addEventListener('change',()=>{EXPLORE_PAGE=1;renderExplore();});
