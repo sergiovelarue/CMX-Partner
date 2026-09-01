@@ -173,7 +173,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   <div class="partner-box">
     <div class="partner-hero">
       <div id="logoWrapReg" class="logo-wrap hidden"><img id="companyLogoReg" alt="Logo empresa"></div>
-      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v2.5</span></h1>
+      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v2.6</span></h1>
       <p>Activa tu acceso profesional para cotizar más rápido, vender con seguridad y mejorar tu rentabilidad.</p>
       <div class="benefits">
         <div>✅ Precios actualizados al instante</div>
@@ -212,7 +212,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div class="userbar"><div>Acceso activo: <b id="activeUser">-</b><span id="activeRoleWrap"> · <span id="activeRole"></span></span><span id="activeCompanyWrap"> · <span id="activeCompany"></span></span></div><button class="linkbtn" id="changeUser">Cambiar usuario</button></div>
 <div class='hero'>
 <div id="logoWrap" class="logo-wrap hidden"><img id="companyLogo" alt="Logo empresa"></div>
-<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v2.5</span></h1>
+<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v2.6</span></h1>
 <details id='heroDetails'>
 <summary>Ver información de la plataforma</summary>
 <p id='introText' style="margin-top:10px">Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.</p>
@@ -1669,26 +1669,48 @@ const resolveMarginLocal=g=>{g=normalize(g);for(const rule of RULES){const k=nor
 // función usada y verificada en el motor SQL), que soporta niveles tipo
 // base, ajuste (recursivo sobre el nivel de referencia) y copia.
 let NIVEL_ACTUAL_ID=null;
-let MARGEN_CACHE=new Map(); // evita repetir la consulta para la misma gama en la misma sesión
+// MARGEN_CACHE guarda solo valores CONFIRMADOS por la RPC (nunca un
+// centinela). Si una gama no está en el mapa, su margen todavía no se ha
+// resuelto con éxito — precargarMargen debe reintentar, no asumir 0.
+// (Corrige bug: antes se usaba 0 como valor provisional mientras resolvía
+// async; si la primera consulta fallaba/tardaba —red lenta, cold start de
+// Supabase Free—, ese 0 quedaba fijo el resto de la sesión e isRestricted()
+// bloqueaba el producto como 'no disponible' aunque su margen real fuera
+// positivo. Afectaba a cualquier rol con NIVEL_ACTUAL_ID asignado —
+// Propietario de Distribuidor, Vendedor de empresa contratante,
+// Admin/Dependiente PDV—; Administrador no se veía afectado porque usa el
+// fallback local resolveMarginLocal(), sin caché async.)
+let MARGEN_CACHE=new Map(); // evita repetir la consulta para la misma gama ya CONFIRMADA en la sesión
 function resolveMargin(g){
   if(!NIVEL_ACTUAL_ID)return resolveMarginLocal(g);
   const key=normalize(g);
   if(MARGEN_CACHE.has(key))return MARGEN_CACHE.get(key);
-  MARGEN_CACHE.set(key,0); // valor provisional mientras resuelve async, evita 'undefined' en el primer render
+  // Aún no confirmado: dispara la consulta en segundo plano (sin marcar
+  // caché hasta tener respuesta real) y devuelve 0 solo como valor de
+  // renderizado temporal para este frame — no se persiste como definitivo.
   sb.rpc('resolver_margen_nivel',{p_nivel_id:NIVEL_ACTUAL_ID,p_gama:g}).then(({data,error})=>{
     if(!error&&data!=null)MARGEN_CACHE.set(key,Number(data));
+    else console.warn('No se pudo resolver el margen de la gama "'+g+'" (se reintentará en la próxima consulta):',error?.message);
   });
-  return MARGEN_CACHE.get(key);
+  return 0;
 }
 // Precarga el margen de una gama de forma async y lo deja listo en caché
 // antes de que la UI necesite mostrarlo (usado antes de calc()/renderExplore
 // para que el primer cálculo ya tenga el valor correcto, no el provisional).
+// Reintenta la RPC cada vez que el margen de esa gama todavía no esté
+// confirmado en caché, en vez de conformarse con un 0 puesto en un intento
+// anterior fallido — así una falla transitoria de red nunca deja un
+// producto bloqueado de forma permanente en la sesión.
 async function precargarMargen(gama){
   if(!NIVEL_ACTUAL_ID)return resolveMarginLocal(gama);
   const key=normalize(gama);
-  if(MARGEN_CACHE.has(key)&&MARGEN_CACHE.get(key)!==0)return MARGEN_CACHE.get(key);
+  if(MARGEN_CACHE.has(key))return MARGEN_CACHE.get(key);
   const{data,error}=await sb.rpc('resolver_margen_nivel',{p_nivel_id:NIVEL_ACTUAL_ID,p_gama:gama});
-  const val=(!error&&data!=null)?Number(data):0;
+  if(error||data==null){
+    console.warn('No se pudo resolver el margen de la gama "'+gama+'" (se reintentará en la próxima consulta):',error?.message);
+    return 0; // no se cachea: la próxima consulta a esta gama reintentará la RPC
+  }
+  const val=Number(data);
   MARGEN_CACHE.set(key,val);
   return val;
 }
