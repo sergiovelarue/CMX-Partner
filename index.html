@@ -6,6 +6,19 @@
   a usuarios, distribuidores o empresas contratantes se limita a lo definido en las
   condiciones contractuales establecidas y autorizadas por Sergio Velásquez.
   © Sergio Velásquez. Todos los derechos reservados.
+
+  Nomenclatura de versión (formato X.Y, dos cifras separadas por un punto):
+  - Cifra izquierda (X = entera/mayor): sube cuando el cambio es grande o
+    importante — nueva funcionalidad significativa, cambio de arquitectura,
+    corrección de un bug crítico que afectaba producción. Al subir X, Y
+    vuelve a 0 (ej. 1.48 -> 2.0).
+  - Cifra derecha (Y = decimal/menor): sube en cambios pequeños — ajustes de
+    UI, textos, correcciones menores que no afectan el comportamiento
+    central de la app (ej. 2.0 -> 2.1).
+  Actualizar ambos tags en el HTML al mismo tiempo: id="appVersionTagReg"
+  (pantalla de registro) y id="appVersionTag" (pantalla principal/app). El
+  nombre del zip de entrega debe incluir esta misma versión, ej.
+  "Mejoras 2026-09-01 v2.0.zip".
 -->
 <html lang="es">
 <head>
@@ -160,7 +173,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   <div class="partner-box">
     <div class="partner-hero">
       <div id="logoWrapReg" class="logo-wrap hidden"><img id="companyLogoReg" alt="Logo empresa"></div>
-      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v1.48.1</span></h1>
+      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v2.0</span></h1>
       <p>Activa tu acceso profesional para cotizar más rápido, vender con seguridad y mejorar tu rentabilidad.</p>
       <div class="benefits">
         <div>✅ Precios actualizados al instante</div>
@@ -199,7 +212,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div class="userbar"><div>Acceso activo: <b id="activeUser">-</b><span id="activeRoleWrap"> · <span id="activeRole"></span></span><span id="activeCompanyWrap"> · <span id="activeCompany"></span></span></div><button class="linkbtn" id="changeUser">Cambiar usuario</button></div>
 <div class='hero'>
 <div id="logoWrap" class="logo-wrap hidden"><img id="companyLogo" alt="Logo empresa"></div>
-<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v1.48.1</span></h1>
+<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v2.0</span></h1>
 <details id='heroDetails'>
 <summary>Ver información de la plataforma</summary>
 <p id='introText' style="margin-top:10px">Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.</p>
