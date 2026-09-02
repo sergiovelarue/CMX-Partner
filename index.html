@@ -173,7 +173,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   <div class="partner-box">
     <div class="partner-hero">
       <div id="logoWrapReg" class="logo-wrap hidden"><img id="companyLogoReg" alt="Logo empresa"></div>
-      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v2.8</span></h1>
+      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v2.9</span></h1>
       <p>Activa tu acceso profesional para cotizar más rápido, vender con seguridad y mejorar tu rentabilidad.</p>
       <div class="benefits">
         <div>✅ Precios actualizados al instante</div>
@@ -212,7 +212,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div class="userbar"><div>Acceso activo: <b id="activeUser">-</b><span id="activeRoleWrap"> · <span id="activeRole"></span></span><span id="activeCompanyWrap"> · <span id="activeCompany"></span></span></div><button class="linkbtn" id="changeUser">Cambiar usuario</button></div>
 <div class='hero'>
 <div id="logoWrap" class="logo-wrap hidden"><img id="companyLogo" alt="Logo empresa"></div>
-<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v2.8</span></h1>
+<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v2.9</span></h1>
 <details id='heroDetails'>
 <summary>Ver información de la plataforma</summary>
 <p id='introText' style="margin-top:10px">Consulta precios, márgenes e información técnica de producto.</p>
@@ -245,6 +245,16 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div class='card hidden' id='suggestedCard'><h3 style="margin:0 0 10px;color:var(--brand);font-size:1rem">🎯 Productos Sugeridos</h3><div class='dest-grid' id='suggestedGrid'></div></div>
 <div class='card hidden' id='relatedCard'><h3 style="margin:0 0 10px;color:var(--brand);font-size:1rem">🤝 Productos comprados en conjunto normalmente</h3><div class='dest-grid' id='relatedGrid'></div></div>
 <div class='card hidden' id='mediaCard'><details id='mediaDetails'><summary style="cursor:pointer;font-weight:700;color:var(--brand);font-size:1rem">📎 Información técnica (imágenes, planos, manuales)</summary><div id='mediaContent' style="margin-top:10px"></div></details></div>
+<div class='card hidden' id='asistenteIaCard'>
+  <h3 style="margin:0 0 8px;color:var(--brand);font-size:1rem">🤖 Preguntar al asistente</h3>
+  <p style="margin:0 0 10px;color:var(--muted);font-size:.82rem">Responde sobre complementarios y disponibilidad de este producto. No da precios ni márgenes.</p>
+  <div id='asistenteIaChat' style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
+  <div class='actions'>
+    <input id='asistenteIaPregunta' placeholder='Ej: ¿tiene productos complementarios?' style="flex:1;min-width:180px" maxlength='500'>
+    <button class='p' id='btnAsistenteIaPreguntar'>Preguntar</button>
+  </div>
+  <div class='mini-status' id='asistenteIaChatStatus'></div>
+</div>
 <div class='card'>
   <h3 style="margin:0 0 10px;color:var(--brand);font-size:1rem">🔎 Explorar catálogo</h3>
   <div class='explore-filters'>
@@ -686,6 +696,19 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
       </div>
       <div class="mini-status" id="probarConexionStatus"></div>
     </div>
+  </div>
+
+  <div class="admin-sub">
+    <h4>🤖 Asistente de IA (función adicional)</h4>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Responde preguntas sobre el producto que el vendedor está consultando: complementarios y disponibilidad. Nunca precios ni márgenes. Apagado: el botón queda oculto para todos.</p>
+    <div class="actions">
+      <label style="display:flex;align-items:center;gap:8px;font-weight:500;font-size:.9rem;cursor:pointer"><input id="settingsAsistenteIa" type="checkbox" style="width:18px;height:18px"> Función habilitada para este cliente</label>
+    </div>
+    <div class="inline-form" style="margin-top:8px">
+      <div><label>Límite de preguntas por mes (toda la plataforma)</label><input id="settingsAsistenteIaLimite" type="number" min="1" step="1" placeholder="Ej: 500"></div>
+    </div>
+    <p style="margin:6px 0 0;color:var(--muted);font-size:.78rem">Control de costo. Al llegar al límite, el asistente deja de responder hasta el próximo mes.</p>
+    <div class="mini-status" id="asistenteIaStatus"></div>
   </div>
 
   <div class="admin-sub">
@@ -1399,6 +1422,8 @@ async function showAdminTab(tab){
   if(tab==='settings'&&qs('settingsConexionLink'))qs('settingsConexionLink').checked=!!SETTINGS.conexion_link_habilitada;
   if(tab==='settings'&&qs('settingsAprobacionPedidos'))qs('settingsAprobacionPedidos').checked=!!SETTINGS.aprobacion_pedidos_habilitada;
   if(tab==='settings'&&qs('settingsIvaAprobacion'))qs('settingsIvaAprobacion').value=SETTINGS.iva_tarifa_pct_aprobacion??19;
+  if(tab==='settings'&&qs('settingsAsistenteIa'))qs('settingsAsistenteIa').checked=!!SETTINGS.asistente_ia_habilitado;
+  if(tab==='settings'&&qs('settingsAsistenteIaLimite'))qs('settingsAsistenteIaLimite').value=SETTINGS.asistente_ia_limite_mensual??500;
   if(tab==='settings'&&qs('settingsAprobacionWebhookUrl'))qs('settingsAprobacionWebhookUrl').value=SETTINGS.aprobacion_webhook_url||'';
   if(tab==='settings')renderSecretoAprobacionEstado();
   if(tab==='settings')cargarConfigConsecutivos();
@@ -1666,7 +1691,7 @@ sb.from('consultas_log').insert({referencia:item.referencia}).then(({error})=>{i
 }
 let PRODUCTS=[],RULES=[],CONFIG={},DATA=[],byRef=new Map(),lastCopy="",lastQuote="",lastItem=null,QUOTE_ITEMS=[],CATALOGO_ITEMS=[],MEDIA_IMAGES=new Map(),QUOTE_SESSION_ID=null,RANKING_MAP=new Map(),EXPLORE_PAGE=1,DISPONIBILIDAD_MAP=new Map(),SUGGESTED_FOR_LAST=[],RELATED_FOR_LAST=new Map();
 const EXPLORE_PAGE_SIZE=20;
-let SETTINGS={company_name:'',nit_empresa:'',logo_url:'',theme:'original',catalogo_foco_badge:'Nuevo',catalogo_bestseller_badge:'Best Seller',catalogo_oferta_badge:'Oferta',catalogo_oferta_formato:'porcentaje',limite_pdv_por_distribuidor:10,limite_vendedores_dependientes_por_distribuidor:10,limite_distribuidores:10,limite_vendedores_empresa:10,limite_niveles_descuento:10,correo_pedidos:'',conexion_link_habilitada:false,modo_carga_precios:'manual',modo_carga_stock:'manual',aprobacion_pedidos_habilitada:false,iva_tarifa_pct_aprobacion:19};
+let SETTINGS={company_name:'',nit_empresa:'',logo_url:'',theme:'original',catalogo_foco_badge:'Nuevo',catalogo_bestseller_badge:'Best Seller',catalogo_oferta_badge:'Oferta',catalogo_oferta_formato:'porcentaje',limite_pdv_por_distribuidor:10,limite_vendedores_dependientes_por_distribuidor:10,limite_distribuidores:10,limite_vendedores_empresa:10,limite_niveles_descuento:10,correo_pedidos:'',conexion_link_habilitada:false,modo_carga_precios:'manual',modo_carga_stock:'manual',aprobacion_pedidos_habilitada:false,iva_tarifa_pct_aprobacion:19,asistente_ia_habilitado:false,asistente_ia_limite_mensual:500};
 const ref=document.getElementById('ref'),sala=document.getElementById('sala'),cant=document.getElementById('cantidad'),r=document.getElementById('r'),box=document.getElementById('box'),copy=document.getElementById('copy'),quote=document.getElementById('quote'),addBtn=document.getElementById('addToQuote'),toast=document.getElementById('toast');
 const money=v=>new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(Math.round(v));
 const pct=v=>Math.max(0,Math.min(100,Number(v)||0))/100; const now=()=>new Intl.DateTimeFormat('es-CO',{dateStyle:'medium',timeStyle:'short'}).format(new Date());
@@ -1784,12 +1809,58 @@ async function renderProductMedia(referencia){
   if(vids.length)html+=`<div>${vids.map(x=>`<a href="${x.url}" target="_blank" class="badge warn" style="display:inline-block;margin:0 6px 6px 0;text-decoration:none">🎥 ${x.nombre_archivo||'Ver video'}</a>`).join('')}</div>`;
   content.innerHTML=html;card.classList.remove('hidden');
 }
-async function calc(){const item=find(ref.value);if(!item){r.innerHTML="<div class='badge warn'>Referencia no encontrada</div><div class='empty'>Revisa el código o selecciona una sugerencia.</div>";copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;qs('mediaCard').classList.add('hidden');qs('suggestedCard').classList.add('hidden');qs('relatedCard').classList.add('hidden');qs('stockCard').classList.add('hidden');SUGGESTED_FOR_LAST=[];RELATED_FOR_LAST=new Map();renderExplore();return;}
+// Asistente de IA: solo consulta/información, nunca precios. El switch y el
+// límite se verifican server-side en la Edge Function; aquí solo se muestra u
+// oculta el botón según SETTINGS.asistente_ia_habilitado (control de UX, no
+// de seguridad -- la Edge Function igual rechaza si está deshabilitado).
+let ASISTENTE_IA_REF_ACTUAL=null;
+function mostrarAsistenteIaSiHabilitado(referencia){
+  const card=qs('asistenteIaCard');if(!card)return;
+  if(!SETTINGS.asistente_ia_habilitado){card.classList.add('hidden');return;}
+  if(ASISTENTE_IA_REF_ACTUAL!==referencia){qs('asistenteIaChat').innerHTML='';setStatus('asistenteIaChatStatus','','');qs('asistenteIaPregunta').value='';}
+  ASISTENTE_IA_REF_ACTUAL=referencia;
+  card.classList.remove('hidden');
+}
+function agregarMensajeAsistenteIa(rol,texto){
+  const chat=qs('asistenteIaChat');if(!chat)return;
+  const esUsuario=rol==='usuario';
+  const div=document.createElement('div');
+  div.style.cssText=`align-self:${esUsuario?'flex-end':'flex-start'};max-width:85%;padding:8px 12px;border-radius:10px;font-size:.86rem;background:${esUsuario?'var(--brand)':'#f1f3f5'};color:${esUsuario?'#fff':'#1a1a1a'}`;
+  div.textContent=texto;
+  chat.appendChild(div);
+  chat.scrollTop=chat.scrollHeight;
+}
+async function preguntarAsistenteIa(){
+  const pregunta=(qs('asistenteIaPregunta').value||'').trim();
+  if(!pregunta){setStatus('asistenteIaChatStatus','Escribe una pregunta.','err');return;}
+  if(!ASISTENTE_IA_REF_ACTUAL){setStatus('asistenteIaChatStatus','Consulta un producto primero.','err');return;}
+  agregarMensajeAsistenteIa('usuario',pregunta);
+  qs('asistenteIaPregunta').value='';
+  setStatus('asistenteIaChatStatus','Pensando…','info');
+  qs('btnAsistenteIaPreguntar').disabled=true;
+  try{
+    const{data,error}=await sb.functions.invoke('asistente-ia',{body:{referencia:ASISTENTE_IA_REF_ACTUAL,pregunta,email_usuario:CURRENT_USER?.email||''}});
+    if(error){
+      let msg='No se pudo obtener respuesta. Intenta de nuevo.';
+      try{const ctx=await error.context?.json();if(ctx?.error)msg=ctx.error;}catch(_e){}
+      setStatus('asistenteIaChatStatus',msg,'err');return;
+    }
+    if(data?.error){setStatus('asistenteIaChatStatus',data.error,'err');return;}
+    agregarMensajeAsistenteIa('asistente',data?.respuesta||'No pude generar una respuesta.');
+    setStatus('asistenteIaChatStatus',data?.limite_mensual?`Uso este mes: ${data.uso_mes_actual}/${data.limite_mensual}`:'','ok');
+  }catch(e){
+    setStatus('asistenteIaChatStatus','Error de conexión con el asistente.','err');
+  }finally{
+    qs('btnAsistenteIaPreguntar').disabled=false;
+  }
+}
+async function calc(){const item=find(ref.value);if(!item){r.innerHTML="<div class='badge warn'>Referencia no encontrada</div><div class='empty'>Revisa el código o selecciona una sugerencia.</div>";copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;qs('mediaCard').classList.add('hidden');qs('suggestedCard').classList.add('hidden');qs('relatedCard').classList.add('hidden');qs('stockCard').classList.add('hidden');qs('asistenteIaCard').classList.add('hidden');SUGGESTED_FOR_LAST=[];RELATED_FOR_LAST=new Map();renderExplore();return;}
 logUsage(item);
 await precargarMargen(item.gama);
-if(await isRestricted(item.gama)){copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;qs('mediaCard').classList.add('hidden');qs('suggestedCard').classList.add('hidden');qs('relatedCard').classList.add('hidden');qs('stockCard').classList.add('hidden');SUGGESTED_FOR_LAST=[];RELATED_FOR_LAST=new Map();renderExplore();r.innerHTML=`<div class='badge warn'>No disponible</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${escapeHtml(item.referencia)}</div></div><div class='row'><div class='k'>Descripción</div><div>${escapeHtml(item.descripcion)}</div></div><div class='row'><div class='k'>Gama</div><div>${escapeHtml(item.gama)}</div></div><div class='empty'>${escapeHtml(CONFIG.restricted_message||'Producto no disponible para cotización en este canal.')}</div>`;return;}
+if(await isRestricted(item.gama)){copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;qs('mediaCard').classList.add('hidden');qs('suggestedCard').classList.add('hidden');qs('relatedCard').classList.add('hidden');qs('stockCard').classList.add('hidden');qs('asistenteIaCard').classList.add('hidden');SUGGESTED_FOR_LAST=[];RELATED_FOR_LAST=new Map();renderExplore();r.innerHTML=`<div class='badge warn'>No disponible</div><div class='row'><div class='k'>Referencia</div><div class='mono'>${escapeHtml(item.referencia)}</div></div><div class='row'><div class='k'>Descripción</div><div>${escapeHtml(item.descripcion)}</div></div><div class='row'><div class='k'>Gama</div><div>${escapeHtml(item.gama)}</div></div><div class='empty'>${escapeHtml(CONFIG.restricted_message||'Producto no disponible para cotización en este canal.')}</div>`;return;}
 lastItem=item;
 renderPriceCard();
+mostrarAsistenteIaSiHabilitado(item.referencia);
 }
 function renderPriceCard(){
   const item=lastItem;if(!item)return;
@@ -3006,7 +3077,7 @@ const mediaMap=new Map();(mediaData||[]).forEach(mm=>{const k=normalize(mm.refer
 // vuelve silenciosamente al default (ej. un switch guardado en true aparece
 // apagado al recargar, aunque en la BD siga en true). Ya pasó una vez con
 // conexion_link_habilitada/aprobacion_pedidos_habilitada — no repetir el bug.
-if(settingsData)SETTINGS={company_name:settingsData.company_name||'',nit_empresa:settingsData.nit_empresa||'',logo_url:settingsData.logo_url||'',theme:settingsData.theme||'original',catalogo_foco_badge:settingsData.catalogo_foco_badge||'Nuevo',catalogo_bestseller_badge:settingsData.catalogo_bestseller_badge||'Best Seller',catalogo_oferta_badge:settingsData.catalogo_oferta_badge||'Oferta',catalogo_oferta_formato:settingsData.catalogo_oferta_formato||'porcentaje',limite_pdv_por_distribuidor:settingsData.limite_pdv_por_distribuidor??10,limite_vendedores_dependientes_por_distribuidor:settingsData.limite_vendedores_dependientes_por_distribuidor??10,limite_distribuidores:settingsData.limite_distribuidores??10,limite_vendedores_empresa:settingsData.limite_vendedores_empresa??10,limite_niveles_descuento:settingsData.limite_niveles_descuento??10,correo_pedidos:settingsData.correo_pedidos||'',conexion_link_habilitada:!!settingsData.conexion_link_habilitada,modo_carga_precios:settingsData.modo_carga_precios||'manual',modo_carga_stock:settingsData.modo_carga_stock||'manual',aprobacion_pedidos_habilitada:!!settingsData.aprobacion_pedidos_habilitada,iva_tarifa_pct_aprobacion:settingsData.iva_tarifa_pct_aprobacion??19,aprobacion_secreto_configurado:!!settingsData.aprobacion_secreto_configurado,aprobacion_secreto_actualizado_en:settingsData.aprobacion_secreto_actualizado_en||null,aprobacion_webhook_url:settingsData.aprobacion_webhook_url||''};
+if(settingsData)SETTINGS={company_name:settingsData.company_name||'',nit_empresa:settingsData.nit_empresa||'',logo_url:settingsData.logo_url||'',theme:settingsData.theme||'original',catalogo_foco_badge:settingsData.catalogo_foco_badge||'Nuevo',catalogo_bestseller_badge:settingsData.catalogo_bestseller_badge||'Best Seller',catalogo_oferta_badge:settingsData.catalogo_oferta_badge||'Oferta',catalogo_oferta_formato:settingsData.catalogo_oferta_formato||'porcentaje',limite_pdv_por_distribuidor:settingsData.limite_pdv_por_distribuidor??10,limite_vendedores_dependientes_por_distribuidor:settingsData.limite_vendedores_dependientes_por_distribuidor??10,limite_distribuidores:settingsData.limite_distribuidores??10,limite_vendedores_empresa:settingsData.limite_vendedores_empresa??10,limite_niveles_descuento:settingsData.limite_niveles_descuento??10,correo_pedidos:settingsData.correo_pedidos||'',conexion_link_habilitada:!!settingsData.conexion_link_habilitada,modo_carga_precios:settingsData.modo_carga_precios||'manual',modo_carga_stock:settingsData.modo_carga_stock||'manual',aprobacion_pedidos_habilitada:!!settingsData.aprobacion_pedidos_habilitada,iva_tarifa_pct_aprobacion:settingsData.iva_tarifa_pct_aprobacion??19,aprobacion_secreto_configurado:!!settingsData.aprobacion_secreto_configurado,aprobacion_secreto_actualizado_en:settingsData.aprobacion_secreto_actualizado_en||null,aprobacion_webhook_url:settingsData.aprobacion_webhook_url||'',asistente_ia_habilitado:!!settingsData.asistente_ia_habilitado,asistente_ia_limite_mensual:settingsData.asistente_ia_limite_mensual??500};
 PRODUCTS=productsData||[];RULES=rulesData||[];
 await loadRulesForUser();
 renderVersionBadge(verData?.fecha_actualizacion);
@@ -3021,7 +3092,7 @@ if(qs('limiteNiveles'))qs('limiteNiveles').value=SETTINGS.limite_niveles_descuen
 renderDestacadosAdmin();renderVentaCruzadaAdmin();renderDestacados();
 populateExploreFilters();EXPLORE_PAGE=1;renderExplore();
 r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";}catch(err){console.error(err);r.innerHTML="<div class='badge danger'>Error de carga</div><div class='empty'>No fue posible conectar con la base de precios (Supabase). Intenta recargar la página; si el error persiste, contacta a soporte.</div>";renderVersionBadge(null);}}
-document.getElementById('calc').onclick=calc;document.getElementById('clear').onclick=()=>{ref.value='';sala.value='0';if(cant)cant.value='1';box.style.display='none';copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";qs('mediaCard').classList.add('hidden');qs('suggestedCard').classList.add('hidden');qs('relatedCard').classList.add('hidden');qs('stockCard').classList.add('hidden');SUGGESTED_FOR_LAST=[];RELATED_FOR_LAST=new Map();renderExplore();ref.focus();};
+document.getElementById('calc').onclick=calc;document.getElementById('clear').onclick=()=>{ref.value='';sala.value='0';if(cant)cant.value='1';box.style.display='none';copy.disabled=true;quote.disabled=true;addBtn.disabled=true;lastItem=null;r.innerHTML="<div class='empty'>Base cargada. Ya puedes buscar por referencia o nombre.</div>";qs('mediaCard').classList.add('hidden');qs('suggestedCard').classList.add('hidden');qs('relatedCard').classList.add('hidden');qs('stockCard').classList.add('hidden');qs('asistenteIaCard').classList.add('hidden');ASISTENTE_IA_REF_ACTUAL=null;SUGGESTED_FOR_LAST=[];RELATED_FOR_LAST=new Map();renderExplore();ref.focus();};
 ref.addEventListener('input',debounce(showS,200));ref.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});sala.addEventListener('keydown',e=>{if(e.key==='Enter')calc();});document.addEventListener('click',e=>{if(!box.contains(e.target)&&e.target!==ref)box.style.display='none';});
 if(cant)cant.addEventListener('input',()=>{if(lastItem)renderPriceCard();});
 copy.onclick=async()=>{if(!lastCopy)return;try{await navigator.clipboard.writeText(lastCopy);showToast('Resultado copiado');}catch(e){}};quote.onclick=async()=>{if(!lastQuote)return;try{await navigator.clipboard.writeText(lastQuote);showToast('Cotización copiada');}catch(e){}};
@@ -3057,11 +3128,14 @@ qs('btnSaveBadges').onclick=saveBadgeSettings;qs('btnAddFoco').onclick=()=>addDe
 wireRefAutocomplete('focoRef','focoRefBox');wireRefAutocomplete('bsRef','bsRefBox');wireRefAutocomplete('ofRef','ofRefBox');
 wireRefAutocomplete('vcDisparadoraRef','vcDisparadoraRefBox');wireRefAutocomplete('vcSugeridaRef','vcSugeridaRefBox');
 qs('btnAddVentaCruzada').onclick=addVentaCruzada;
+qs('btnAsistenteIaPreguntar').onclick=preguntarAsistenteIa;qs('asistenteIaPregunta').addEventListener('keydown',e=>{if(e.key==='Enter')preguntarAsistenteIa();});
 qs('btnSaveCompany').onclick=async()=>{const raw=qs('settingsCompany').value.trim();if(!raw){setStatus('companyStatus','Ingresa un nombre de empresa.','err');return;}const company=raw.toUpperCase();const nit=(qs('settingsNitEmpresa')?.value||'').trim();setStatus('companyStatus','Guardando…','info');const{error}=await sb.rpc('guardar_empresa_contratante',{p_company_name:company,p_nit_empresa:nit||null,p_email:CURRENT_USER?.email||''});if(error){setStatus('companyStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.company_name=company;SETTINGS.nit_empresa=nit;qs('settingsCompany').value=company;applyCompanyName();setStatus('companyStatus','✅ Empresa contratante actualizada para todos los usuarios.','ok');};
 qs('btnSaveCorreoPedidos').onclick=async()=>{const correo=(qs('settingsCorreoPedidos').value||'').trim();if(!correo||!isValidEmail(correo)){setStatus('correoPedidosStatus','Ingresa un correo válido.','err');return;}setStatus('correoPedidosStatus','Guardando…','info');const{error}=await sb.rpc('guardar_correo_pedidos',{p_correo:correo,p_email:CURRENT_USER?.email||''});if(error){setStatus('correoPedidosStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.correo_pedidos=correo;setStatus('correoPedidosStatus','✅ Correo de pedidos actualizado.','ok');};
 qs('settingsConexionLink').onchange=async()=>{const habilitado=qs('settingsConexionLink').checked;setStatus('conexionLinkStatus','Guardando…','info');const{error}=await sb.rpc('guardar_conexion_link_habilitada',{p_habilitado:habilitado,p_email:CURRENT_USER?.email||''});if(error){setStatus('conexionLinkStatus','Error al guardar: '+error.message,'err');qs('settingsConexionLink').checked=!habilitado;return;}SETTINGS.conexion_link_habilitada=habilitado;setStatus('conexionLinkStatus',habilitado?'✅ Función habilitada. Los administradores ya pueden elegir el modo "Vía link" en Precios y Disponibilidad.':'✅ Función deshabilitada. Todos los usuarios quedan en modo manual; los links guardados no se borran.','ok');};
 qs('settingsAprobacionPedidos').onchange=async()=>{const habilitado=qs('settingsAprobacionPedidos').checked;setStatus('aprobacionPedidosStatus','Guardando…','info');const{error}=await sb.rpc('guardar_aprobacion_pedidos_habilitada',{p_habilitado:habilitado,p_email:CURRENT_USER?.email||''});if(error){setStatus('aprobacionPedidosStatus','Error al guardar: '+error.message,'err');qs('settingsAprobacionPedidos').checked=!habilitado;return;}SETTINGS.aprobacion_pedidos_habilitada=habilitado;setStatus('aprobacionPedidosStatus',habilitado?'✅ Función habilitada. Los vendedores ya ven el botón "Enviar para aprobación" al generar una cotización.':'✅ Función deshabilitada. El botón "Enviar para aprobación" queda oculto para todos.','ok');};
 qs('settingsIvaAprobacion').onchange=async()=>{const val=Number(qs('settingsIvaAprobacion').value);if(isNaN(val)||val<0||val>100){setStatus('aprobacionPedidosStatus','Ingresa una tarifa de IVA válida (0 a 100).','err');qs('settingsIvaAprobacion').value=SETTINGS.iva_tarifa_pct_aprobacion??19;return;}setStatus('aprobacionPedidosStatus','Guardando…','info');const{error}=await sb.rpc('guardar_iva_tarifa_aprobacion',{p_tarifa:val,p_email:CURRENT_USER?.email||''});if(error){setStatus('aprobacionPedidosStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.iva_tarifa_pct_aprobacion=val;setStatus('aprobacionPedidosStatus','✅ Tarifa de IVA actualizada para el cálculo del Motor de Aprobación.','ok');};
+qs('settingsAsistenteIa').onchange=async()=>{const habilitado=qs('settingsAsistenteIa').checked;const limite=Number(qs('settingsAsistenteIaLimite').value)||SETTINGS.asistente_ia_limite_mensual||500;setStatus('asistenteIaStatus','Guardando…','info');const{error}=await sb.rpc('guardar_asistente_ia_config',{p_habilitado:habilitado,p_limite:limite,p_email:CURRENT_USER?.email||''});if(error){setStatus('asistenteIaStatus','Error al guardar: '+error.message,'err');qs('settingsAsistenteIa').checked=!habilitado;return;}SETTINGS.asistente_ia_habilitado=habilitado;setStatus('asistenteIaStatus',habilitado?'✅ Función habilitada. Los vendedores ya ven el botón "Preguntar al asistente" en Consultar.':'✅ Función deshabilitada. El botón queda oculto para todos.','ok');};
+qs('settingsAsistenteIaLimite').onchange=async()=>{const val=Number(qs('settingsAsistenteIaLimite').value);if(isNaN(val)||val<1){setStatus('asistenteIaStatus','Ingresa un límite mensual válido (mínimo 1).','err');qs('settingsAsistenteIaLimite').value=SETTINGS.asistente_ia_limite_mensual??500;return;}const habilitado=!!SETTINGS.asistente_ia_habilitado;setStatus('asistenteIaStatus','Guardando…','info');const{error}=await sb.rpc('guardar_asistente_ia_config',{p_habilitado:habilitado,p_limite:val,p_email:CURRENT_USER?.email||''});if(error){setStatus('asistenteIaStatus','Error al guardar: '+error.message,'err');return;}SETTINGS.asistente_ia_limite_mensual=val;setStatus('asistenteIaStatus','✅ Límite mensual actualizado.','ok');};
 qs('btnGuardarConsecCot').onclick=()=>guardarConfigConsecutivo('cotizacion');qs('btnGuardarConsecPed').onclick=()=>guardarConfigConsecutivo('pedido');
 qs('btnAddAdmin').onclick=addAdminEmail;
 qs('btnAddNivel').onclick=addNivel;

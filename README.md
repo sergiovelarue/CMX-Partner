@@ -1,31 +1,25 @@
-# Comodísimos Partner v3.0.2
+# ListaLoop B2B — v2.9 (2026-09-02)
 
-Calculador de precios para distribuidores autorizados y equipo comercial. Evolución de CMX30 con registro de usuario y panel administrativo.
+Este paquete contiene el archivo listo para desplegar en Netlify vía GitHub. Súbelo directamente al repositorio (reemplazando `index.html`) para actualizar ambos sitios espejo.
 
-## Origen
-Construido sobre el motor de precios de CMX30. Mantiene la numeración de versión de CMX30 para dar continuidad al historial (decisión tomada al iniciar el repositorio: se descartó reiniciar en v1.2, que era el número mostrado en el título de esta primera versión).
+## Contenido
 
-## Archivos del deploy
-- `index.html`
-- `cmx30_products_core.json`
-- `cmx30_margin_rules.json`
-- `cmx30_app_config.json`
-- Backups incluidos: `backup_index_v302.html`, `backup_cmx30_products_core_v302.json`, `backup_cmx30_margin_rules_v302.json`, `backup_cmx30_app_config_v302.json`
+- `index.html` — archivo canónico único de la app (frontend completo, sin dependencias externas de build).
 
-## Funcionalidades actuales
-- Registro obligatorio de usuario: nombre, celular, correo, empresa/distribuidor, ciudad, punto de venta, cargo (Vendedor / Dependiente / Administrador / Propietario), con consentimiento de tratamiento de datos.
-- Calculador de precios: PVP con IVA, PVP sin IVA, PVP con descuento en sala, PVD con/sin IVA, ganancia estimada del distribuidor.
-- Restricción de cotización por gama de producto (líneas no disponibles para el canal).
-- Copia de resultado y de cotización formateada para WhatsApp.
-- Registro de uso: cada consulta de precio queda asociada al usuario que la realizó.
-- Panel administrador (correos autorizados fijos en el código + clave de acceso): exporta CSV de usuarios registrados y CSV de uso/consultas.
+## Cambios en esta versión (v2.9)
 
-## Pendiente / decisiones para versiones futuras
-- **Lista negra de dominios/correos bloqueados:** no implementada. Se definirá más adelante.
-- **Acceso diferenciado según perfil (cargo):** el campo se captura en el registro, pero todavía no cambia qué puede ver o hacer cada perfil.
-- **Autenticación de administrador:** hoy es correo autorizado + clave fija en el código (nivel básico). Es suficiente para esta etapa de uso interno; se evaluará una autenticación más robusta si la herramienta se convierte en una versión para cliente externo.
+- **Asistente de IA — Ajustes Generales**: nuevo bloque en la pestaña "Ajustes Generales" con switch para habilitar/deshabilitar la función y campo de límite de preguntas por mes (control de costo). Guardado vía RPC `guardar_asistente_ia_config` en Supabase, restringido a administradores.
+- **Asistente de IA — Widget de chat**: en la pestaña "Consultar", al buscar un producto aparece la tarjeta "Preguntar al asistente" (solo si la función está habilitada). El vendedor puede preguntar por complementarios y disponibilidad del producto consultado. El asistente nunca menciona precios, márgenes, PVD ni descuentos — ese dato jamás se le pasa al modelo. Muestra contador de uso mensual.
+- Backend: Edge Function `asistente-ia` ya desplegada en Supabase, valida el switch y el límite mensual antes de responder (nunca confía en el frontend para el control de costo).
 
-## v3.0.2 - Comodísimos Partner
-- Se agrega pantalla de registro/activación de acceso para distribuidores y equipo comercial.
-- Se agrega panel administrador con exportación de usuarios registrados y logs de uso.
-- Base de cálculo de precios heredada del motor de CMX30.
+## Pendiente para activar el Asistente de IA en producción
+
+Falta configurar el secreto `ANTHROPIC_API_KEY` en Supabase → Edge Functions → `asistente-ia` → Secrets. Sin esa clave, el botón aparece si activas el switch pero cualquier pregunta devuelve un error controlado. Requiere cuenta en Anthropic Console (console.anthropic.com) con método de pago.
+
+## Historial reciente
+
+- **v2.8 (2026-09-02)**: corrección de responsive móvil (botón "Mi Equipo" ya no se desborda ni desestabiliza el scroll), auditoría y recorte de ~25 textos largos en toda la app, texto legal provisional de transferencia internacional de datos (Ley 1581/2012) en el consentimiento de registro.
+
+## Notas de seguridad
+
+- El asistente de IA opera bajo un contrato de contexto estricto: solo referencia, descripción, gama, disponibilidad (MTS/MTO) y productos complementarios ya definidos. Nunca recibe ni puede exponer precios o márgenes, documentado como comentario en el código de la Edge Function.
