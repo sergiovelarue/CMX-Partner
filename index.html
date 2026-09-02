@@ -132,7 +132,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 .main-tabs{display:flex;gap:8px;margin-bottom:14px}
 .main-tab-btn{flex:1;padding:14px 12px;font-size:.9rem;display:flex;align-items:center;justify-content:center;gap:6px;letter-spacing:.2px}
 .tab-badge{background:var(--brand2);color:var(--brand);border-radius:2px;padding:1px 8px;font-size:.72rem;font-weight:500;min-width:18px;text-align:center}
-@media(max-width:760px){.main-tab-btn{padding:14px 8px;font-size:.86rem}.mini{padding:11px 12px;font-size:.82rem}}
+@media(max-width:760px){.main-tabs{flex-wrap:wrap}.main-tab-btn{flex:1 1 45%;min-width:0;padding:12px 6px;font-size:.82rem}.mini{padding:11px 12px;font-size:.82rem}}
 .dest-section-title{font-size:.95rem;color:var(--brand);margin:0 0 10px;font-weight:400;letter-spacing:.3px;text-transform:uppercase;font-size:.8rem}
 .dest-empty{color:var(--muted);font-size:.84rem;padding:14px 0}
 .carousel{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
@@ -173,7 +173,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
   <div class="partner-box">
     <div class="partner-hero">
       <div id="logoWrapReg" class="logo-wrap hidden"><img id="companyLogoReg" alt="Logo empresa"></div>
-      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v2.7</span></h1>
+      <h1>ListaLoop B2B <span class="app-version-tag" id="appVersionTagReg">v2.8</span></h1>
       <p>Activa tu acceso profesional para cotizar más rápido, vender con seguridad y mejorar tu rentabilidad.</p>
       <div class="benefits">
         <div>✅ Precios actualizados al instante</div>
@@ -195,10 +195,10 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
         <div id="regRoleWrap"><label>Cargo</label><select id="regRole"><option value="">Seleccionar</option><option>Vendedor</option><option>Dependiente PDV</option><option>Administrador PDV</option><option>Propietario Distribuidor</option></select></div>
         <div id="regCodigoWrap"><label>Código de distribuidor</label><input id="regCodigoDistribuidor" placeholder="Entregado por tu distribuidor" autocomplete="off"></div>
       </div>
-      <p id="regCodigoHelp" style="margin:6px 0 0;color:var(--muted);font-size:.78rem">El código de distribuidor lo entrega tu distribuidor o el administrador de la plataforma. Si eres Vendedor de planta (no de un distribuidor), usa el código de vendedor que te dio el administrador. Sin un código válido no podrás ver margen ni PVD.</p>
+      <p id="regCodigoHelp" style="margin:6px 0 0;color:var(--muted);font-size:.78rem">Te lo entrega tu distribuidor o el administrador. Sin código válido no verás margen ni PVD.</p>
       <p id="regDetectedMsg" class="hidden" style="margin:6px 0 0;color:var(--brand);font-size:.82rem;font-weight:600"></p>
       <div class="consent">
-        <label><input id="regConsent" type="checkbox"> <span id="consentText">Autorizo a ConAccion BPS para recolectar, almacenar y tratar mis datos personales con fines comerciales, promocionales, formativos y de relacionamiento, conforme a la política de tratamiento de datos personales vigente.</span></label>
+        <label><input id="regConsent" type="checkbox"> <span id="consentText">Autorizo a ConAccion BPS para recolectar, almacenar y tratar mis datos personales con fines comerciales, promocionales, formativos y de relacionamiento, conforme a la política de tratamiento de datos personales vigente. Sus datos podrán ser almacenados en servidores ubicados fuera de Colombia, en el marco de los servicios de infraestructura tecnológica utilizados, conforme a lo dispuesto en la Ley 1581 de 2012 y sus decretos reglamentarios.</span></label>
       </div>
       <div class="actions">
         <button class="p" id="activateAccess">Activar mi acceso</button>
@@ -212,10 +212,10 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 <div class="userbar"><div>Acceso activo: <b id="activeUser">-</b><span id="activeRoleWrap"> · <span id="activeRole"></span></span><span id="activeCompanyWrap"> · <span id="activeCompany"></span></span></div><button class="linkbtn" id="changeUser">Cambiar usuario</button></div>
 <div class='hero'>
 <div id="logoWrap" class="logo-wrap hidden"><img id="companyLogo" alt="Logo empresa"></div>
-<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v2.7</span></h1>
+<h1 id='appName'>ListaLoop B2B <span class="app-version-tag" id="appVersionTag">v2.8</span></h1>
 <details id='heroDetails'>
 <summary>Ver información de la plataforma</summary>
-<p id='introText' style="margin-top:10px">Plataforma para la Gestión de Listas de precios B2B de forma efectiva y funciones de Cálculo de precios e información técnica de producto para distribuidores autorizados. Diseñado para cotizar más rápido, vender con seguridad y fortalecer la rentabilidad del canal.</p>
+<p id='introText' style="margin-top:10px">Consulta precios, márgenes e información técnica de producto.</p>
 <p id="empresaLine" class="hidden" style="margin-top:8px;font-weight:700"></p>
 <p style='margin-top:10px;opacity:.9;font-size:.9rem'>Base de precios integrada: <span id="baseName">-</span> | Precios vigentes desde: <span id="devDate">-</span> | Referencias activas cargadas: <span id="statRefs">-</span></p>
 <small id='waNote'></small>
@@ -336,7 +336,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
       <h3 style='margin:0;color:var(--brand)'>📄 Datos de la cotización</h3>
       <button class='s mini' id='btnClosePdfQuote'>✕ Cerrar</button>
     </div>
-    <p style="margin:0 0 14px;color:var(--muted);font-size:.86rem">Estos datos se usan para el PDF y, si corresponde, para enviar la cotización o el pedido. Nombre e identificación son requeridos para enviar a aprobación o como pedido; para solo generar el PDF son opcionales.</p>
+    <p style="margin:0 0 14px;color:var(--muted);font-size:.86rem">Para el PDF son opcionales. Para enviar a aprobación o como pedido, nombre e identificación son obligatorios.</p>
     <div class="inline-form">
       <div><label>Nombre del cliente</label><input id="pdfClienteNombre" placeholder="Ej: Almacén El Progreso"></div>
       <div><label>Correo del cliente</label><input id="pdfClienteEmail" type="email" placeholder="cliente@correo.com"></div>
@@ -399,7 +399,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 </div>
 <div class='card admin-panel hidden' id='adminPricePanel'>
   <h3>🔧 Lista de precios 1 — Administración</h3>
-  <p style="margin:0;color:var(--muted);font-size:.86rem">Visible solo para el administrador autenticado. Esta es la Lista de precios 1 (base): el PVP con IVA de cada producto, la referencia de partida para todos los Niveles de descuento. Los cambios aquí afectan a todos los usuarios de inmediato.</p>
+  <p style="margin:0;color:var(--muted);font-size:.86rem">Solo administrador. Lista base (PVP con IVA), punto de partida de todos los Niveles de descuento. Los cambios aplican de inmediato.</p>
 
   <div class="admin-sub hidden" id="preciosModoSelectorWrap">
     <h4>Modo de actualización de precios</h4>
@@ -407,7 +407,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
       <button class="p mini" id="btnPreciosModoManual" style="padding:10px 16px">✍️ Manual</button>
       <button class="s mini" id="btnPreciosModoLink" style="padding:10px 16px">🔗 Vía link</button>
     </div>
-    <p style="margin:6px 0 0;color:var(--muted);font-size:.78rem">Elige cómo se actualiza esta lista de precios. Cambiar de modo no borra la configuración del otro.</p>
+    <p style="margin:6px 0 0;color:var(--muted);font-size:.78rem">Cambiar de modo no borra la configuración del otro.</p>
   </div>
 
   <div id="preciosModoManualWrap">
@@ -438,7 +438,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 
   <div class="admin-sub hidden" id="preciosModoLinkWrap">
     <h4 id="detalleCargaExterna">🔗 Conexión automática vía link a archivo externo (Google Sheets / exportación de tu ERP)</h4>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Conecta un archivo publicado como CSV (Google Sheet publicado en la web, o la exportación periódica de tu ERP/sistema de inventario). La app lo lee directamente y te avisa automáticamente si detecta cambios frente a la última versión cargada.</p>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Conecta un CSV publicado (Google Sheet o tu ERP). La app avisa si detecta cambios frente a la última versión cargada.</p>
     <div class="inline-form">
       <div><label>Nombre de esta lista (trazabilidad)</label><input id="uploadOrigenLink" placeholder="Ej: C01 22 julio 2026"></div>
     </div>
@@ -453,7 +453,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 
   <div class="admin-sub">
     <h4>📎 Información técnica del producto (imagen, plano, manual, video)</h4>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Imágenes y PDF se suben directo aquí. Para video, pega el enlace de YouTube/Vimeo (no se sube el archivo).</p>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Imágenes y PDF se suben directo. Para video, pega el enlace de YouTube/Vimeo.</p>
     <div class="inline-form">
       <div><label>Referencia del producto</label><input id="mediaRef" placeholder="Ej: CCAPA6001"></div>
       <div><label>Tipo</label><select id="mediaTipo"><option value="imagen">Imagen</option><option value="plano">Plano (PDF)</option><option value="manual">Manual / Ficha técnica (PDF)</option><option value="video">Video (enlace)</option></select></div>
@@ -472,13 +472,13 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
       <button class="p mini" id="btnStockModoManual" style="padding:10px 16px">✍️ Manual</button>
       <button class="s mini" id="btnStockModoLink" style="padding:10px 16px">🔗 Vía link</button>
     </div>
-    <p style="margin:6px 0 0;color:var(--muted);font-size:.78rem">Elige cómo se actualiza la disponibilidad MTS/MTO. Cambiar de modo no borra la configuración del otro.</p>
+    <p style="margin:6px 0 0;color:var(--muted);font-size:.78rem">Cambiar de modo no borra la configuración del otro.</p>
   </div>
 
   <div id="stockModoManualWrap">
   <div class="admin-sub">
     <h4>📦 Disponibilidad MTS / MTO — actualizar una referencia</h4>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">MTS (Make to Stock): se muestran unidades disponibles y próximas a llegar. MTO (Make to Order): se muestran días de entrega aproximados.</p>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">MTS: unidades disponibles y próximas a llegar. MTO: días de entrega aproximados.</p>
     <div class="inline-form">
       <div><label>Referencia</label><input id="stockRef" placeholder="Ej: CCAPA6001"></div>
       <div><label>Tipo de abastecimiento</label><select id="stockTipo"><option value="MTS">MTS (Make to Stock)</option><option value="MTO">MTO (Make to Order)</option></select></div>
@@ -509,7 +509,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 
   <div class="admin-sub hidden" id="stockModoLinkWrap">
     <h4 id="detalleStockExterno">🔗 Conexión automática vía link a archivo externo (ERP / WMS)</h4>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Conecta un archivo publicado como CSV (Google Sheet publicado en la web, o la exportación periódica de tu ERP/WMS) con el mismo formato de la carga masiva. A diferencia de la lista de precios, los cambios de disponibilidad se aplican automáticamente cada 15 minutos, sin necesidad de revisión manual.</p>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Conecta un CSV publicado (mismo formato de la carga masiva). A diferencia de precios, los cambios se aplican automáticamente cada 15 minutos.</p>
     <div class="inline-form">
       <div><label>Link del CSV externo de disponibilidad</label><input id="linkStockExterno" placeholder="https://docs.google.com/.../pub?output=csv"></div>
       <div><button class="s mini" id="btnGuardarStockExterno" style="padding:12px 16px">Guardar link</button></div>
@@ -524,7 +524,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 
   <div class="admin-sub">
     <h4>👤 Administradores</h4>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Solo un administrador ya autenticado puede agregar o quitar a otro. El correo se agrega aquí; la contraseña se crea aparte en Supabase (Authentication → Users) con ese mismo correo.</p>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Solo un administrador puede agregar o quitar a otro. La contraseña se configura por separado con Sergio.</p>
     <div class="inline-form">
       <div><label>Correo del nuevo administrador</label><input id="newAdminEmail" type="email" placeholder="nombre@empresa.com"></div>
       <div><button class="p mini" id="btnAddAdmin" style="padding:12px 16px">Agregar administrador</button></div>
@@ -538,21 +538,21 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
     <div class="mini-status" id="ownersStatus"></div>
 
     <h5 style="margin:18px 0 6px;font-size:.88rem">🏬 Administrador PDV</h5>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Se auto-registra con correo + código de distribuidor. Aparece aquí al registrarse.</p>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Se auto-registra con código de distribuidor.</p>
     <div id="adminPdvList" style="margin-top:10px"></div>
 
     <h5 style="margin:18px 0 6px;font-size:.88rem">🧾 Dependiente PDV</h5>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Se auto-registra con correo + código de distribuidor. Aparece aquí al registrarse.</p>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Se auto-registra con código de distribuidor.</p>
     <div id="dependientesList" style="margin-top:10px"></div>
 
     <h5 style="margin:18px 0 6px;font-size:.88rem">🧑‍💼 Vendedores de distribuidor</h5>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Vendedor que se registró con el código de un distribuidor real (no de la empresa contratante). Aparece aquí al registrarse.</p>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Se registró con código de un distribuidor real (no de la empresa contratante).</p>
     <div id="vendDistList" style="margin-top:10px"></div>
   </div>
 
   <div class="admin-sub">
     <h4>🏬 Distribuidores</h4>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Nace en Nivel 1; reasigna el nivel en la tabla. Código no obvio: habilita también el registro de Admin PDV y Dependientes.</p>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Inicia en Nivel 1; puedes reasignarlo en la tabla. El código también habilita el registro de Admin PDV y Dependientes.</p>
     <div class="inline-form">
       <div><label>Nombre del distribuidor</label><input id="newDistNombre" placeholder="Ej: El Palacio Del Mueble"></div>
       <div><label>Código de distribuidor</label><input id="newDistCodigo" placeholder="Ej: PDM-7X2K"></div>
@@ -560,7 +560,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
       <div><label>Correo del propietario (opcional)</label><input id="newDistOwnerEmail" type="email" placeholder="nombre@distribuidor.com"></div>
       <div><button class="p mini" id="btnAddDist" style="padding:12px 16px">Crear distribuidor</button></div>
     </div>
-    <p style="margin:6px 0 0;color:var(--muted);font-size:.76rem">Con correo: crea también al Propietario. Ingresa con ese correo + el código de distribuidor, igual que Admin PDV. El NIT es requerido para que el Propietario pueda usar el Motor de Aprobación de Pedidos (envía sus propias cotizaciones a aprobación como si fuera cliente de la empresa).</p>
+    <p style="margin:6px 0 0;color:var(--muted);font-size:.76rem">Con correo: crea también al Propietario (ingresa igual que Admin PDV). El NIT es necesario si usará el Motor de Aprobación de Pedidos.</p>
     <div id="distribuidoresList" style="margin-top:10px"></div>
     <div class="mini-status" id="distribuidoresStatus"></div>
   </div>
@@ -597,7 +597,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 
   <div class="admin-sub" id="soporteAdminSub">
     <h4>💬 Reportes, sugerencias y calificaciones</h4>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Mensajes enviados por los usuarios desde el botón de soporte. Los reportes te permiten actuar rápido y mantener la aplicación mejorando con el uso real.</p>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Mensajes enviados por los usuarios desde el botón de soporte.</p>
     <div class="inline-form">
       <div><label>Filtrar por tipo</label><select id="soporteFiltroTipo"><option value="">Todos</option><option value="problema">Problemas</option><option value="sugerencia">Sugerencias</option><option value="calificacion">Calificaciones</option></select></div>
       <div><label>Filtrar por estado</label><select id="soporteFiltroEstado"><option value="">Todos</option><option value="nuevo">Nuevo</option><option value="en_revision">En revisión</option><option value="resuelto">Resuelto</option><option value="descartado">Descartado</option></select></div>
@@ -608,7 +608,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 </div>
 <div class='card admin-panel hidden' id='adminReglasPanel'>
   <h3>📊 Reglas de negocio</h3>
-  <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Nivel = margen por gama. Distribuidor hereda el Nivel asignado (sección Usuarios). Solo el admin cambia niveles.</p>
+  <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Cada Nivel define el margen por gama. El distribuidor hereda el Nivel que le asignes en Usuarios.</p>
 
   <div class="admin-sub">
     <h5 style="margin:14px 0 6px;font-size:.88rem">Niveles de descuento</h5>
@@ -649,7 +649,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 
   <div class="admin-sub">
     <h4>🔗 Conexión automática vía link a archivo externo (función adicional)</h4>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Habilita la conexión con ERP/WMS (vía link a Google Sheets u otro archivo publicado) para precios y disponibilidad. Es una función adicional al plan base: requiere acuerdo comercial adicional y un día extra de onboarding/capacitación con el cliente antes de activarla. Mientras esté apagada, todos los usuarios solo ven las opciones de carga manual (uno a uno / archivo CSV).</p>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Conexión con ERP/WMS para precios y disponibilidad. Función premium, requiere acuerdo comercial y capacitación previa. Apagada: solo carga manual.</p>
     <div class="actions">
       <label style="display:flex;align-items:center;gap:8px;font-weight:500;font-size:.9rem;cursor:pointer"><input id="settingsConexionLink" type="checkbox" style="width:18px;height:18px"> Función habilitada para este cliente</label>
     </div>
@@ -658,18 +658,18 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 
   <div class="admin-sub">
     <h4>✅ Motor de Aprobación de Pedidos (función adicional)</h4>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Habilita el envío de cotizaciones a un portal externo donde el cliente aprueba, rechaza o pide ajustes; si aprueba, se genera automáticamente el pedido con evidencia legal. Es una función adicional al plan base: requiere acuerdo comercial adicional (empalme + valor mensual) y un día extra de onboarding/capacitación antes de activarla. Mientras esté apagada, ningún vendedor ve el botón "Enviar para aprobación".</p>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Envía cotizaciones a un portal externo donde el cliente aprueba y se genera el pedido. Función premium, requiere acuerdo comercial y capacitación previa. Apagada: el botón queda oculto para todos.</p>
     <div class="actions">
       <label style="display:flex;align-items:center;gap:8px;font-weight:500;font-size:.9rem;cursor:pointer"><input id="settingsAprobacionPedidos" type="checkbox" style="width:18px;height:18px"> Función habilitada para este cliente</label>
     </div>
     <div class="inline-form" style="margin-top:8px">
       <div><label>Tarifa de IVA para el cálculo de precio sin IVA (%)</label><input id="settingsIvaAprobacion" type="number" min="0" max="100" step="0.1" placeholder="Ej: 19"></div>
     </div>
-    <p style="margin:6px 0 0;color:var(--muted);font-size:.78rem">El catálogo de ListaLoop guarda el precio con IVA incluido. Para armar el pedido, se calcula el precio sin IVA dividiendo entre (1 + tarifa/100). Ajusta esta tarifa si tu catálogo maneja una tasa distinta al 19% general.</p>
+    <p style="margin:6px 0 0;color:var(--muted);font-size:.78rem">Se usa para calcular el precio sin IVA del pedido. Ajusta si tu tasa no es 19%.</p>
     <div class="mini-status" id="aprobacionPedidosStatus"></div>
     <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border,#e2e2e2)">
       <p style="margin:0 0 6px;font-weight:500;font-size:.86rem">🔗 URL del webhook del Motor de Aprobación</p>
-      <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Endpoint al que ListaLoop envía cada cotización. Es información pública (no un secreto) — cámbiala solo si el Motor de Aprobación te informa un nuevo dominio.</p>
+      <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Dirección a la que se envía cada cotización. Cámbiala solo si el Motor de Aprobación te informa un nuevo dominio.</p>
       <div class="inline-form">
         <div style="flex:1"><input id="settingsAprobacionWebhookUrl" type="url" placeholder="https://..." style="width:100%"></div>
       </div>
@@ -678,11 +678,11 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
     </div>
     <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border,#e2e2e2)">
       <p style="margin:0 0 6px;font-weight:500;font-size:.86rem">🔐 Clave de integración con el Motor de Aprobación</p>
-      <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Esta clave identifica y autentica a esta empresa ante el Motor de Aprobación (junto con el NIT de Empresa contratante). Por seguridad, la clave nunca se guarda ni se muestra dentro de ListaLoop — solo vive como secreto de la función de envío en Supabase. Este indicador es informativo, actualizado manualmente cuando se configura o rota la clave.</p>
+      <p style="margin:0 0 8px;color:var(--muted);font-size:.78rem">Identifica y autentica a esta empresa ante el Motor de Aprobación. Por seguridad, nunca se guarda ni se muestra en ListaLoop.</p>
       <div id="secretoAprobacionEstado" style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;font-size:.82rem"></div>
       <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <button class="s mini" id="btnProbarConexionAprobacion">▶️ Probar conexión</button>
-        <span style="font-size:.76rem;color:var(--muted)">⚠️ Envía una cotización de prueba real al Motor de Aprobación (usa tu propio correo como cliente) para validar la clave y el NIT. Úsalo solo cuando lo necesites, no como chequeo rutinario.</span>
+        <span style="font-size:.76rem;color:var(--muted)">⚠️ Envía una cotización de prueba real (a tu propio correo). Úsalo solo cuando lo necesites.</span>
       </div>
       <div class="mini-status" id="probarConexionStatus"></div>
     </div>
@@ -690,7 +690,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 
   <div class="admin-sub">
     <h4>🔢 Numeración de cotizaciones y pedidos</h4>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Prefijo y número inicial del consecutivo asignado en cada envío. Son dos numeraciones independientes: "Cotizaciones" (envíos al Motor de Aprobación del cliente) y "Pedidos" (envíos directos al área comercial hechos por distribuidores). Cambiar el número inicial aquí solo debe hacerse para corregir un error operativo — el consecutivo avanza automáticamente en cada envío real.</p>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Dos numeraciones independientes: Cotizaciones (aprobación del cliente) y Pedidos (envío directo). El consecutivo avanza solo — cambia el número inicial solo para corregir un error.</p>
     <div class="inline-form">
       <div><label>Prefijo Cotizaciones</label><input id="consecCotPrefijo" placeholder="Ej: COT" maxlength="10"></div>
       <div><label>Siguiente número (Cotizaciones)</label><input id="consecCotSiguiente" type="number" min="1" step="1"></div>
@@ -709,7 +709,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 
   <div class="admin-sub">
     <h4>Empresa contratante</h4>
-    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Se muestra como "Distribuidores autorizados por [EMPRESA]" y reemplaza el encabezado de las cotizaciones de WhatsApp. El nombre se guarda siempre en MAYÚSCULAS. El NIT se usa en documentos de la cotización y, si el Motor de Aprobación está habilitado, identifica esta cuenta ante ese servicio: debe coincidir exactamente con el NIT registrado ahí, o los envíos serán rechazados.</p>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:.82rem">Se muestra en cotizaciones y WhatsApp como "Distribuidores autorizados por [EMPRESA]" (siempre en MAYÚSCULAS). ⚠️ Si el Motor de Aprobación está habilitado, el NIT debe coincidir exactamente con el registrado ahí, o los envíos serán rechazados.</p>
     <div class="inline-form">
       <div><label>Nombre de la empresa</label><input id="settingsCompany" placeholder="Ej: COMODISIMOS"></div>
       <div><label>NIT de la empresa</label><input id="settingsNitEmpresa" placeholder="Ej: 900123456-7"></div>
@@ -833,7 +833,7 @@ select{width:100%;padding:13px;border:1px solid var(--line);border-radius:3px;fo
 </div>
 <div class='footer'><span id="footerDistribText">Herramienta para distribuidores autorizados.</span> Información de referencia comercial. Derechos reservados.
   <div style="margin-top:10px"><button class='s mini' id='btnAbrirSoporte'>💬 Reportar un problema, sugerir una mejora o calificar la app</button></div>
-  <div class='admin-gate hidden' id='adminGate'><button class='s mini' id='adminLogin'>🔒 Acceso administrador</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Visible solo para correos administradores autorizados. Esto solo desbloquea este dispositivo — la configuración ya guardada (precios, reglas, switches, numeración) permanece intacta aunque debas volver a ingresar tu clave aquí.</span></div><div class='admin-tools hidden' id='adminTools'><button class='s mini' id='exportUsers'>Exportar registros CSV</button><button class='s mini' id='exportLogs'>Exportar uso CSV</button><button class='s mini' id='adminLogout'>Bloquear descargas</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Descargas habilitadas para administrador validado.</span></div><div style="margin-top:10px;font-size:.74rem;color:#a9b4c2">© ListaLoop B2B — Propiedad intelectual exclusiva de Sergio Velásquez. Prohibida su copia, distribución o modificación sin autorización expresa. El uso por usuarios o empresas contratantes se rige por las condiciones contractuales autorizadas por Sergio Velásquez.<span style="float:right;opacity:.45">23:1</span></div></div>
+  <div class='admin-gate hidden' id='adminGate'><button class='s mini' id='adminLogin'>🔒 Acceso administrador</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Solo administradores. Desbloquea este dispositivo; la configuración guardada no se pierde.</span></div><div class='admin-tools hidden' id='adminTools'><button class='s mini' id='exportUsers'>Exportar registros CSV</button><button class='s mini' id='exportLogs'>Exportar uso CSV</button><button class='s mini' id='adminLogout'>Bloquear descargas</button><span style='font-size:.78rem;color:var(--muted);align-self:center'>Descargas habilitadas para administrador validado.</span></div><div style="margin-top:10px;font-size:.74rem;color:#a9b4c2">© ListaLoop B2B — Propiedad intelectual exclusiva de Sergio Velásquez. Prohibida su copia, distribución o modificación sin autorización expresa. El uso por usuarios o empresas contratantes se rige por las condiciones contractuales autorizadas por Sergio Velásquez.<span style="float:right;opacity:.45">23:1</span></div></div>
 </div><div id='toast'>Copiado</div>
 <script>
 const CONFIG_FILE="cmx30_app_config.json";
@@ -1617,7 +1617,7 @@ function conTimeout(promesa,ms=15000){
 }
 async function activate(){
 const user={name:qs('regName').value.trim(),phone:normalizeColombiaPhone(qs('regPhone').value),email:normalizeEmail(qs('regEmail').value),company:qs('regCompany').value.trim(),city:qs('regCity').value.trim(),store:qs('regStore').value.trim(),role:qs('regRole').value,codigoDistribuidor:qs('regCodigoDistribuidor').value.trim().toUpperCase(),consent:qs('regConsent').checked,registeredAt:new Date().toISOString(),lastAccess:new Date().toISOString()};
-const required=['name','phone','email','company','city','role'];const missing=required.some(k=>!user[k]);if(missing||!user.consent){qs('regMsg').textContent='Completa todos los campos obligatorios y acepta la autorización de tratamiento de datos.';return;}if(!isValidEmail(user.email)){qs('regMsg').textContent='Ingresa un correo electrónico válido. Ejemplo: nombre@empresa.com';qs('regEmail').focus();return;}if(!isValidColombiaMobile(user.phone)){qs('regMsg').textContent='Ingresa un celular colombiano válido de 10 dígitos. Ejemplo: 3001234567';qs('regPhone').focus();return;}
+const required=['name','phone','email','company','city','role'];const missing=required.some(k=>!user[k]);if(missing||!user.consent){qs('regMsg').textContent='Completa los campos obligatorios y acepta el tratamiento de datos.';return;}if(!isValidEmail(user.email)){qs('regMsg').textContent='Ingresa un correo electrónico válido. Ejemplo: nombre@empresa.com';qs('regEmail').focus();return;}if(!isValidColombiaMobile(user.phone)){qs('regMsg').textContent='Ingresa un celular colombiano válido de 10 dígitos. Ejemplo: 3001234567';qs('regPhone').focus();return;}
 const rolLower=user.role.toLowerCase();
 if(rolLower==='vendedor'){
   if(!user.codigoDistribuidor){qs('regMsg').textContent='Ingresa el código de distribuidor, o el código de vendedor de la empresa si no perteneces a un distribuidor.';return;}
@@ -1640,9 +1640,9 @@ if(rolLower==='vendedor'){
     // correcto y lo que falta es la autorización previa del administrador.
     const{data:motivo,error:validarErr}=await conTimeout(sb.rpc('validar_vendedor_empresa_v2',{p_email:user.email,p_telefono:user.phone,p_codigo:user.codigoDistribuidor})).catch(()=>({data:'codigo',error:null}));
     if(validarErr){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent=validarErr.message;return;}
-    if(motivo==='codigo'){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='El código ingresado no es válido. Verifica el código de distribuidor o de vendedor de la empresa con quien te lo entregó.';return;}
-    if(motivo==='no_autorizado'){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='El código es correcto, pero aún no tienes autorización como vendedor. Solicita al administrador de la plataforma que registre tu correo y celular en la sección Vendedores, y vuelve a intentar.';return;}
-    if(motivo==='bloqueado'){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Tu acceso como vendedor está bloqueado. Contacta al administrador de la plataforma para reactivarlo.';return;}
+    if(motivo==='codigo'){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Código no válido. Verifícalo con quien te lo entregó.';return;}
+    if(motivo==='no_autorizado'){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Código correcto, pero aún no estás autorizado. Pide al administrador que te registre en Vendedores.';return;}
+    if(motivo==='bloqueado'){qs('regMsg').style.color='var(--danger)';qs('regMsg').textContent='Tu acceso está bloqueado. Contacta al administrador para reactivarlo.';return;}
     user.perfilRol='vendedor';user.esEmpresaContratante=true;user.distribuidorId=null;
     const{data:settingsNivel}=await conTimeout(sb.from('app_settings').select('nivel_vendedor_empresa_id').eq('id',1).maybeSingle());
     user.nivelEmpresaId=settingsNivel?.nivel_vendedor_empresa_id||null;
@@ -1766,7 +1766,7 @@ async function isRestricted(gama){
 }
 function applyCompanyName(){const company=(SETTINGS.company_name||'').trim().toUpperCase();const line=qs('empresaLine');if(line){if(company){line.textContent=`Distribuidores autorizados por ${company}`;line.classList.remove('hidden');}else{line.textContent='';line.classList.add('hidden');}}
 const footerText=qs('footerDistribText');if(footerText)footerText.textContent=company?`Herramienta para distribuidores autorizados por ${company}.`:'Herramienta para distribuidores autorizados.';
-const consent=qs('consentText');if(consent)consent.textContent=company?`Autorizo a ConAccion y a ${company} para recolectar, almacenar y tratar mis datos personales con fines comerciales, promocionales, formativos y de relacionamiento, conforme a la política de tratamiento de datos personales vigente.`:'Autorizo a ConAccion BPS para recolectar, almacenar y tratar mis datos personales con fines comerciales, promocionales, formativos y de relacionamiento, conforme a la política de tratamiento de datos personales vigente.';}
+const consent=qs('consentText');if(consent)consent.textContent=company?`Autorizo a ConAccion y a ${company} para recolectar, almacenar y tratar mis datos personales con fines comerciales, promocionales, formativos y de relacionamiento, conforme a la política de tratamiento de datos personales vigente. Sus datos podrán ser almacenados en servidores ubicados fuera de Colombia, en el marco de los servicios de infraestructura tecnológica utilizados, conforme a lo dispuesto en la Ley 1581 de 2012 y sus decretos reglamentarios.`:'Autorizo a ConAccion BPS para recolectar, almacenar y tratar mis datos personales con fines comerciales, promocionales, formativos y de relacionamiento, conforme a la política de tratamiento de datos personales vigente. Sus datos podrán ser almacenados en servidores ubicados fuera de Colombia, en el marco de los servicios de infraestructura tecnológica utilizados, conforme a lo dispuesto en la Ley 1581 de 2012 y sus decretos reglamentarios.';}
 function applyLogo(){const url=(SETTINGS.logo_url||'').trim();['logoWrap','logoWrapReg'].forEach(id=>{const w=qs(id);if(w)w.classList.toggle('hidden',!url);});['companyLogo','companyLogoReg'].forEach(id=>{const img=qs(id);if(img)img.src=url;});const preview=qs('logoPreview');if(preview)preview.innerHTML=url?`<img src="${url}" alt="Logo actual" style="max-height:60px;max-width:200px;border:1px solid var(--line);border-radius:8px;padding:6px;background:#fff">`:'<span style="color:var(--muted);font-size:.84rem">Sin logo cargado.</span>';}
 function applyTheme(theme){document.documentElement.setAttribute('data-theme',theme==='dark'||theme==='pastel'?theme:'');document.querySelectorAll('.theme-btn').forEach(b=>{b.className=(b.dataset.theme===theme?'p mini theme-btn':'s mini theme-btn');});}
 async function renderProductMedia(referencia){
@@ -2044,7 +2044,7 @@ async function abrirModalPdfCotizacion(){
     if(qs('pdfClienteIdentificacion'))qs('pdfClienteIdentificacion').value=CURRENT_USER?.distribuidorNit||'';
     camposCliente.forEach(id=>{if(qs(id))qs(id).setAttribute('readonly','readonly');});
     if(st){st.textContent='';}
-    setStatus('pdfQuoteStatus','Estos datos son los de tu negocio — se envían a la empresa contratante para aprobar tu pedido.','info');
+    setStatus('pdfQuoteStatus','Datos de tu negocio, enviados a la empresa contratante para aprobar el pedido.','info');
   }else{
     camposCliente.forEach(id=>{if(qs(id))qs(id).removeAttribute('readonly');});
   }
@@ -2800,7 +2800,7 @@ function procesarResultadosCSV(results,origen,previewId){
     <div class="summary-chip"><b>${currentActiveCount}</b>Productos activos hoy (referencia)</div>
   </div>
   ${invalid.length?`<details style="margin-top:8px"><summary style="cursor:pointer;color:var(--danger);font-size:.84rem">Ver filas con error</summary><table class="preview-table"><tr><th>Fila</th><th>Problema</th></tr>${invalid.slice(0,30).map(x=>`<tr><td>${x.row}</td><td>${escapeHtml(x.errs)}</td></tr>`).join('')}</table>${invalid.length>30?`<div style="font-size:.8rem;color:var(--muted);margin-top:4px">Mostrando 30 de ${invalid.length}</div>`:''}</details>`:''}
-  <div class="mini-status info" style="display:block;margin-top:10px">⚠️ Al confirmar: los <b>${valid.length}</b> productos del archivo quedarán activos y con el precio de este archivo. Todos los demás productos que existan hoy en la base y NO estén en este archivo quedarán marcados <b>inactivos</b> (no se borran, ni tampoco sus imágenes, planos, manuales, destacados o disponibilidad asociados). Si el archivo trae gamas nuevas sin regla de margen configurada, esos productos quedarán visibles solo con PVP hasta que configures la regla. Al terminar verás un resumen de todo lo que requiera tu revisión.</div>
+  <div class="mini-status info" style="display:block;margin-top:10px">⚠️ Al confirmar:<ul style="margin:6px 0 0;padding-left:18px"><li><b>${valid.length}</b> productos del archivo quedan activos con su nuevo precio.</li><li>Los demás quedan <b>inactivos</b> (no se borran, ni sus imágenes, planos, destacados o disponibilidad).</li><li>Gamas nuevas sin regla de margen se ven solo con PVP hasta que la configures.</li><li>Al terminar verás un resumen para revisar.</li></ul></div>
   <div class="actions" style="margin-top:10px"><button class="p mini" id="btnApplyBulk">Confirmar y aplicar carga masiva</button></div>`;
   qs(previewId).innerHTML=previewHtml;
   qs('btnApplyBulk').onclick=applyBulkUpload;
